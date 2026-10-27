@@ -1,4 +1,5 @@
 import json
+from urllib.error import HTTPError
 import tempfile
 import unittest
 from pathlib import Path
@@ -74,4 +75,15 @@ class PollOnceTests(unittest.TestCase):
    return {}
   self.assertEqual(poll_once("token","123",self.db,[],telegram_api=fake),3)
   self.assertEqual(sum(1 for m,_ in calls if m=="sendMessage"),2)
+ def test_stale_menu_edit_falls_back(self):
+  calls=[]
+  def send(method,payload):
+   calls.append(method)
+   if method=="editMessageText":
+    raise HTTPError("https://example.invalid",400,"not editable",{},None)
+  result=process_update({"callback_query":{"id":"cb","data":"bc:sectors",
+    "message":{"message_id":77,"chat":{"id":123}}}},
+    send=send,allowed_ids="123",database=self.db,ideas=[])
+  self.assertEqual(result,"sent")
+  self.assertEqual(calls,["editMessageText","sendMessage","answerCallbackQuery"])
 if __name__=="__main__":unittest.main()
