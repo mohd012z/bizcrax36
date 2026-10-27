@@ -1,0 +1,43 @@
+name: BizCrax36 agentic research
+on:
+  workflow_dispatch:
+    inputs:
+      query:
+        description: "Business topic to investigate"
+        required: true
+        type: string
+      country:
+        description: "Country"
+        required: false
+        default: Malaysia
+        type: string
+permissions:
+  contents: read
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unit tests
+        run: python3 -m unittest tests.test_agentic_research -v
+      - name: Discover candidate leads
+        env:
+          RESEARCH_QUERY: ${{ inputs.query }}
+          RESEARCH_COUNTRY: ${{ inputs.country }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import json
+          from backend.agentic_research import research
+          output = research(os.environ["RESEARCH_QUERY"], os.environ.get("RESEARCH_COUNTRY") or "Malaysia")
+          path = Path("agentic-research-result.json")
+          path.write_text(json.dumps(output, indent=2, ensure_ascii=False), encoding="utf-8")
+          print("Candidates:", len(output["candidates"]), "Source errors:", len(output["errors"]))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agentic-research-result
+          path: agentic-research-result.json
+          retention-days: 7
