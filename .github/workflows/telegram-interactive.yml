@@ -5,6 +5,7 @@ on:
     paths:
       - 'backend/telegram_poll_once.py'
       - 'backend/telegram_bot.py'
+      - 'backend/agent_skill.py'
       - 'backend/agentic_research.py'
       - 'backend/research_v2.py'
       - 'backend/research_queue.py'
@@ -30,7 +31,7 @@ jobs:
       - name: Check Python runtime
         run: python3 --version
       - name: Run Telegram and research regression tests
-        run: python3 -m unittest tests.test_agentic_research tests.test_research_v2 tests.test_dossier_queue tests.test_reports tests.test_telegram_agentic_research tests.test_telegram_poll_once -v
+        run: python3 -m unittest tests.test_agentic_research tests.test_research_v2 tests.test_dossier_queue tests.test_reports tests.test_telegram_agentic_research tests.test_telegram_poll_once tests.test_ai_bizcollector tests.test_agent_skill -v
       - name: Process pending Telegram messages and button clicks
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

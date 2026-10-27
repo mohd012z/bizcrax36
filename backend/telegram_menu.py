@@ -14,7 +14,8 @@ def keyboard(rows):
 def home():
     return keyboard([
         [{"text":"🤖 AI bizcollector","callback_data":"bc:aimenu"}],
-        [{"text":"🚀 Research engine","callback_data":"bc:research"}],
+        [{"text":"🚀 Research engine","callback_data":"bc:research"},
+         {"text":"🧠 Agent study","callback_data":"bc:study"}],
         [{"text":"🔎 Search opportunities","callback_data":"bc:search"},
          {"text":"💡 Business ideas","callback_data":"bc:mode:ideas"}],
         [{"text":"📋 All research","callback_data":"bc:mode:all"},
@@ -70,7 +71,7 @@ def _valid_job_id(value):
     return len(value)==12 and all(c in "0123456789abcdef" for c in value.lower())
 
 def resolve(data):
-    if data in ("bc:home","bc:help","bc:search","bc:sectors","bc:research"):
+    if data in ("bc:home","bc:help","bc:search","bc:sectors","bc:research","bc:study"):
         return data
     if data.startswith("bc:report:") and _valid_job_id(data[10:]):
         return data
