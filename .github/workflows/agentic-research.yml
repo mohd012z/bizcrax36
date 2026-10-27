@@ -71,3 +71,20 @@ jobs:
           with urllib.request.urlopen(req,timeout=30) as response:
               print("Telegram delivery HTTP",response.status)
           PY
+      - name: Mark queued research complete
+        if: ${{ success() && inputs.chat_id != '' && inputs.request_id != '' }}
+        env:
+          COMPLETION_URL: ${{ secrets.RESEARCH_COMPLETION_URL }}
+          COMPLETION_SECRET: ${{ secrets.RESEARCH_COMPLETION_SECRET }}
+          REQUEST_ID: ${{ inputs.request_id }}
+        run: |
+          python3 - <<'PY'
+          import json,os,urllib.request
+          url=os.environ.get("COMPLETION_URL","")
+          secret=os.environ.get("COMPLETION_SECRET","")
+          if not url or not secret: raise SystemExit("Research completion callback is not configured")
+          payload=json.dumps({"request_id":os.environ["REQUEST_ID"],"state":"COMPLETE"}).encode()
+          req=urllib.request.Request(url,data=payload,headers={"Authorization":"Bearer "+secret,"Content-Type":"application/json"},method="POST")
+          with urllib.request.urlopen(req,timeout=30) as response:
+              if response.status != 200: raise SystemExit("Completion callback failed")
+          PY
