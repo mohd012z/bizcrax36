@@ -1,5 +1,12 @@
 name: BizCrax36 Telegram interactive menu
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/telegram_poll_once.py'
+      - 'backend/telegram_bot.py'
+      - 'backend/agentic_research.py'
+      - '.github/workflows/telegram-interactive.yml'
   workflow_dispatch:
   schedule:
     - cron: '*/5 * * * *'
