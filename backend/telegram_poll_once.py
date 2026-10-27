@@ -536,13 +536,15 @@ def process_update(update, *, send, allowed_ids, database, ideas,
     return "sent"
 
 def poll_once(token,allowed_ids,database,ideas,telegram_api=api,max_updates=50,
-             repository="",job_token=""):
+             repository="",job_token="",poll_timeout=0):
     if not token or not allowed_ids:
         raise ValueError("Telegram credentials missing")
+    if not isinstance(poll_timeout,int) or not 0 <= poll_timeout <= 25:
+        raise ValueError("poll_timeout must be an integer from 0 to 25 seconds")
     def call(method,payload):
         return telegram_api(token,method,payload)
     # Use zero timeout: GitHub Actions is not a permanent bot host.
-    updates=call("getUpdates",{"timeout":0,"limit":max_updates,
+    updates=call("getUpdates",{"timeout":poll_timeout,"limit":max_updates,
         "allowed_updates":json.dumps(["message","callback_query"])})
     processed=0
     outcomes={"sent":0,"denied":0,"ignored":0,"suppressed":0}
@@ -577,6 +579,9 @@ def poll_once(token,allowed_ids,database,ideas,telegram_api=api,max_updates=50,
     return processed
 
 def main():
+    if os.environ.get("TELEGRAM_RUNTIME", "actions") != "actions":
+        print("Telegram Actions polling disabled: another runtime owns updates",flush=True)
+        return
     token=os.environ.get("TELEGRAM_BOT_TOKEN","")
     allowed_ids=os.environ.get("TELEGRAM_ALLOWED_CHAT_IDS") or os.environ.get("TELEGRAM_CHAT_ID","")
     if not token or not allowed_ids:

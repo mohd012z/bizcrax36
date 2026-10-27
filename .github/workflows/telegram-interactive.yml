@@ -33,7 +33,7 @@ jobs:
   # Scheduled + manual runs: poll FIRST so queued button presses are picked up
   # as soon as the runner is up (no test-suite pre-flight on the hot path).
   process-updates:
-    if: github.event_name != 'push'
+    if: github.event_name != 'push' && (vars.TELEGRAM_RUNTIME == '' || vars.TELEGRAM_RUNTIME == 'actions')
     runs-on: ubuntu-latest
     timeout-minutes: 14
     steps:

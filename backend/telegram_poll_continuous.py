@@ -1,46 +1,76 @@
-"""Continuous local Telegram poller for the BizCrax36 bot (dev/backup host).
+"""Persistent polling on an always-on host, never alongside another consumer.
 
-The GitHub Actions scheduler only runs every 5 minutes, so button presses
-queue up to ~20-30s (runner spin-up) before the bot answers — it feels frozen.
-This process polls continuously on the always-on host, so responses are
-sub-second. The CI poller stays as a fallback; getUpdates makes them mutually
-exclusive in practice (whoever acks an update wins), and concurrency is kept
-low by the Telegram queue itself.
-
-Env (all required unless a default exists):
-  TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (or TELEGRAM_ALLOWED_CHAT_IDS),
-  MINDA_BASE_URL, MINDA_API_KEY, MINDA_MODEL (optional — AI layer fail-open),
-  POLL_SECONDS (default 1), MAX_UPDATES (default 50).
+Set repository variable TELEGRAM_RUNTIME=persistent before starting this
+process. A Telegram 409 is a configuration failure, not safe load balancing.
 """
 import os
+import signal
 import sys
-import time
+import threading
+from pathlib import Path
+from urllib.error import HTTPError
 
+from backend.telegram_bot import BASE, api
 from backend.telegram_poll_once import load_ideas, poll_once
+from backend.runtime_guard import polling_lock
+
+
+def run(stopped, *, poll=poll_once, telegram_api=api):
+    token = os.environ.get('TELEGRAM_BOT_TOKEN', '').strip()
+    allowed = os.environ.get('TELEGRAM_ALLOWED_CHAT_IDS') or os.environ.get('TELEGRAM_CHAT_ID', '')
+    if not token or not allowed or any(
+        not item.strip().lstrip('-').isdigit() for item in allowed.split(',')
+    ):
+        raise ValueError('A bot token and numeric Telegram chat allowlist are required')
+    max_updates = int(os.environ.get('MAX_UPDATES', '50'))
+    poll_seconds = float(os.environ.get('POLL_SECONDS', '1'))
+    if not 1 <= max_updates <= 100 or not 0.1 <= poll_seconds <= 30:
+        raise ValueError('MAX_UPDATES must be 1..100; POLL_SECONDS must be 0.1..30')
+    database = Path(os.environ.get('BIZCRAX_DATABASE', str(BASE / 'data/research.sqlite3')))
+    lock_path = Path(os.environ.get('TELEGRAM_LOCK_PATH', str(BASE / 'data/telegram-poller.lock')))
+    repository = os.environ.get('GITHUB_REPOSITORY', '')
+    job_token = os.environ.get('GITHUB_TOKEN', '')
+    with polling_lock(lock_path):
+        webhook = telegram_api(token, 'getWebhookInfo', {})
+        if webhook.get('url'):
+            raise RuntimeError('Active Telegram webhook: stop; do not start a second consumer')
+        print('Telegram persistent listener starting; single-consumer mode', flush=True)
+        failures = 0
+        while not stopped.is_set():
+            try:
+                poll(token, allowed, database, load_ideas(), max_updates=max_updates,
+                     repository=repository, job_token=job_token, poll_timeout=25,
+                     telegram_api=telegram_api)
+            except HTTPError as exc:
+                if exc.code in (400, 401, 403, 409):
+                    raise RuntimeError('Telegram configuration failure HTTP %d; listener stopped' % exc.code) from None
+                failures += 1
+                print('Telegram transport failure HTTP %d; retrying' % exc.code, flush=True)
+            except (OSError, RuntimeError) as exc:
+                failures += 1
+                print('Telegram transient failure: %s; retrying' % type(exc).__name__, flush=True)
+            else:
+                failures = 0
+            stopped.wait(min(30, 2 ** min(failures, 5)) if failures else poll_seconds)
 
 
 def main():
-    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-    allowed = os.environ.get("TELEGRAM_ALLOWED_CHAT_IDS") or os.environ.get("TELEGRAM_CHAT_ID", "")
-    if not token or not allowed:
-        raise SystemExit("Missing TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID")
-    poll_seconds = float(os.environ.get("POLL_SECONDS", "1"))
-    max_updates = int(os.environ.get("MAX_UPDATES", "50"))
-    from backend.telegram_bot import BASE
-    ideas = load_ideas()
-    print("bizcrax36 continuous poller: start (poll every %.1fs, max %d)"
-          % (poll_seconds, max_updates), flush=True)
-    while True:
-        try:
-            poll_once(token, allowed, BASE / "data" / "research.sqlite3", ideas,
-                      max_updates=max_updates, repository="", job_token="")
-        except Exception as exc:  # network blip, expired webhook, 409, etc.
-            print("poll cycle error (continuing):", type(exc).__name__,
-                  str(exc)[:200], flush=True)
-            time.sleep(max(2.0, min(poll_seconds * 5, 15.0)))
-        else:
-            time.sleep(poll_seconds)
+    stopped = threading.Event()
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        signal.signal(sig, lambda *_: stopped.set())
+    try:
+        run(stopped)
+    except (ValueError, RuntimeError) as exc:
+        print(str(exc), file=sys.stderr, flush=True)
+        return 78
+    except HTTPError as exc:
+        print('Telegram startup HTTP %d' % exc.code, file=sys.stderr, flush=True)
+        return 78 if exc.code in (400, 401, 403, 409) else 1
+    except OSError:
+        print('Telegram startup transport/storage failure', file=sys.stderr, flush=True)
+        return 1
+    return 0
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())

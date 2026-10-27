@@ -1,0 +1,33 @@
+[Unit]
+Description=bizcrax36 persistent Telegram listener
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=telegram-bots
+Group=telegram-bots
+WorkingDirectory=/opt/telegram-bots/bizcrax36
+EnvironmentFile=/etc/telegram-bots/bizcrax36.env
+Environment=PYTHONUNBUFFERED=1
+Environment=TELEGRAM_RUNTIME=persistent
+Environment=TELEGRAM_LOCK_PATH=/var/lib/telegram-bizcollector/poller.lock
+Environment=BIZCRAX_DATABASE=/var/lib/telegram-bizcollector/research.sqlite3
+StateDirectory=telegram-bizcollector
+StateDirectoryMode=0700
+UMask=0077
+ExecStart=/opt/telegram-bots/bizcrax36/.venv/bin/python -m backend.telegram_poll_continuous
+Restart=on-failure
+RestartSec=10
+RestartPreventExitStatus=78
+TimeoutStopSec=90
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/telegram-bots/bizcrax36/data
+
+[Install]
+WantedBy=multi-user.target
