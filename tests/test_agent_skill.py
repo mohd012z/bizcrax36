@@ -92,8 +92,11 @@ class StudyTests(unittest.TestCase):
         original = agent.ai_bizcollector._chat
         agent.ai_bizcollector._chat = fake_chat
         try:
+            # explicit endpoint creds => env-independent (CI has no MINDA_* set)
             out = agent.record_study("solar panels", "small", make_result(),
-                                     new=True, path=self.path, ai=True)
+                                     new=True, path=self.path, ai=True,
+                                     base_url="http://minda.test", api_key="k",
+                                     model="m")
             self.assertTrue(out["ai_lesson"])
             state = agent.load_state(self.path)
             self.assertEqual(state["skills"][0]["lesson"], "Solar queries work well; avoid news wrapper links.")
