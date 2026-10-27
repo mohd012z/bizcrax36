@@ -1,0 +1,38 @@
+[
+  {
+    "title": "SME OCR and document automation",
+    "sector": "Technology",
+    "country": "Malaysia",
+    "description": "Digitize maintenance records, invoices and compliance documents",
+    "customers": "SMEs, contractors and training centres",
+    "capital_min": 1000,
+    "capital_max": 20000
+  },
+  {
+    "title": "Industrial maintenance coordination",
+    "sector": "Facilities",
+    "country": "Malaysia",
+    "description": "Manage service requests, contractor dispatch and maintenance reporting",
+    "customers": "Commercial property managers",
+    "capital_min": 5000,
+    "capital_max": 50000
+  },
+  {
+    "title": "Overseas digital workflow services",
+    "sector": "Technology",
+    "country": "Singapore",
+    "description": "Remote scheduling, inventory and document workflow implementation",
+    "customers": "Singapore SMEs",
+    "capital_min": 2000,
+    "capital_max": 25000
+  },
+  {
+    "title": "Energy efficiency implementation support",
+    "sector": "Energy",
+    "country": "Malaysia",
+    "description": "Partner with qualified energy auditors and service companies",
+    "customers": "Commercial buildings",
+    "capital_min": 10000,
+    "capital_max": 100000
+  }
+]
