@@ -91,6 +91,11 @@ def make_handler(database):
                 if path.path == "/api/search":
                     ideas_path=Path(__file__).resolve().parent.parent / "data/business_ideas.json"
                     ideas=json.loads(ideas_path.read_text(encoding="utf-8")) if ideas_path.exists() else []
+                    extra_path=Path(__file__).resolve().parent.parent / "data/web_research_ideas.json"
+                    if extra_path.exists():
+                        extras=json.loads(extra_path.read_text(encoding="utf-8"))
+                        seen={(x.get("title","").casefold(),x.get("country","").casefold()) for x in ideas}
+                        ideas.extend(x for x in extras if (x.get("title","").casefold(),x.get("country","").casefold()) not in seen)
                     data=one_search(load_records(database),ideas,query=params.get("q",[""])[0],
                         country=params.get("country",[""])[0],sector=params.get("sector",[""])[0],
                         mode=params.get("mode",["all"])[0])
