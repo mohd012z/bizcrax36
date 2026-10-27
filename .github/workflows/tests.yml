@@ -1,7 +1,7 @@
 name: BizCrax36 P1 tests
 on:
   push:
-    branches: [main, feature/opportunity-research-p1]
+    branches: [main, feature/opportunity-research-p1, feat/agentic-research-v2]
   pull_request:
 jobs:
   unit-tests:

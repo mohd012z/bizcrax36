@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+agentic-research-result.json
+data/research-jobs/*/charts/
