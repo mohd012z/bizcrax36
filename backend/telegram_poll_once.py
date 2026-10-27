@@ -6,6 +6,7 @@ Delivery and acknowledgement are not atomic: a crash may cause one duplicate.
 """
 import json
 import os
+from urllib.error import HTTPError
 from pathlib import Path
 from backend.telegram_bot import api,allowed,search_text,handle_callback,BASE
 from backend.telegram_menu import home
@@ -35,9 +36,15 @@ def process_update(update, *, send, allowed_ids, database, ideas):
         original=callback.get("message") or {}
         message_id=original.get("message_id")
         if isinstance(message_id,int):
-            send("editMessageText",{"chat_id":chat_id,"message_id":message_id,
-                "text":text[:4000],"reply_markup":markup,
-                "disable_web_page_preview":"true"})
+            try:
+                send("editMessageText",{"chat_id":chat_id,"message_id":message_id,
+                    "text":text[:4000],"reply_markup":markup,
+                    "disable_web_page_preview":"true"})
+            except HTTPError as exc:
+                if exc.code != 400:
+                    raise
+                send("sendMessage",{"chat_id":chat_id,"text":text[:4000],
+                    "reply_markup":markup,"disable_web_page_preview":"true"})
         else:
             send("sendMessage",{"chat_id":chat_id,"text":text[:4000],
                 "reply_markup":markup,"disable_web_page_preview":"true"})
