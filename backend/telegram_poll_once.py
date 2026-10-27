@@ -11,6 +11,7 @@ from pathlib import Path
 from backend.telegram_bot import api,allowed,search_text,handle_callback,BASE
 from backend.telegram_menu import home, sectors
 from backend.telegram_result_utils import deduplicate_ideas
+from backend.agentic_research import research
 
 def load_ideas(root=BASE):
     ideas=[]
@@ -22,14 +23,34 @@ def load_ideas(root=BASE):
                 ideas.extend(items)
     return deduplicate_ideas(ideas)
 
-def process_update(update, *, send, allowed_ids, database, ideas):
+def format_research(result):
+    items=result['candidates'][:5]
+    lines=[f"Research: {result['plan']['query']}", f"Candidates: {len(result['candidates'])} | source errors: {len(result['errors'])}"]
+    for i, item in enumerate(items, 1):
+        lines.append(f"{i}. {item['title']}\n{item['source_url']}\nStatus: REVIEW_REQUIRED")
+    if not items:
+        lines.append('No candidates discovered. Sources may be unavailable; try a narrower topic.')
+    lines.append('News leads only; profitability, demand and tender eligibility are NOT verified.')
+    return '\n\n'.join(lines)[:3900]
+
+def safe_callback_answer(send, callback_id, **extra):
+    if not callback_id:
+        return
+    try:
+        send('answerCallbackQuery', {'callback_query_id': callback_id, **extra})
+    except HTTPError as exc:
+        if exc.code != 400:
+            raise
+        # Scheduled GitHub polling often receives callbacks after Telegram expiry.
+
+def process_update(update, *, send, allowed_ids, database, ideas, researcher=research):
     callback=update.get("callback_query")
     if isinstance(callback,dict):
         callback_id=callback.get("id")
         chat_id=(callback.get("message") or {}).get("chat",{}).get("id")
         if not allowed(chat_id,allowed_ids):
             if callback_id:
-                send("answerCallbackQuery",{"callback_query_id":callback_id,"text":"Not authorized","show_alert":"true"})
+                safe_callback_answer(send,callback_id,text="Not authorized",show_alert="true")
             return "denied"
         text,markup=handle_callback(callback.get("data",""),database,ideas)
         # Acknowledge only after successful message delivery.
@@ -49,7 +70,7 @@ def process_update(update, *, send, allowed_ids, database, ideas):
             send("sendMessage",{"chat_id":chat_id,"text":text[:4000],
                 "reply_markup":markup,"disable_web_page_preview":"true"})
         if callback_id:
-            send("answerCallbackQuery",{"callback_query_id":callback_id})
+            safe_callback_answer(send,callback_id)
         return "sent"
     message=update.get("message")
     if not isinstance(message,dict):
@@ -61,7 +82,18 @@ def process_update(update, *, send, allowed_ids, database, ideas):
     if not isinstance(text,str):
         return "ignored"
     command=text.strip().split(maxsplit=1)[0].split("@",1)[0].lower() if text.strip() else ""
-    response="Select a business sector:" if command in ("/sector","/sectors") else search_text(text,database,ideas)
+    if command=="/research":
+        query=text.strip().partition(" ")[2].strip()
+        if not query or len(query)>120:
+            response="Usage: /research aviation training Malaysia (1–120 characters)."
+        else:
+            try:
+                response=format_research(researcher(query,max_queries=3))
+            except (OSError, ValueError) as exc:
+                response="Research temporarily unavailable. Please try again later."
+                print("Research error:",type(exc).__name__,flush=True)
+    else:
+        response="Select a business sector:" if command in ("/sector","/sectors") else search_text(text,database,ideas)
     markup=sectors() if command in ("/sector","/sectors") else home()
     send("sendMessage",{"chat_id":chat_id,"text":response,
         "reply_markup":markup,"disable_web_page_preview":"true"})
