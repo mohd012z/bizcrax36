@@ -244,6 +244,73 @@ def render_scenario_chart(series, path, title="ILLUSTRATIVE CASH FLOW SCENARIOS 
     c.text(16, 386, "Unit: %s. Inputs supplied by the user; no market data assumed." % unit, FAINT, 1)
     return _save(path, c)
 
+def render_flow_chart(flow, path, title="IMPLEMENTATION FLOW — DISCOVER → SCALE"):
+    from pathlib import Path
+    path = Path(path)
+    c = Canvas(640, 150)
+    c.text(16, 14, title, FAINT, 1)
+    n = len(flow) or 1
+    gap = 12
+    bw = int((640 - 32 - gap * (n - 1)) / n)
+    x = 16
+    for i, stage in enumerate(flow):
+        color = INK if i % 2 == 0 else INK_ALT
+        c.fill_rect(x, 46, x + bw, 78, color)
+        label = (stage.get("stage") or "?")[:8]
+        c.text(x + 4, 56, label, (255, 255, 255), 1)
+        if i < n - 1:
+            ax = x + bw
+            c.line(ax + 1, 62, ax + gap, 62, (100, 116, 139))
+            c.line(ax + gap - 3, 58, ax + gap, 62, (100, 116, 139))
+            c.line(ax + gap - 3, 66, ax + gap, 62, (100, 116, 139))
+        note = (stage.get("note") or "")[:30]
+        c.text(x, 88, note, LABEL, 1)
+        x += bw + gap
+    c.text(16, 130, "Standard go/no-go gated flow. Each stage produces evidence before the next begins.", FAINT, 1)
+    return _save(path, c)
+
+
+def render_budget_chart(budget, path, title="ILLUSTRATIVE BUDGET BY CATEGORY (MYR)"):
+    from pathlib import Path
+    path = Path(path)
+    items = list((budget.get("items") or {}).items())
+    c = Canvas(640, 90 + len(items) * 40)
+    c.text(16, 14, title, FAINT, 1)
+    total = sum(v for _, v in items) or 1
+    max_bar = 340
+    y = 50
+    for k, v in items:
+        label = k.replace("_", " ").title()[:22]
+        c.text(16, y, label, LABEL, 1)
+        bar_w = max(2, int(max_bar * v / total))
+        c.fill_rect(16, y + 16, 16 + bar_w, y + 27, INK)
+        c.text(16 + bar_w + 8, y + 17, "RM %s" % "{:,}".format(v), FAINT, 1)
+        y += 40
+    cap = "Estimated bands, not a quote. Total = sum of categories. Replace with real quotes."
+    c.text(16, 90 + len(items) * 40 - 18, cap[:78], FAINT, 1)
+    return _save(path, c)
+
+
+def render_risk_chart(risks, path, title="RISK REGISTER — SCORE (SEVERITY x LIKELIHOOD)"):
+    from pathlib import Path
+    path = Path(path)
+    rows_ = risks[:8]
+    c = Canvas(640, 90 + len(rows_) * 44)
+    c.text(16, 14, title, FAINT, 1)
+    y = 50
+    for r in rows_:
+        s = int(r.get("score", 0))
+        label = (r.get("risk") or "?")[:30]
+        c.text(16, y, label, LABEL, 1)
+        bar_w = max(2, int(340 * s / 9.0))
+        color = (220, 38, 38) if s >= 6 else (180, 83, 9) if s >= 3 else (100, 116, 139)
+        c.fill_rect(16, y + 16, 16 + bar_w, y + 27, color)
+        c.text(16 + bar_w + 8, y + 17, "%d/9 [%s]" % (s, r.get("basis", "assumed")), FAINT, 1)
+        y += 44
+    c.text(16, 90 + len(rows_) * 44 - 18, "Score = severity x likelihood (each 1-3). Red>=6 amber>=3. Mitigations in DOCX.", FAINT, 1)
+    return _save(path, c)
+
+
 # ----------------------------------------------------------------- DOCX
 
 _DOC_TYPES = (
@@ -343,7 +410,8 @@ def build_docx(dossier, result, out_path, images=()):
     # Place each image at its target section: sort by section order first.
     section_order = list(dossier["sections"].keys())
     target_of = {"scores": "opportunity_ranking", "metrics": "opportunity_ranking",
-                 "scenarios": "financial_forecast"}
+                 "scenarios": "financial_forecast",
+                 "flow": "flow", "budget": "financial_forecast", "risk": "risk"}
     ordered_images = sorted(images, key=lambda img: section_order.index(
         target_of.get(img[3], section_order[-1])))
     image_rids = {}
@@ -397,6 +465,9 @@ def _figure_caption(kind):
         "scores": "Preliminary weighted scores for top leads. Blue bars = source-verified leads.",
         "metrics": "Metric breakdown of the top lead with basis (evidence vs assumed) per metric.",
         "scenarios": "Illustrative cumulative cash flow at 0.5x/1x/1.5x volume. User-supplied inputs only.",
+        "flow": "Implementation flow with go/no-go gates. Each stage must produce evidence before the next begins.",
+        "budget": "Illustrative budget by category (MYR). Estimated bands — replace with real quotes before spending.",
+        "risk": "Risk register scored by severity x likelihood. Red >= 6, amber >= 3. Mitigations in the DOCX body.",
     }.get(kind, kind)
 
 # ----------------------------------------------------------------- pipeline
@@ -450,6 +521,49 @@ def generate_report(dossier, result, out_dir, financials=None):
         "summary": {
             "candidates": len(candidates),
             "top_score": (top or {}).get("score", {}).get("total"),
+            "sections": {k: v.get("label") for k, v in dossier.get("sections", {}).items()},
+        },
+    }
+    with open(os.path.join(out_dir, "report.json"), "w", encoding="utf-8") as fh:
+        json.dump(report, fh, indent=2, ensure_ascii=False)
+    return {"docx": docx_path, "report": os.path.join(out_dir, "report.json"),
+            "charts": report["charts"], "summary": report["summary"]}
+
+
+def generate_news_report(dossier, plan, out_dir):
+    """Build flow/budget/risk charts + DOCX for a news-derived implementation plan."""
+    out_dir = str(out_dir)
+    charts_dir = os.path.join(out_dir, "charts")
+    os.makedirs(charts_dir, exist_ok=True)
+    images = []
+    render_flow_chart(plan.get("flow") or [], os.path.join(charts_dir, "flow.png"))
+    images.append(("flow.png", 640, 150, "flow"))
+    budget = plan.get("budget") or {}
+    render_budget_chart(budget, os.path.join(charts_dir, "budget.png"))
+    images.append(("budget.png", 640, 90 + len((budget.get("items") or {})) * 40, "budget"))
+    render_risk_chart(plan.get("risks") or [], os.path.join(charts_dir, "risk.png"))
+    images.append(("risk.png", 640, 90 + min(8, len(plan.get("risks") or [])) * 44, "risk"))
+    docx_path = build_docx(dossier, {"candidates": []}, os.path.join(out_dir, "report.docx"),
+                           images=images)
+    sig = plan.get("signals") or {}
+    report = {
+        "schema_version": dossier.get("schema_version", 1),
+        "generated_at": dossier.get("generated_at"),
+        "kind": "business_implementation_plan",
+        "topic": dossier.get("topic"),
+        "country": dossier.get("country"),
+        "capital_band": dossier.get("capital_band"),
+        "docx": docx_path,
+        "charts": [os.path.join(charts_dir, name) for name, _, _, _ in images],
+        "summary": {
+            "source_url": plan.get("source_url"),
+            "source_name": plan.get("source_name"),
+            "sector": plan.get("sector"),
+            "horizon": plan.get("horizon"),
+            "potential_class": plan.get("potential_class"),
+            "growth_score": sig.get("growth_score"),
+            "budget_total": (plan.get("budget") or {}).get("total"),
+            "risks": len(plan.get("risks") or []),
             "sections": {k: v.get("label") for k, v in dossier.get("sections", {}).items()},
         },
     }

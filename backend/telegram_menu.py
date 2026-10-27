@@ -15,14 +15,23 @@ def home():
     return keyboard([
         [{"text":"🤖 AI bizcollector","callback_data":"bc:aimenu"}],
         [{"text":"🚀 Research engine","callback_data":"bc:research"},
-         {"text":"🧠 Agent study","callback_data":"bc:study"}],
+         {"text":"📰 News agent","callback_data":"bc:news"}],
+        [{"text":"🧠 Agent study","callback_data":"bc:study"},
+         {"text":"🏷 Sector ▾","callback_data":"bc:sectors"}],
         [{"text":"🔎 Search opportunities","callback_data":"bc:search"},
          {"text":"💡 Business ideas","callback_data":"bc:mode:ideas"}],
         [{"text":"📋 All research","callback_data":"bc:mode:all"},
          {"text":"✅ Verified live","callback_data":"bc:mode:live"}],
-        [{"text":"🏷 Sector ▾","callback_data":"bc:sectors"},
-         {"text":"🔍 Review required","callback_data":"bc:mode:review"}],
-        [{"text":"ℹ️ Help","callback_data":"bc:help"}]
+        [{"text":"🔍 Review required","callback_data":"bc:mode:review"},
+         {"text":"ℹ️ Help","callback_data":"bc:help"}]
+    ])
+
+def news_menu():
+    return keyboard([
+        [{"text":"📰 Scan latest business news","callback_data":"bc:news:scan"}],
+        [{"text":"🧩 Business plan from top research","callback_data":"bc:news:plan"}],
+        [{"text":"💬 How to use (paste a news link)","callback_data":"bc:news"}],
+        [{"text":"🏠 Main menu","callback_data":"bc:home"}]
     ])
 
 def research_help():

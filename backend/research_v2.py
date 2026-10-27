@@ -291,7 +291,7 @@ def _fingerprint(title):
 
 def research(query, country="Malaysia", capital="all", fetch=None,
              max_queries=6, verify_top=3, workers=4, on_stage=None, verify_fetch=None,
-             when="30d"):
+             when="30d", with_evidence=True):
     def stage(name):
         if on_stage:
             on_stage(name)
@@ -299,6 +299,13 @@ def research(query, country="Malaysia", capital="all", fetch=None,
     terms = [w for w in re.findall(r"[a-z0-9]+", query.lower()) if w not in STOP and len(w) > 2]
     seen, candidates, errors = set(), [], []
     stage("researching")
+    # Skip sources that have repeatedly failed verification (DEAD_ENDS pattern).
+    skip_hosts = set()
+    try:
+        from backend import agent_skill
+        skip_hosts = agent_skill.blacklisted_hosts()
+    except Exception:
+        skip_hosts = set()
     round1, round1_errors = discover_round(task["rounds"][0], fetch=fetch, workers=workers, when=when)
     errors.extend(round1_errors)
     round2, round2_errors = discover_round(task["rounds"][1], fetch=fetch, workers=workers, when=when)
@@ -310,6 +317,8 @@ def research(query, country="Malaysia", capital="all", fetch=None,
     for record in round1 + round2:
         if "gap_query" in record or record["discovery_query"] in task["rounds"][1]:
             record["gap_query"] = True
+        if skip_hosts and (urlparse(record.get("source_url") or "").hostname or "").lower() in skip_hosts:
+            continue
         fingerprint = _fingerprint(record["title"])
         if fingerprint in seen:
             continue
@@ -340,6 +349,15 @@ def research(query, country="Malaysia", capital="all", fetch=None,
         record["score"] = score(record, terms, capital, gap_hits, verified_count)
         record.setdefault("status", "review_required")
     candidates.sort(key=lambda x: (-x["score"]["total"], -(1 if x.get("verification", {}).get("verified") else 0), x["title"]))
+    # Live macro/evidence context (fail-open; labeled evidence vs unavailable).
+    evidence, evidence_errors = [], []
+    if with_evidence:
+        try:
+            from backend import evidence_sources
+            evidence, evidence_errors = evidence_sources.fetch_all(
+                " ".join(terms[:6]), country, fetch=fetch, workers=4)
+        except Exception:
+            evidence, evidence_errors = [], [{"source": "macro", "error": "fetch failed"}]
     return {
         "schema_version": SCHEMA_VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -347,6 +365,8 @@ def research(query, country="Malaysia", capital="all", fetch=None,
         "candidates": candidates,
         "errors": errors,
         "gap_hits": gap_hits,
+        "evidence": evidence,
+        "evidence_errors": evidence_errors,
         "notice": "Research leads only. Headlines and heuristic scores do not prove business "
                   "viability, open tenders, or verified demand. Every lead stays review_required "
                   "until issuer and commercial evidence is independently confirmed.",

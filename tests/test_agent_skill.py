@@ -137,5 +137,59 @@ class StudyTests(unittest.TestCase):
         self.assertIn("bc:research", json.dumps(data))
 
 
+class LedgerTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        base = Path(self.tmp.name)
+        self.ledger = base / "research.jsonl"
+        self.black = base / "source-blacklist.json"
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_append_then_read_ledger(self):
+        row = agent.append_ledger(make_result(n=4, verified=1), query="solar", capital="small", path=self.ledger)
+        self.assertEqual(row["leads"], 4)
+        self.assertEqual(row["verified"], 1)
+        rows = agent.read_ledger(self.ledger)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["query"], "solar")
+        # append again -> two rows, newest last
+        agent.append_ledger(make_result(n=2, verified=0), path=self.ledger)
+        self.assertEqual(len(agent.read_ledger(self.ledger)), 2)
+
+    def test_ledger_fail_open_on_bad_path(self):
+        # Path points at a directory -> open-for-append raises -> returns None.
+        d = Path(self.tmp.name) / "adir"
+        d.mkdir(parents=True, exist_ok=True)
+        self.assertIsNone(agent.append_ledger(make_result(), path=d))
+
+    def _fetch_fail_result(self):
+        return {"plan": {"query": "solar", "country": "Malaysia", "capital": "small"},
+                "candidates": [
+                    {"title": "a", "source_url": "https://dead.example.com/1",
+                     "verification": {"verified": False, "reason": "URLError"}},
+                    {"title": "b", "source_url": "https://ok.example.com/2",
+                     "verification": {"verified": True, "reason": "title_words_present"}},
+                ],
+                "errors": []}
+
+    def test_semantic_mismatch_not_blacklisted(self):
+        res = {"plan": {}, "candidates": [
+            {"title": "a", "source_url": "https://ok.example.com/1",
+             "verification": {"verified": False, "reason": "insufficient_title_match"}}],
+            "errors": []}
+        out = agent.record_verification_failures(res, path=self.black)
+        self.assertEqual(out, {})
+        self.assertEqual(agent.blacklisted_hosts(self.black), set())
+
+    def test_fetch_failures_blacklist_after_threshold(self):
+        for _ in range(agent.BLACKLIST_THRESHOLD):
+            agent.record_verification_failures(self._fetch_fail_result(), path=self.black)
+        hosts = agent.blacklisted_hosts(self.black)
+        self.assertIn("dead.example.com", hosts)
+        self.assertNotIn("ok.example.com", hosts)
+
+
 if __name__ == "__main__":
     unittest.main()

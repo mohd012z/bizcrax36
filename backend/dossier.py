@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 
 SECTIONS = (
     ("executive_summary", "Executive summary"),
+    ("market_evidence", "Live market evidence"),
     ("industry_intelligence", "Industry intelligence"),
     ("customer_demand", "Customer demand"),
     ("competition", "Competition"),
@@ -72,6 +73,21 @@ def build(result, now=None):
 
     capital = plan.get("capital", "all")
     sections = {}
+    evidence = result.get("evidence") or []
+    ev_lines = []
+    for m in evidence:
+        if m.get("basis") == "evidence":
+            detail = m.get("detail") or (("%.2f %s" % (m.get("value"), m.get("year", ""))).strip() if "value" in m else "")
+            ev_lines.append("• [%s] %s — %s" % (m.get("source"), m.get("label"), detail))
+        else:
+            ev_lines.append("• [%s] %s — %s (UNAVAILABLE)" % (m.get("source"), m.get("label"), m.get("detail")))
+    have_evidence = any(m.get("basis") == "evidence" for m in evidence)
+    sections["market_evidence"] = {
+        "label": "verified" if have_evidence else "unavailable",
+        "content": ev_lines or [
+            "Live macro/evidence sources not retrieved this run (offline or rate-limited).",
+            "Typical no-auth sources: World Bank (MYS GDP/inflation/unemployment), Frankfurter FX, Crossref literature."],
+    }
     sections["executive_summary"] = {
         "label": "estimated",
         "content": [
@@ -83,11 +99,14 @@ def build(result, now=None):
         ],
     }
     sections["industry_intelligence"] = {
-        "label": "unavailable",
-        "content": [
+        "label": "estimated" if have_evidence else "unavailable",
+        "content": ([
+            "Macro context retrieved live this run — see the 'Live market evidence' section above (basis: evidence).",
+        ] if have_evidence else [
             "Market size and growth: not retrieved by this engine (requires open-data/statistics connectors).",
+        ]) + [
             "Sector detected: %s" % plan.get("sector", "general"),
-            "Use DOSM (open.dosm.gov.my), Bank Negara and MDEC releases for dated market statistics before acting.",
+            "For dated market statistics before acting, use DOSM (open.dosm.gov.my), Bank Negara and MDEC releases.",
         ],
     }
     sections["customer_demand"] = {
@@ -213,6 +232,19 @@ def summary_text(dossier, result, max_chars=3900):
     lines.append("")
     lines.append("📈 SIGNALS: competition headlines %s | licence/registration headlines %s | %s"
                  % (gap.get("competition", 0), gap.get("regulation", 0), plan.get("sector", "general")))
+    evidence = result.get("evidence") or []
+    live = [m for m in evidence if m.get("basis") == "evidence"]
+    if live:
+        bits = []
+        for m in live[:3]:
+            label = (m.get("label") or "?")[:30]
+            if "value" in m:
+                bits.append("%s %s%%" % (label, m.get("value")))
+            elif m.get("detail") and m.get("detail") != label:
+                bits.append(m.get("detail")[:40])
+            else:
+                bits.append(label)
+        lines.append("🌐 LIVE EVIDENCE (fetched now): " + "; ".join(bits))
     lines.append("")
     lines.append("§ Executive: %s" % _label(dossier["sections"]["executive_summary"]["label"]))
     lines.append("§ Customer demand: %s" % _label(dossier["sections"]["customer_demand"]["label"]))
@@ -222,6 +254,6 @@ def summary_text(dossier, result, max_chars=3900):
                  % (_label(dossier["sections"]["funding_investment"]["label"]),
                     _label(dossier["sections"]["risk_assessment"]["label"])))
     lines.append("")
-    lines.append("Tap 📄 Report (DOCX) for the full 14-section dossier.")
+    lines.append("Tap 📄 Report (DOCX) for the full 15-section dossier.")
     lines.append(result["notice"][:220])
     return "\n".join(lines)[:max_chars]

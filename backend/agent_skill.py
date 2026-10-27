@@ -13,6 +13,7 @@ import re
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse
 
 from backend.telegram_bot import BASE
 from backend import ai_bizcollector
@@ -121,8 +122,8 @@ def deterministic_lesson(topic, capital, result):
 def _ai_lesson(topic, capital, result, base_url=None, api_key=None, model=None, timeout=20):
     """Minda-distilled skill note. Fail-open: returns None on any problem."""
     try:
-        settings = ai_bizcollector._minda_settings(base_url, api_key, model)
-        if not settings:
+        endpoints = ai_bizcollector._endpoints(base_url, api_key, model)
+        if not endpoints:
             return None
         candidates = (result.get("candidates") or [])[:5]
         lines = ["%d. %s (%s/100, %s)" % (
@@ -135,7 +136,7 @@ def _ai_lesson(topic, capital, result, base_url=None, api_key=None, model=None, 
                       sum(1 for c in (result.get("candidates") or [])
                           if (c.get("verification") or {}).get("verified")),
                       len(result.get("errors") or []), "\n".join(lines) or "(none)"))
-        text = ai_bizcollector._chat(settings, [
+        text = ai_bizcollector._chat_failover(endpoints, [
             {"role": "system", "content": LESSON_SYSTEM},
             {"role": "user", "content": prompt},
         ], max_tokens=120, timeout=timeout)
@@ -215,3 +216,99 @@ def study_menu():
         {"text": "🔁 New research", "callback_data": "bc:research"},
         {"text": "🏠 Main menu", "callback_data": "bc:home"},
     ]]}, separators=(",", ":"))
+
+
+# ------------------------------------------------------------------ ledger
+# Append-only research ledger (research.jsonl) + source blacklist (dead ends).
+# Pattern learned from the auto-deep-researcher-24x7 study: every run is a
+# durable fact row; sources that repeatedly fail verification are blacklisted
+# so discovery stops wasting fetch budget on them.
+
+LEDGER_PATH = STATE_PATH.parent / "research.jsonl"
+BLACKLIST_PATH = STATE_PATH.parent / "source-blacklist.json"
+BLACKLIST_THRESHOLD = 3
+
+
+def append_ledger(result, query=None, capital=None, path=LEDGER_PATH):
+    """Append one research run as a durable JSONL row. Never raises."""
+    try:
+        plan = result.get("plan") or {}
+        candidates = result.get("candidates") or []
+        verified = sum(1 for c in candidates if (c.get("verification") or {}).get("verified"))
+        row = {
+            "at": datetime.now(timezone.utc).isoformat(),
+            "query": (query or plan.get("query") or "")[:120],
+            "country": plan.get("country"),
+            "capital": (capital or plan.get("capital") or "all"),
+            "sector": plan.get("sector"),
+            "leads": len(candidates),
+            "verified": verified,
+            "source_errors": len(result.get("errors") or []),
+            "top_score": (candidates[0].get("score") or {}).get("total") if candidates else None,
+        }
+        p = Path(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with open(p, "a", encoding="utf-8") as f:
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
+        return row
+    except Exception:
+        return None
+
+
+def read_ledger(path=LEDGER_PATH, limit=50):
+    try:
+        lines = Path(path).read_text(encoding="utf-8").strip().splitlines()[-limit:]
+        return [json.loads(x) for x in lines if x.strip()]
+    except (OSError, ValueError):
+        return []
+
+
+# Verification reasons that are semantic (page fetched fine) rather than a
+# fetch failure. Anything else (URLError, timeout, ConnectionError...) is a
+# dead end worth counting toward the blacklist.
+_SEMANTIC_VERIFY_REASONS = {"no_source_url", "title_too_short_to_verify",
+                            "title_words_present", "insufficient_title_match"}
+
+
+def record_verification_failures(result, path=BLACKLIST_PATH):
+    """Bump the fail count for every source host whose page could not be
+    fetched (a verification *fetch* failure, not a title mismatch). Blacklist
+    hosts that fail >= BLACKLIST_THRESHOLD times. Never raises."""
+    try:
+        candidates = result.get("candidates") or []
+        failed_hosts = []
+        for c in candidates:
+            v = c.get("verification") or {}
+            reason = v.get("reason") or ""
+            if reason and reason not in _SEMANTIC_VERIFY_REASONS:
+                url = c.get("source_url") or ""
+                host = (urlparse(url).hostname or "").lower() if "://" in url else ""
+                if host:
+                    failed_hosts.append(host)
+        if not failed_hosts:
+            return {}
+        try:
+            data = json.loads(Path(path).read_text(encoding="utf-8"))
+            if not isinstance(data, dict):
+                data = {}
+        except (OSError, ValueError):
+            data = {}
+        for host in failed_hosts:
+            data[host] = int(data.get(host, 0)) + 1
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp")
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False)
+        os.replace(str(tmp), str(path))
+        return {h: n for h, n in data.items() if n >= BLACKLIST_THRESHOLD}
+    except Exception:
+        return {}
+
+
+def blacklisted_hosts(path=BLACKLIST_PATH):
+    """Set of source hosts to skip in discovery (repeat verification failures)."""
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+        return {h for h, n in data.items() if int(n) >= BLACKLIST_THRESHOLD}
+    except (OSError, ValueError):
+        return set()

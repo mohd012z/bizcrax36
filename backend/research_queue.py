@@ -79,6 +79,13 @@ def run_job(query, country="Malaysia", capital="all", fetch=None, verify_fetch=N
             "duration_seconds": round(time.monotonic() - started, 2),
             "stages": [{"name": s["name"], "seconds": round(s["at"], 2)} for s in job["stages"]],
         }
+        # Durable learning (fail-open): ledger row + source-blacklist updates.
+        try:
+            from backend import agent_skill
+            agent_skill.append_ledger(result, query=query, capital=capital)
+            agent_skill.record_verification_failures(result)
+        except Exception:
+            pass
         return job, result, dossier
     except (OSError, ValueError) as exc:
         job["status"] = "failed"
