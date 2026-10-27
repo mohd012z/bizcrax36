@@ -69,6 +69,19 @@ def make_handler(database):
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             path = urlsplit(self.path)
+            if path.path in ("/", "/index.html"):
+                html_path=Path(__file__).resolve().parent.parent / "index.html"
+                if not html_path.exists():
+                    return self.respond(404, {"error":"dashboard_missing"})
+                data=html_path.read_bytes()
+                self.send_response(200)
+                self.send_header("Content-Type","text/html; charset=utf-8")
+                self.send_header("Cache-Control","no-store")
+                self.send_header("X-Content-Type-Options","nosniff")
+                self.send_header("Content-Length",str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+                return
             if path.path not in ("/api/health", "/api/opportunities", "/api/global-opportunities", "/api/search"):
                 return self.respond(404, {"error":"not_found"})
             if path.path == "/api/health":
@@ -76,7 +89,7 @@ def make_handler(database):
             try:
                 params=parse_qs(path.query,keep_blank_values=True)
                 if path.path == "/api/search":
-                    ideas_path=Path("data/business_ideas.json")
+                    ideas_path=Path(__file__).resolve().parent.parent / "data/business_ideas.json"
                     ideas=json.loads(ideas_path.read_text(encoding="utf-8")) if ideas_path.exists() else []
                     data=one_search(load_records(database),ideas,query=params.get("q",[""])[0],
                         country=params.get("country",[""])[0],sector=params.get("sector",[""])[0],
