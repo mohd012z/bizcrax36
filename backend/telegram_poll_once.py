@@ -9,7 +9,7 @@ import os
 from urllib.error import HTTPError
 from pathlib import Path
 from backend.telegram_bot import api,allowed,search_text,handle_callback,BASE
-from backend.telegram_menu import home
+from backend.telegram_menu import home, sectors
 from backend.telegram_result_utils import deduplicate_ideas
 
 def load_ideas(root=BASE):
@@ -60,8 +60,11 @@ def process_update(update, *, send, allowed_ids, database, ideas):
     text=message.get("text")
     if not isinstance(text,str):
         return "ignored"
-    send("sendMessage",{"chat_id":chat_id,"text":search_text(text,database,ideas),
-        "reply_markup":home(),"disable_web_page_preview":"true"})
+    command=text.strip().split(maxsplit=1)[0].split("@",1)[0].lower() if text.strip() else ""
+    response="Select a business sector:" if command in ("/sector","/sectors") else search_text(text,database,ideas)
+    markup=sectors() if command in ("/sector","/sectors") else home()
+    send("sendMessage",{"chat_id":chat_id,"text":response,
+        "reply_markup":markup,"disable_web_page_preview":"true"})
     return "sent"
 
 def poll_once(token,allowed_ids,database,ideas,telegram_api=api,max_updates=50):
