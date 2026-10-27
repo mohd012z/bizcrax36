@@ -2,7 +2,6 @@
 import json
 import logging
 import signal
-import sqlite3
 import os
 import time
 import urllib.error
@@ -12,7 +11,6 @@ TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 ALLOWED = {x.strip() for x in os.getenv("TELEGRAM_ALLOWED_CHAT_IDS", "").split(",") if x.strip()}
 GITHUB_TOKEN = os.getenv("GITHUB_DISPATCH_TOKEN", "")
 REPOSITORY = os.getenv("GITHUB_REPOSITORY_NAME", "mohd012z/bizcrax36")
-STATE_DB = os.getenv("TELEGRAM_STATE_DB", "/data/bizcrax36-telegram.sqlite3")
 TIMEOUT = 30
 STOP = False
 
@@ -53,16 +51,6 @@ def dispatch(query, chat, request_id):
             raise RuntimeError("GitHub dispatch returned unexpected HTTP status")
 
 
-def remember_update(update_id):
-    import pathlib
-    pathlib.Path(STATE_DB).parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(STATE_DB, timeout=10) as db:
-        db.execute('CREATE TABLE IF NOT EXISTS handled_updates (update_id INTEGER PRIMARY KEY, created_at TEXT DEFAULT CURRENT_TIMESTAMP)')
-        result = db.execute('INSERT OR IGNORE INTO handled_updates (update_id) VALUES (?)', (update_id,))
-        db.commit()
-        return result.rowcount == 1
-
-
 def process(update):
     message = update.get("message") or {}
     chat = (message.get("chat") or {}).get("id")
@@ -86,8 +74,6 @@ def process(update):
             return
         request_id = "tg-" + str(update["update_id"])
         try:
-            if not remember_update(update["update_id"]):
-                return
             dispatch(query, chat, request_id)
         except Exception:
             logging.exception("Research dispatch failed for %s", request_id)
