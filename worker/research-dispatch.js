@@ -10,7 +10,7 @@ export default {
   if(!env.GITHUB_DISPATCH_TOKEN || !env.DB) throw new Error("Missing dispatch configuration");
   for(const message of batch.messages){
    const job=message.body;
-   if(!job||!/^tg-\\d+$/.test(String(job.request_id))||!Number.isSafeInteger(Number(job.chat_id))||typeof job.query!=="string"||job.query.length>120){
+   if(!job||!/^tg-\d+$/.test(String(job.request_id))||!Number.isSafeInteger(Number(job.chat_id))||typeof job.query!=="string"||job.query.length>120){
     console.error("Discarding invalid research job");message.ack();continue;
    }
    const existing=await readJob(env.DB,job.request_id);
