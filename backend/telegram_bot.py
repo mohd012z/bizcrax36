@@ -12,7 +12,8 @@ from urllib.parse import urlencode
 from backend.search_api import load_records
 from backend.unified_search import one_search
 from pathlib import Path
-from backend.telegram_menu import home, sectors, results_menu, resolve, SECTORS
+from backend.telegram_result_utils import page
+from backend.telegram_menu import home, sectors, results_menu, paged_menu, resolve, SECTORS
 
 BASE=Path(__file__).resolve().parent.parent
 MAX_RESULTS=5
@@ -58,19 +59,37 @@ def handle_callback(data, database, ideas):
         return "Send /search followed by a keyword, e.g. /search aviation",home()
     if action=="bc:sectors":
         return "Select business sector:",sectors()
+    if action.startswith("bc:page:"):
+        _,_,kind,value,index=action.split(":")
+        return show_page(kind,value,int(index),database,ideas)
     if action.startswith("bc:sector:"):
-        sector=SECTORS[int(action.split(":")[-1])]
+        return show_page("sector",action.split(":")[-1],0,database,ideas)
+    mode=action.split(":")[-1]
+    return show_page("mode",mode,0,database,ideas)
+
+def show_page(kind,value,index,database,ideas):
+    if kind=="sector":
+        sector=SECTORS[int(value)]
         if sector=="All":
             return "All sectors. Choose a search mode:",home()
         result=one_search(load_records(database),ideas,sector=sector,mode="all")
-        titles=[str(x.get("title") or "Untitled")[:90] for x in result["results"][:5]]
-        text=f"{sector}: {result['count']} research leads\n"+("\n".join("• "+t for t in titles) if titles else "No matches")
-        return text+"\nResearch ideas are unverified.",home()
-    mode=action.split(":")[-1]
-    result=one_search(load_records(database),ideas,mode=mode)
-    titles=[str(x.get("title") or "Untitled")[:90] for x in result["results"][:5]]
-    text=f"{mode.upper()}: {result['count']} leads\n"+("\n".join("• "+t for t in titles) if titles else "No matching records")
-    return text+"\nCheck source and eligibility.",results_menu(mode)
+        label=sector
+    else:
+        result=one_search(load_records(database),ideas,mode=value)
+        label=value.upper()
+    subset=page(result["results"],index,MAX_RESULTS)
+    lines=[f"{label}: {subset['total']} research leads | Page {subset['page']+1}/{subset['pages']}"]
+    for n,entry in enumerate(subset["items"],subset["page"]*MAX_RESULTS+1):
+        title=str(entry.get("title") or "Untitled").replace("\\n"," ")[:110]
+        status=str(entry.get("status") or "review_required")
+        lines.append(f"{n}. {title} [{status}]")
+        url=entry.get("source_url")
+        if isinstance(url,str) and url.startswith("https://"):
+            lines.append(url)
+    if not subset["items"]:
+        lines.append("No matching records.")
+    lines.append("Research leads require independent source verification.")
+    return "\\n".join(lines)[:3800],paged_menu(kind,value,subset["page"],subset["pages"])
 
 def api(token, method, payload):
     req=Request(f"https://api.telegram.org/bot{token}/{method}",
