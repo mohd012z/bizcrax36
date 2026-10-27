@@ -26,7 +26,7 @@ def search_text(message, database, ideas):
     parts=message.strip().split(maxsplit=1)
     command=parts[0].split("@",1)[0].lower() if parts else ""
     if command in ("/start","/help"):
-        return "BizCrax36 research bot. Choose a menu button or send /search keyword, /ideas keyword, /live keyword, /status. Research leads require independent verification."
+        return "BizCrax36 research bot. Choose a menu button or send /research topic for fresh discovery, /search keyword for saved records, /ideas keyword, /live keyword, /status. Research leads require independent verification."
     if command in ("/sector","/sectors"):
         return "Choose Sector ▾ from the buttons below to select a business sector."
     if command=="/status":
