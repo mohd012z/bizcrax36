@@ -52,4 +52,26 @@ class PollOnceTests(unittest.TestCase):
   with self.assertRaises(RuntimeError):
    poll_once("token","123",self.db,[],telegram_api=fake)
   self.assertEqual(methods,["getUpdates","sendMessage"])
+ def test_callback_edits_existing_menu(self):
+  calls=[]
+  result=process_update({"callback_query":{"id":"cb","data":"bc:sectors",
+    "message":{"message_id":77,"chat":{"id":123}}}},
+    send=lambda method,payload:calls.append((method,payload)),
+    allowed_ids="123",database=self.db,ideas=[])
+  self.assertEqual(result,"sent")
+  self.assertEqual(calls[0][0],"editMessageText")
+  self.assertEqual(calls[0][1]["message_id"],77)
+  self.assertEqual(calls[1][0],"answerCallbackQuery")
+ def test_repeated_start_collapsed(self):
+  calls=[]
+  def fake(token,method,payload):
+   calls.append((method,payload))
+   if method=="getUpdates":
+    if "offset" in payload:return []
+    return [{"update_id":1,"message":{"chat":{"id":123},"text":"/start"}},
+      {"update_id":2,"message":{"chat":{"id":123},"text":"/start"}},
+      {"update_id":3,"message":{"chat":{"id":123},"text":"/search energy"}}]
+   return {}
+  self.assertEqual(poll_once("token","123",self.db,[],telegram_api=fake),3)
+  self.assertEqual(sum(1 for m,_ in calls if m=="sendMessage"),2)
 if __name__=="__main__":unittest.main()
