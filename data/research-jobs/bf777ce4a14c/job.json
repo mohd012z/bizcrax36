@@ -1,0 +1,2331 @@
+{
+  "id": "bf777ce4a14c",
+  "query": "agritech cold chain",
+  "country": "Malaysia",
+  "capital": "small",
+  "status": "completed",
+  "created_at": "2026-10-27T13:23:19.238393+00:00",
+  "finished_at": "2026-10-27T13:23:21.505727+00:00",
+  "duration_seconds": 2.27,
+  "diagnostics": {
+    "candidates": 37,
+    "source_verified": 0,
+    "source_errors": 0,
+    "gap_hits": {
+      "competition": 2,
+      "regulation": 1
+    },
+    "top_score": 67,
+    "duration_seconds": 2.27,
+    "stages": [
+      {
+        "name": "researching",
+        "seconds": 0.0
+      },
+      {
+        "name": "verifying",
+        "seconds": 1.51
+      },
+      {
+        "name": "scoring",
+        "seconds": 2.27
+      },
+      {
+        "name": "completed",
+        "seconds": 2.27
+      }
+    ]
+  },
+  "result": {
+    "schema_version": 2,
+    "generated_at": "2026-10-27T13:23:21.505623+00:00",
+    "plan": {
+      "query": "agritech cold chain",
+      "country": "Malaysia",
+      "capital": "small",
+      "sector": "aerospace",
+      "rounds": [
+        [
+          "agritech cold chain Malaysia market demand",
+          "agritech cold chain Malaysia SME supplier opportunities",
+          "agritech cold chain Malaysia government programme",
+          "agritech cold chain Malaysia procurement tender",
+          "aviation training Malaysia business",
+          "agritech cold chain Malaysia affordable startup investment"
+        ],
+        [
+          "agritech cold chain Malaysia competitors pricing",
+          "agritech cold chain Malaysia licence registration requirement",
+          "agritech cold chain Malaysia customer demand survey"
+        ]
+      ]
+    },
+    "candidates": [
+      {
+        "title": "Vietnam Cold-Chain and Agritech Opportunities for Foreign Investors - ASEAN Briefing",
+        "source_url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxNQ0s1Um1ZdjY1VnNoTTM4MTFmVnByanVCdDZjUUhuM3NqWENJUlE5bEtBbFRwWEVLd3RxU0xsdXJJRURfMGhTSGVhT2hzWUJ1YVNNNGk5elY2RThiSnR5bGRFWXNQU3k1amdBU1NzTl9WeUNmbFVWb3JQd1M4akhtd0NTWjB0cUdSQzl2SUg3R3dBeHpQM3FjSm1oaEdEZjMwcE1lMmNR?oc=5",
+        "published_at": "Fri, 19 Sep 2025 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "76b98333b2abfdeb7e8b",
+        "verification": {
+          "verified": false,
+          "match_ratio": 0.0,
+          "retrieved_at": "2026-10-27T13:23:21.048048+00:00",
+          "source_sha256": "d2934c5486e29afa7bc0",
+          "reason": "insufficient_title_match"
+        },
+        "score": {
+          "total": 67,
+          "metrics": {
+            "demand": {
+              "value": 79,
+              "basis": "evidence",
+              "note": "3 headline term matches, 0 verified sources; published 9678h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Agritech start-ups navigating cost pressures, contributing to food security - The Malaysian Reserve",
+        "source_url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxNQTNNM0VaR3VmR1U1UWI5dHZzaURiRUVVeGdYbjdtaXpwYWtfNEIyOHA1Rkd2ajVxSkswYW9zUnl4YklMS2NIU1U2allmRWM1T2Q2NEVXQ2d1VWVwSG1vdHY5MzRVUzV6NThDYnp6Zmt2T2hTSUgwZHVxN0RpNzlrVDRJM2hqRUhnQmV6dVFqNGYwbG1RblNTT0xDZFhpVk9sNTVBVk1GanpKZUdkRTJhaFdVeEIyeHJqd3c?oc=5",
+        "published_at": "Tue, 28 Apr 2026 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "e747e99fe3e7425019b1",
+        "score": {
+          "total": 58,
+          "metrics": {
+            "demand": {
+              "value": 43,
+              "basis": "evidence",
+              "note": "1 headline term matches, 0 verified sources; published 4374h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Asia's agri-tech startups offer answers to Iran war supply chain crunch - Nikkei Asia",
+        "source_url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxOVm5mc1doZ0dDSG93M1hWMW5waWNBVllfaF9kMWs0TW9rb3pOUWpnUW84SllEbDZxb2QtaF9GNWE4NzV3RzdzSVlrVlF4VWJsOGZnRXp3SFdIUDA3MGdlMmxWQ3c0elhPWDlJa0FVeUpfYnhMNnQ0TmpRdjVHd0Y0ck0tdUl4ZExObGwxWkV0NzJQZTAxWDAzeWs3RVpMRVRZb281Unk0eHpNT0w0QXpMYVFVTzFFNkk?oc=5",
+        "published_at": "Wed, 20 May 2026 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia affordable startup investment",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "3671d6b62b1012577d63",
+        "score": {
+          "total": 58,
+          "metrics": {
+            "demand": {
+              "value": 43,
+              "basis": "evidence",
+              "note": "1 headline term matches, 0 verified sources; published 3846h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Collaborative Automation Reduces Disruption in Agriculture Supply Chain, Enhances Food Security - SME & Entrepreneurship Magazine",
+        "source_url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxNYzVMNG5HX0hObV9nU0RDb2tQTUdwekQxc0pWNF9sU2JnTF96cjB3eVljek9YNDNJRjRyTG9laG44aDBfWHFQVkhLcVpyN3hWVm5ZRFFJSGhfc2c2akg4d1NlQUFNdHBsLWYtLV82ek5RV0FYSXdJcFhtR1Vqdk1IOGw2bVBsYXNIZEkxd1ZwSHJhX3VReUdhWF92VTJaSVVkdmYySEJfYVlVLXFmbWF1MXJ3?oc=5",
+        "published_at": "Thu, 30 Dec 2021 08:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia government programme",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "0ff09029ea7cf1b9dd8f",
+        "score": {
+          "total": 58,
+          "metrics": {
+            "demand": {
+              "value": 43,
+              "basis": "evidence",
+              "note": "1 headline term matches, 0 verified sources; published 42293h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Digitalising the agricultural supply chain, from farm to fork - The Business Times",
+        "source_url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxNZ2FBQ1h5aF92enU3VURUbWVTaUE5aXgycHRSWkhFRkhWalhGeGJDam5WRXJGR1F2ZWcycklaNXRoT1ZBRGltMmlOOEJfNllBdmJtMXZTQ3V5RzRDb3g4cWVMVGpzTDhMOENvU0NSRUhjX0RwdjV2ZzdGc1NVZGlEeVpQMDZxeWVtOVRaaWNEYkpROFhnRVFHNHI3Rk1TcXB2TWZzOU1NNXNNQmxwSE5ZODhuNUN0dw?oc=5",
+        "published_at": "Thu, 10 Nov 2022 08:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia SME supplier opportunities",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "92c9b7e19ed015d3973f",
+        "verification": {
+          "verified": false,
+          "match_ratio": 0.0,
+          "retrieved_at": "2026-10-27T13:23:21.503943+00:00",
+          "source_sha256": "8c1fad7fe85df6a34309",
+          "reason": "insufficient_title_match"
+        },
+        "score": {
+          "total": 58,
+          "metrics": {
+            "demand": {
+              "value": 43,
+              "basis": "evidence",
+              "note": "1 headline term matches, 0 verified sources; published 34733h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Invigorating Supply Chain In the Agri-Food Sector - MIDA | Malaysian Investment Development Authority",
+        "source_url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE4yQmp0andySWF2UXpDQjJmM2Ywb05iU3d2OHYwOEtmdnV1VEo4NFFhODZuQkxsdUlJTHlESHdFaUVRNXBsVklfc3NnaVh2Z1J1UGd5Y3lJdUZZRnd1VWsyc1R3MzRKQlpmUmFHcm1UUEx0VVF1RkU4M01nclE1RTQ?oc=5",
+        "published_at": "Mon, 10 Nov 2025 08:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "c1e60ce58327b94547b9",
+        "verification": {
+          "verified": false,
+          "match_ratio": 0.0,
+          "retrieved_at": "2026-10-27T13:23:21.178335+00:00",
+          "source_sha256": "1e750fbea7cb9307a8fa",
+          "reason": "insufficient_title_match"
+        },
+        "score": {
+          "total": 58,
+          "metrics": {
+            "demand": {
+              "value": 43,
+              "basis": "evidence",
+              "note": "1 headline term matches, 0 verified sources; published 8429h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "RARE EARTHS UNPACKED: 5 things to know about global supply chain shakeup - S&P Global",
+        "source_url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxQeEQ5c1lvUDlISkE3cjh1aEhyZE41TWMwNUo2UHZ2YnVYQ0djemYwN0VCczZGNUhtUi13RF9qR2lNa1l6TTZQYWdIZ3Z1T2M2cUVaMUJJQTV3aFRzTjlqM3hwOVZlbjFNczJJMGFMU1NTWW91RUJGcmVHdVhpZGtsTnQ3bFNhY1VJV19mV0pSSkhIclpTbDZBQmRpQXZ0eC1ybWJhQS0xYUc1MlBkQlV6anZ3ODlncFVKSnlKdG92Zl83NmdLQnM3NnhySmRKd1h1LTBiRzdR?oc=5",
+        "published_at": "Tue, 31 Mar 2026 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia competitors pricing",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "gap_query": true,
+        "id": "547e69483e72fcbe024f",
+        "score": {
+          "total": 58,
+          "metrics": {
+            "demand": {
+              "value": 43,
+              "basis": "evidence",
+              "note": "1 headline term matches, 0 verified sources; published 5046h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Singapore agritech startup Peptobiotics bags US$6.2 million in Series A - The Business Times",
+        "source_url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxPVldPYkpjRkhaMXozMXMzS0xSVFRZRWllM1E2SWh0cWRNYXBIZ1o4b0lnRVVwbUFXb0xIRm1PU25tb0dRU1VOb2dTQVlHQ2x4UWJKRUc2Zm9BME14ZVBjWHJOaVRmd2tqb3V1bGl0WFVDdWxmOV9qT2NySWVFMWdxN1VxYWV0eUcwTFRFeFpnTVRhWmJYSXd6QXJXdWs4WXZLMWVhR2RFMDFRcEtJZjhEMl93YmFDbHR6UndnWTBXaw?oc=5",
+        "published_at": "Tue, 09 Apr 2024 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia affordable startup investment",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "b61ab594ffb8d88774c9",
+        "score": {
+          "total": 58,
+          "metrics": {
+            "demand": {
+              "value": 43,
+              "basis": "evidence",
+              "note": "1 headline term matches, 0 verified sources; published 22350h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Temasek's Heliconia Capital leads $11 mil Series A round in local agritech firm Glife - Yahoo Finance Singapore",
+        "source_url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxNR0l6TXNma0VqVUtZUXpFRXFXMXRYUHdSYVFjZktIUmJONFJZbzJvTGl5NDdjc0NEYjV0MDRWQmZINjdmVkpLVE9qLV9EejZGcHRCeFBlOEd4ZEpOb0FueWsyUW9DdFdHdG9XdUhiZVdDVUQxblR2OGJsRnVFdGxIUF9rLURCeGIweW9FcA?oc=5",
+        "published_at": "Tue, 16 Nov 2021 08:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia government programme",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "108034be6ca68d8487f2",
+        "score": {
+          "total": 58,
+          "metrics": {
+            "demand": {
+              "value": 43,
+              "basis": "evidence",
+              "note": "1 headline term matches, 0 verified sources; published 43349h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "63 Cleantech Startups Working Towards Making India’s Future Cleaner & Greener - Inc42",
+        "source_url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxPcEtaTk9SV1c4NkNNU25ITmR0aDI3eHlLNDhzalF5R3A0emJkWnRzOFdldm41ckJXeldRTWY4NlVNUTBGRkZEb2xES0JVX3lBN0t2Sm1KeWVLOXpDekNtUWFwaU9JLWh5a1ZtM2hHZnNwMVdReDF3V2VkQ29OVHROMFdFcG5KODJETFRub19QZ0RHR3hNcl9nYVJ2TUhVeXRTZDhpdFlyUTdySm5hOVE?oc=5",
+        "published_at": "Sat, 18 Jan 2025 08:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia affordable startup investment",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "964b40e9450f865ab994",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 15533h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "A growing global demand: Agricommodity sector to grab new market opportunities at MIACES in July - The Edge Malaysia",
+        "source_url": "https://news.google.com/rss/articles/CBMiygFBVV95cUxPa0lhRW5FVng1SUlBRGVkOTlMS0h2c0NRYXAzUlowSFFjcVBnRDR6TXlLaTZVM2NhRG8yY2pKS0p0aWJMN0p4cXF4dFVXTl9wUnN6VEpBNHBhc0VuejV3QXBrTW5jMEhNdUFiN3ZXdWdzcUxKcW80Q3B2Mm1MSGFmaFVjTTZfNHJUOHNYZ3N4Z2RwTXk3VnhqTUM2bHpmWGdVLXlYWjE4TUdKLS10RHpFekNkNENSUkc1T3NoWGM1M3U3OUU0SHNpRkpR?oc=5",
+        "published_at": "Tue, 12 Jul 2022 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "9535d8ffd166886f5f44",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 37638h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Aleph Farms plans 2027 cultivated beef launch in Singapore after securing green light from regulators - AgFunderNews",
+        "source_url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxNMXNMOUNSbEhoZVJJbWREZEhGem0xY0dST1BCMkg2M0x5M0pOWjBsTzN1WllJVkxyVWJoWno5b0hld0pxNHZBUFN1Y3pNSm4wN0ZVNlZnNi1XNlNWeU5WQVY3ckdTU3JXS1oyTzNPRkdJYVRIcW9mUDNLeHA3OWt6TW1NY1hqeWNFQkVGRjFXYlM2UVFhc0RVQjJNUnFYUU1nVzhiS1JUVmZOQ3hQTGZ3Szc4YUNVNkNNMkZ0eUQtdHFDRG1y?oc=5",
+        "published_at": "Mon, 03 Aug 2026 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "1b905ed370537cbe8ca9",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 2046h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Apace 2026 showcases latest aviation, aerospace technologies in Kuching - Borneo Post",
+        "source_url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxPdlZ2S0dha0NmS1RsVzduMFVfRG5TcHpsNVQ1dE5ZSXZVNEFoSFZIckpmSy1lOS1fQzNZWUlRckhMZVhJZklYcEdKdVdsS2Jzcm4xNHdycFdxVmpWMlhfUl84eElraXpJQkszNTRBQmd2Y05MR2xlTmdfeEhHSjBJR2JpeGppRUFLaUE1MWZ6OV9BXzFRMEJ5SzJCTXFOaVMtei01a3l5d2ZSVGtHeTc0VDBR?oc=5",
+        "published_at": "Tue, 27 Jan 2026 08:00:00 GMT",
+        "discovery_query": "aviation training Malaysia business",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "6c2139b11967b2a1c778",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 6557h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "As El Niño Arrives, Malaysia Explores Cultivated Meat to Battle Climate Change & Food Insecurity - Green Queen Media",
+        "source_url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxOdEluVzd1UEhQckN2U0gxQXBDcjJ1dFZFa0FGWHBQUG5JNDRhR3VzT1puWTIwN3hPN2lPVDF6XzhHUk50ck9MaWx6U3dzVFVlWXpISGZwNDIzNWxkaWQ5SkhBbFZoRnBmLVl1c1FueV9Wc3hzMmpsV0twWGpwWjlQYUdXT3RjekpzRXZ2WnRvWTZRWW5FNWd0a0lyS29VR2tqUEJNRw?oc=5",
+        "published_at": "Fri, 12 Jun 2026 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia government programme",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "f8ccf65dec134bf7ed86",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 3294h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "BMM builds talent pipeline to support Malaysia's push in global MRO market - NST Online",
+        "source_url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxOcTFpd2hPVTlrMjdCRE1UQUdHaG1YSkthVkh4aGdMZl9RVnR4UlZ0STV0MjFnWjZSNmxZbWk0aEJnYWhtX3FGWXowbnYyNlY2dGZTZmFoZHBrVDVITE10RlFzUjJ4b29hVVhXOHZpdTVYcmRnYXNyOWRONkI0VjcwSjZmQ2RQc291bmNJSjZDU2kxMHRzMHRXRWpmVVExVkZqNzEyTFBvNTVLLTl5bF9oM0dKc2FWN2JxekHSAb8BQVVfeXFMTndNTmIzX1MzelROZ1RKdlUwcXlRZDM2VnctUUs1VE5rY2hKU2FYUUdPUG1XNS1fN2xEX0FrV1pBNmZ1RnNDaXFmN0ktbjU0bmYyMWFTWldhSWg0cUdzNEg0Mm5rLWRETGZ1dDVaLVdzZ3Z0V19zNGpJZk5zVXMtVng2YzRIR3laQzVOb0U2NWsxcmZLbEJiT3dEYnJWdHhpUnZoejZ1STVoM1hIVnB5amhkaVdGaFVDV1B5U0xacVk?oc=5",
+        "published_at": "Sun, 10 May 2026 07:00:00 GMT",
+        "discovery_query": "aviation training Malaysia business",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "8a452ddc50f2865018a0",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 4086h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Base Maintenance Malaysia Graduates First Cohort Of Homegrown Technicians - BusinessToday Malaysia",
+        "source_url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxNRnVUd2hsNmV2TGVIaFdwOXhza1NPV0Y4YWJ1VnBEaU1fR3dfbUExUm9rZlJxbUZVOTJJZ3RraFVrQkFhdzJmbTZidzh1RHZHRW1tWGNPcVJrWG5lQW5JNnoxWUstTnlWdU9yVnRxNVV2cTVFLUhmZGoyejh1ekpYTkR0MGRfUF9tRUx5SEtmcDFFUkRwbno0WkotZFhteTFMRVA4b1NWTUk2S3BnSmlVRVd3U2FlZ3pKQmc?oc=5",
+        "published_at": "Tue, 31 Mar 2026 07:00:00 GMT",
+        "discovery_query": "aviation training Malaysia business",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "859b705ea3967e43a28b",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 5046h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Beyond the mutton in your briyani: A Malaysian breakthrough in biotech - Free Malaysia Today",
+        "source_url": "https://news.google.com/rss/articles/CBMiygFBVV95cUxNeE4wOVpJYmJxZC1xbUthSy1WbktRbHd4SHItSDV2XzJzOHdaUFlZU013enpoZXpZUjczaXU1SFByWjh0NUszSzFfOThBMkdiaXpCMmVaNTA0b1dwRGFHY3lpSE5idFc5Zi14c0ROMldKdUVVdHpEaFFiUTNuaFJpRlVXT256bDU0dlhFeHRldm9OTWctcjE5enZrWkppSlZIcWoyMTMyZlNxMzBLcVl0dVBRQjBVcVZfZWxtczRwYXE3QmpnYzBsZm5B?oc=5",
+        "published_at": "Mon, 16 Mar 2026 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "5619d98450486bd402bb",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 5406h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Cover Story: Agriculture needs more than tech as a solution - The Edge Malaysia",
+        "source_url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxPeTExMlFyYjRybC1UUTJsT2dLQVlPc1NJTWZvUmlmQmFWTWx4VV9PdGlCREQyaDF1NDFnendGT3RwY0JuM295SjlXQjdoTk5KWmZNLWgtWVh5T3R5WF9fTXF0TzBYN2xZYlRKYWdWYW5IVGNjQ3ZyZ19BSTNfa2JYZENyMHVxRE5pZVZETw?oc=5",
+        "published_at": "Mon, 29 Nov 2021 08:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia government programme",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "48712c4708c9a35f37a6",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 43037h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Durian Fruit Market Size, Share & Industry Statistics 2035 - Fact.MR",
+        "source_url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTFBCWEhQcmpzbnVneWtVaGktVVVlczhEV2hrMk44SUJhcmFFSDhuV01Lb2VVb2xqeF9VbkdDNnY1LXdRYVlPcGwtcF9pSk1Hc1BmOVR5UUI4UnBudVJBTlE?oc=5",
+        "published_at": "Sat, 10 May 2025 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia customer demand survey",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "gap_query": true,
+        "id": "74b8b6896798648024cd",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 12846h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Europe Plastic Pallets Market Size, Share & Trends, 2034 - Market Data Forecast",
+        "source_url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxOY3ZmMkFLT2gwZmhuaU1yT19uVnktXzJzM3Z4MHViYUFTZXFMSW5QSkc3VU5wRW4xUkh1NFZWVzVqOE5aVVM4bmRodkkxSkI1cEcybkd4aGNLNzN1TU13bzVkRTlaeTUxQVBpZlB5U3dHM3NmNDU0MnpEQTlVS0hhQzVrQkt6Zw?oc=5",
+        "published_at": "Tue, 15 Sep 2026 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "7f9292b8e4fa2ce4f5a9",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 1014h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Ex-Shell PH chair Edgar Chua, ex-Malaysia Aviation Group chief Izham Ismail join PAL board - Bilyonaryo Business",
+        "source_url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxQSUgtZ21NS21SaWcxNU5wUnk0QUNwdlNEY2dfNFM1NzBpRGxhSnYtT0lCV21wM1JTSjM4ZXdjWTJKX0o5XzcwcHU0ZUdZVjd6YmExekRfaEk2MDFDaW9GbW41ZXZEZWJHaTlzSkFXVG15d283VE9vUV84cTBvQmtPblJYVUJzRmUySUozVVltUWhKUy1iRnBhVzdmQzBOeUx2ODlpaW1oWEltU1B2d1hYdThpUQ?oc=5",
+        "published_at": "Mon, 01 Jun 2026 07:00:00 GMT",
+        "discovery_query": "aviation training Malaysia business",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "6bc3710a0b48b30e5355",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 3558h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "GTA extends helicopter engine support agreement until September 2028 - The Malaysian Reserve",
+        "source_url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxOSmFJZHZVdGFJVHl1c3JqNXZSY0VyT2diWUJmOWRNUnpRYzdHZ0RPWjFpLUVxeTZaTGFVcFViQlowYUZFdUVCWEdyUmhxc01TYnpwcE8tWHhLMGt0a2tJcmFrTzhlblJXdnRQNi1yaDJzTVZacFpqSk1QYzhHck9kQUtfY1YtbXFjc2I2WWJ1Y2ZSQjMxSDBSRUdobHhLUVZLbDVFSXNQMHU1NEg2VFh0d25n?oc=5",
+        "published_at": "Thu, 22 Oct 2026 00:36:19 GMT",
+        "discovery_query": "aviation training Malaysia business",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "3d76134727ec28163c8b",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 133h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "It took this M’sian smart farm 5 years to find an ideal method to grow pesticide-free veg - Vulcan Post",
+        "source_url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxOVVlpTkVUUzZiZGNRN0VwampJT1pjS0tkOU54el9INDFPVmpOZ2V1U0FxT1JZeDcxSndya2tNWGpuUmU1TDVZeXItS3BoY0FUZGhtcWZKcnZaREpsbFgxVWtWcFpmdEV4Q1JBMjhac1RVRTVSYmhmLUJGeE5nbDVjbnlPaEpIdEJXVjZka3c2WQ?oc=5",
+        "published_at": "Thu, 15 Jul 2021 08:37:20 GMT",
+        "discovery_query": "agritech cold chain Malaysia competitors pricing",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "gap_query": true,
+        "id": "6618fb080d2c5ae1f920",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 46325h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Malaysia Airlines offers aviation training opportunity for SPM leavers - Focus Malaysia",
+        "source_url": "https://news.google.com/rss/articles/CBMinAFBVV95cUxNbVJOdV9zdUJRajhGQ1R4OVNEVGVrZWE5NzEwem1IN0ZSUjhDVzkyTWVFVzJrbkNCcmp5b3ZnRlFFLTA3bnNDWGF0N3BlYjlmcXk5VTVlVWo5cjhJbHBIMk9xY0h1NjJDUndpb0dyRVdENF85VkN2VExxS2xNUzdSenliTDFnVHlTLUxMSjRnWG9BM3pKVTU4bHprMEc?oc=5",
+        "published_at": "Thu, 06 May 2021 07:00:00 GMT",
+        "discovery_query": "aviation training Malaysia business",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "eeaf96fa08dc9d838cbf",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 48006h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Malaysia expands poultry sector to cut imports, boost food security - AviNews",
+        "source_url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxObHNZSG42bGdOMU9kamNQX0R4aG44UjV2dVYyRXdqNkVaVWQtT2kwMS1zUVRGTnJtWDdlME8zbVg0OUk2RG1iekdycy1IOXVQZDlSTHlUc1dZWFktMnljR2JZQkZaTHAtdXNNQnZlQzBtZ2JhTnc1QXpFcmxmWGxfVWZMbTZORmVPOURyaGplT056a3NYYlpDSzZwNFBJZ0RvbEE?oc=5",
+        "published_at": "Wed, 21 May 2025 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia government programme",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "667d82e33438532725dc",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 12582h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Malaysia to Conduct Cultivated Meat Research to Bolster Agtech Sector & Food Security - Green Queen Media",
+        "source_url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxPMWY1R3o4WGJETXM5MUQyMTV2MnkySnhxT0l2eVlTT3dkRnZJNW1jRUx6Tk95bEo2U2g1VHVfWk1QcEdpU3Z2blJJQ2xXNnFrbWRpUUEwVFNUQnA3d2VtRzJ3TFhyTEM1QlprV0JPUGpkM2kyN2NlNExxWUFvNTQteUdTTUViTFpVZ2RVc0xR?oc=5",
+        "published_at": "Fri, 26 Jul 2024 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia government programme",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "62584a43ad8dc4c62006",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 19758h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Malaysia's Simginuity EDM Discusses Manufacturing Expansion Opportunities with Malaysian Investment Development Authority - afm.aero",
+        "source_url": "https://news.google.com/rss/articles/CBMi0wFBVV95cUxNS1ZXdU9qYzVOOTlCSFdRMFRDWDA5cVJ4b2M4VXdXb3I0VGVJUlAxNjEtSVBlTnRXQ2FfQTRIUDdvVkFJWVh1RWdEbmVtblNqR3dTRDM2TXdlZU1XTFZVZ1pqS3pVR3BoS05vb25VYTNYTkpVRkdoTnpYY0xJcVZjVlpHME5fWmw4Zzd4YjBxQXoxXzhSejBRNDZJTXhacW9aU3Y0YTc3RHFSVjVmczVtQ2pQRW9pRjN5cVVKX0Y2OG1DMEJwcTVidWV0T2ppcGpnSmE0?oc=5",
+        "published_at": "Mon, 19 Oct 2026 09:44:30 GMT",
+        "discovery_query": "aviation training Malaysia business",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "b890559c19f43aeb25b4",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 196h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Malaysia’s aerospace ambitions take flight - The Edge Malaysia",
+        "source_url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9lV2VWRldtZGsxdTdSWVg5NUhibUhyTmRMc0tLU2gzR25IR21ialdVTXc4dTRtZ1d1TkFxMDBPaVFPM2ptblRUUktGZl9tZUh5?oc=5",
+        "published_at": "Tue, 16 Jun 2026 07:00:00 GMT",
+        "discovery_query": "aviation training Malaysia business",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "912ef176328a20f29944",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 3198h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Memorandum of Understanding (MoU) Signing Ceremony between the Faculty of Business Administration, Vietnam Aviation Academy and Sunway University, Malaysia - vau.edu.vn",
+        "source_url": "https://news.google.com/rss/articles/CBMihAJBVV95cUxPMEtacnltWTRQMTd0T1dveTBiRWUzODZNbVNnVlF2SHZWb2VlUFg0QmRFazd6eF9veVEyVm0wSDg5aXZEakt5aXh6OVNCWFpNVG5Eb3ZkaUhoU0k0djFWTUxIMDNHenhIRlNUTmpIYjc5RzdMaU5HVmhMMWY5UlRsaEdiTnNLN2ZCVlVPTU9JRkYxcV9YZWlfc0VqU0tvSGlSM05FZzlQTHdrVzdFY19fNUpCOGhCQnNTWWpxeHk2M0VXVVViZ3d0TnNGa0RhUTVaa0FieXVtZ0RJaEM4RVNDajZFWTFSeVdNcFZkZHFzQURiRGFaWHd5OXpDVUxYR19rTG92dw?oc=5",
+        "published_at": "Thu, 19 Mar 2026 07:00:00 GMT",
+        "discovery_query": "aviation training Malaysia business",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "f5d016e0bfd59e4cd291",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 5334h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Nurture Agriculture Urgently For Malaysia’s Food Security Resilience - BusinessToday Malaysia",
+        "source_url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxOalA4NmtfQ3Zxc1hadWpUcXZic2htVjJvcU13OGZMM01fdHBnMW84VWNMWGZ6YjdTdkJzVTNwd2h1bkVxWVZkT1JnVW8wSE9nTlZiakFjaktnOVJ1ZE84RFZfejlWaGJOZDBYZWRldk1iX1d6bDdnVHlGVGtLZDg0anhqbDd2SVllV01Ma1ZoQ2ZYcWdGdE5oZXBLOU82WHhPejRmUWlmQ0RIOVF0UERuZEx3?oc=5",
+        "published_at": "Sat, 20 Apr 2024 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "f8b33fb835b0f3b11705",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 22086h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Palm Kernel Shell Suppliers, Export Data & Price Trends | Global Market Overview 2026 - Tridge",
+        "source_url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE5tbzVRdHJsaU4zZHV2aTB6SmZ5YnQ4amE0a0FqTkNjOEYycDc1SDVmZ3pXMTNfZkdheWtsU1ZCMEl0ZFFrOUMyVExjY2ZETmRuMzFid0JnRHdUOVQxUWp5V3lPLVFiREU?oc=5",
+        "published_at": "Sun, 18 Oct 2026 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "9d37d12dc4879c1b3bb8",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 222h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Pos Malaysia Facilitates Thailand’s Potato Corner Entry into Malaysian Market via Fulfilment Service, Pos Fulfill - Mini Me Insights",
+        "source_url": "https://news.google.com/rss/articles/CBMi6gFBVV95cUxQMFd5ZnBxQUZteEhnZGtHSVhMVko0WWNTamdlWVBNQjJSVlducTRoYzRIaFdweXVrOEp1cEpOMG5tbHhWQUh0NUo3d041bndmWDJJY3Nmck9wUXozejllSkdXdzh2eTZzTmhHVEdNQ1I0d29Qbjc0TWhmd0g2VHpiWXFLa2NOdVBBY012Yy1LS3ltSmZiTUNCYWlmME1aUFpNVUtNS21UeU83OXRqbi12aE5neEVCajFmMkxoSm9zNENNdFZGYU56WE5SdEwwdnZJVXVOVFRtNFlkejY2Q2tzVExDLUZkTFhMQ2c?oc=5",
+        "published_at": "Fri, 01 Dec 2023 08:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "ff1dda8aa3531a2660d7",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 25469h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Rural heartlands key to next growth wave under 13MP - Free Malaysia Today",
+        "source_url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxNNnJfc19tbW4zWU42THdrU2hPUktXMklWM1VYOTZNSV9tTHVMOXhqWmViSkhNaVJZQ0RFSC16T2V2aWVVNHVham5uTDlaMHR2M0UzaXdySjlzUVRWRkpNLWtXMk5tS0xTZUlGTXE2MEh5a0JiY0ZkT1pncGZadlh3SFc4SVpKN3FGMGJEdVQ1QjZWZEt4aEtkc2x3QjFGV01GcXBxd01YR0ZmNTNHdzRLZVl3?oc=5",
+        "published_at": "Thu, 09 Oct 2025 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia government programme",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "97870b67f576e37c14ef",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 9198h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Singapore drops ‘30 by 30’ farming goal, sets revised targets for fibre and protein by 2035 - The Straits Times",
+        "source_url": "https://news.google.com/rss/articles/CBMi3wFBVV95cUxPY0hTbTNaWVFMRTNfNDd5eDl6MmJ3cndUaVN0VXdPUEhRSmlDelpydUp5cmRnTWpFaWFIWWEzV0ItWnUtM3A0dU43TDJkcVp1aTZ3YmRsOFU5a3RZREdZVDQtbDBuS3FDZURab1lSX1c1aTBxZW4zbG45Wmg2NzQ1dkV4QTBTUVhDUzRIVHFpZnQ0dGJ2MThHZ25jbi1XTVUyVTdvSkFfN2F3eU1FeWo4V0lEcFFlODF0dWZYVjRaWlJBdDA3Y012RUZtcl9OdnpWSWZfVnBEMDZoNkZJY2Fr?oc=5",
+        "published_at": "Tue, 04 Nov 2025 08:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia government programme",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "3cf320492bc2e5fa235d",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 8573h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "The Johor-Singapore SEZ – How businesses are expanding to capture growth - Singapore Economic Development Board (EDB)",
+        "source_url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxNSVhpWUhNSFl6RXFGRmZObjJ4UUYwOHRrc2s2bXE4TjNsZjlHeEFCNk5GR0NjWFJRZnVLaUFTdWdna0V4ako0c2hfbVlic0pKb1d6WGtMOUdkekgzdmhEcFlQNXU5a2c1VjIyS3dVaG9zMlRxNFRyWlByXzZGcHBsb1NLdEVadkVPM0txZkFBYV8zSWJTNEJmbG9IRzl0S21nang1WHUwTTluWllEc1pPSA?oc=5",
+        "published_at": "Sun, 02 Nov 2025 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia SME supplier opportunities",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "279cc5f96d4e2a80b78c",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 8622h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "Tiong Hails Lion Air Group Talks as Boost for Malaysia's Tourism and Business Travel - Nabalu News",
+        "source_url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxQZThrNTJJRktDR24yY3pLVmd6NUxDRmpjdzJxSFFpUGRzb0FxV3dnbzliNEpKX0lHWmYxNXRTV3N0U1lNXzB0alZhLW5IS0loVHh0QVl4UUpPZVlJaTNlV3hzbzlpT1ZDRjlVQW1fZGlNTHJnbFB4SmxpLUtxVWNnOHdyaDI0d2JFVDlDUVFCbVp6VGhpbEttY3l2bGo3OHI0aFJoYk5OaVVodkdWUU5xWXVvcC12eTA?oc=5",
+        "published_at": "Sat, 02 May 2026 07:00:00 GMT",
+        "discovery_query": "aviation training Malaysia business",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "3b37ebd52340ab3607c1",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 4278h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      },
+      {
+        "title": "With RM35mil invested so far, this startup is bringing us closer to M’sian lab-grown meat - Vulcan Post",
+        "source_url": "https://news.google.com/rss/articles/CBMikAFBVV95cUxOUkhTaXByTXN0V3BSRnVXdmJfUThxNG5kU281bUlZQ0ROaHZzSDlpbG5Udk9uMXljN0J0ZXlvSGlPS1FwamY5TEJweWVqa1p5Vm90cERCV3JXUS1VaGVidGNBSGE5akh4VXEtOElBMVFReWRSQk5Cc1BnNWdrV0pyWlIxN1BwNXpWSlQweGNWS3Y?oc=5",
+        "published_at": "Tue, 26 Sep 2023 07:00:00 GMT",
+        "discovery_query": "agritech cold chain Malaysia affordable startup investment",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "5ed3b8c969687a882243",
+        "score": {
+          "total": 54,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 27054h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 60,
+              "basis": "evidence",
+              "note": "2 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 85,
+              "basis": "assumed",
+              "note": "low capital band accessible to SMEs (assumed fit)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 80,
+              "basis": "evidence",
+              "note": "1 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "small"
+        }
+      }
+    ],
+    "errors": [],
+    "gap_hits": {
+      "competition": 2,
+      "regulation": 1
+    },
+    "notice": "Research leads only. Headlines and heuristic scores do not prove business viability, open tenders, or verified demand. Every lead stays review_required until issuer and commercial evidence is independently confirmed."
+  },
+  "report": {
+    "docx": "/opt/data/cache/scratch/bizcrax36/data/research-jobs/bf777ce4a14c/report.docx",
+    "report": "/opt/data/cache/scratch/bizcrax36/data/research-jobs/bf777ce4a14c/report.json",
+    "charts": [
+      "/opt/data/cache/scratch/bizcrax36/data/research-jobs/bf777ce4a14c/charts/scores.png",
+      "/opt/data/cache/scratch/bizcrax36/data/research-jobs/bf777ce4a14c/charts/metrics.png"
+    ],
+    "summary": {
+      "candidates": 37,
+      "top_score": 67,
+      "sections": {
+        "executive_summary": "estimated",
+        "industry_intelligence": "unavailable",
+        "customer_demand": "assumed",
+        "competition": "estimated",
+        "business_model": "unavailable",
+        "startup_capital": "assumed",
+        "financial_forecast": "unavailable",
+        "funding_investment": "estimated",
+        "supply_chain": "unavailable",
+        "legal_regulatory": "assumed",
+        "risk_assessment": "estimated",
+        "growth_strategy": "assumed",
+        "opportunity_ranking": "estimated",
+        "source_verification": "verified"
+      }
+    }
+  },
+  "dossier": {
+    "schema_version": 2,
+    "generated_at": "2026-10-27T13:23:21.505638+00:00",
+    "topic": "agritech cold chain",
+    "country": "Malaysia",
+    "capital_band": "small",
+    "top_candidate_id": "76b98333b2abfdeb7e8b",
+    "sections": {
+      "executive_summary": {
+        "title": "Executive summary",
+        "label": "estimated",
+        "content": [
+          "Topic: agritech cold chain | Country: Malaysia | Capital band: small",
+          "Candidate leads discovered: 37 | source pages independently fetched: 0 | source errors: 0",
+          "Top preliminary score: 67/100 (weighted, preliminary — not a profitability claim)",
+          "All leads remain review_required until issuer, demand and cost evidence is independently confirmed."
+        ]
+      },
+      "industry_intelligence": {
+        "title": "Industry intelligence",
+        "label": "unavailable",
+        "content": [
+          "Market size and growth: not retrieved by this engine (requires open-data/statistics connectors).",
+          "Sector detected: aerospace",
+          "Use DOSM (open.dosm.gov.my), Bank Negara and MDEC releases for dated market statistics before acting."
+        ]
+      },
+      "customer_demand": {
+        "title": "Customer demand",
+        "label": "assumed",
+        "content": [
+          "Demand signals: 37 headlines matched query terms; 0 sources fetched and title-matched.",
+          "Willingness-to-pay and buyer budget: NOT measured — interview at least 5 prospective customers.",
+          "1. Vietnam Cold-Chain and Agritech Opportunities for Foreign Investors - ASEAN Briefing — score 67/100 [review-required]",
+          "   https://news.google.com/rss/articles/CBMipgFBVV95cUxNQ0s1Um1ZdjY1VnNoTTM4MTFmVnByanVCdDZjUUhuM3NqWENJUlE5bEtBbFRwWEVLd3RxU0xsdXJJRURfMGhTSGVhT2hzWUJ1YVNNNGk5elY2RThiSnR5bGRFWXNQU3k1amdBU1NzTl9WeUNmbFVWb3JQd1M4akhtd0NTWjB0cUdSQzl2SUg3R3dBeHpQM3FjSm1oaEdEZjMwcE1lMmNR?oc=5",
+          "2. Agritech start-ups navigating cost pressures, contributing to food security - The Malaysian Reserve — score 58/100 [review-required]",
+          "   https://news.google.com/rss/articles/CBMiugFBVV95cUxNQTNNM0VaR3VmR1U1UWI5dHZzaURiRUVVeGdYbjdtaXpwYWtfNEIyOHA1Rkd2ajVxSkswYW9zUnl4YklMS2NIU1U2allmRWM1T2Q2NEVXQ2d1VWVwSG1vdHY5MzRVUzV6NThDYnp6Zmt2T2hTSUgwZHVxN0RpNzlrVDRJM2hqRUhnQmV6dVFqNGYwbG1RblNTT0xDZFhpVk9sNTVBVk1GanpKZUdkRTJhaFdVeEIyeHJqd3c?oc=5",
+          "3. Asia's agri-tech startups offer answers to Iran war supply chain crunch - Nikkei Asia — score 58/100 [review-required]",
+          "   https://news.google.com/rss/articles/CBMitwFBVV95cUxOVm5mc1doZ0dDSG93M1hWMW5waWNBVllfaF9kMWs0TW9rb3pOUWpnUW84SllEbDZxb2QtaF9GNWE4NzV3RzdzSVlrVlF4VWJsOGZnRXp3SFdIUDA3MGdlMmxWQ3c0elhPWDlJa0FVeUpfYnhMNnQ0TmpRdjVHd0Y0ck0tdUl4ZExObGwxWkV0NzJQZTAxWDAzeWs3RVpMRVRZb281Unk0eHpNT0w0QXpMYVFVTzFFNkk?oc=5",
+          "4. Collaborative Automation Reduces Disruption in Agriculture Supply Chain, Enhances Food Security - SME & Entrepreneurship Magazine — score 58/100 [review-required]",
+          "   https://news.google.com/rss/articles/CBMisgFBVV95cUxNYzVMNG5HX0hObV9nU0RDb2tQTUdwekQxc0pWNF9sU2JnTF96cjB3eVljek9YNDNJRjRyTG9laG44aDBfWHFQVkhLcVpyN3hWVm5ZRFFJSGhfc2c2akg4d1NlQUFNdHBsLWYtLV82ek5RV0FYSXdJcFhtR1Vqdk1IOGw2bVBsYXNIZEkxd1ZwSHJhX3VReUdhWF92VTJaSVVkdmYySEJfYVlVLXFmbWF1MXJ3?oc=5",
+          "5. Digitalising the agricultural supply chain, from farm to fork - The Business Times — score 58/100 [review-required]",
+          "   https://news.google.com/rss/articles/CBMitgFBVV95cUxNZ2FBQ1h5aF92enU3VURUbWVTaUE5aXgycHRSWkhFRkhWalhGeGJDam5WRXJGR1F2ZWcycklaNXRoT1ZBRGltMmlOOEJfNllBdmJtMXZTQ3V5RzRDb3g4cWVMVGpzTDhMOENvU0NSRUhjX0RwdjV2ZzdGc1NVZGlEeVpQMDZxeWVtOVRaaWNEYkpROFhnRVFHNHI3Rk1TcXB2TWZzOU1NNXNNQmxwSE5ZODhuNUN0dw?oc=5"
+        ]
+      },
+      "competition": {
+        "title": "Competition",
+        "label": "estimated",
+        "content": [
+          "Round-2 competition/pricing headlines found: 2",
+          "Direct competitor list, prices and weaknesses: not retrieved; build the competitor table before pricing."
+        ]
+      },
+      "business_model": {
+        "title": "Business model",
+        "label": "unavailable",
+        "content": [
+          "Products/services, revenue streams and pricing: define from the top candidate and customer interviews.",
+          "Run backend.business_blueprint financial_model with real quotes to produce a scenario model."
+        ]
+      },
+      "startup_capital": {
+        "title": "Startup capital",
+        "label": "assumed",
+        "content": [
+          "Small-capital band (RM10k-250k). Typical route: SME Bank financing facilities, MIDA/SMI registration, grant programmes (check eligibility, not assumed)."
+        ]
+      },
+      "financial_forecast": {
+        "title": "Financial forecast",
+        "label": "unavailable",
+        "content": [
+          "No forecast is generated without real inputs (startup cost, price, variable cost, fixed cost, volume, cash).",
+          "Formula: break-even sales = monthly fixed cost / (price - variable cost per sale).",
+          "Scenario multipliers supported: 0.5x / 1x / 1.5x of base volume."
+        ]
+      },
+      "funding_investment": {
+        "title": "Funding and investment",
+        "label": "estimated",
+        "content": [
+          "SME Bank financing facilities — Verify participating-bank routes, collateral and rates; do not assume approval.",
+          "MIDA / SMI investment incentives — Check scheme eligibility by sector, location and ownership structure.",
+          "SME Corp (SMI) development grants — Grant schemes change; confirm open windows and permitted costs.",
+          "SEDA energy efficiency schemes — Relevant when the opportunity includes energy audits or efficiency retrofits.",
+          "MATRADE export support — Relevant only if the business model exports goods or services.",
+          "World Bank / ADB procurement (UNGM) — For tenders: verify notice reference, deadline and bidder eligibility."
+        ]
+      },
+      "supply_chain": {
+        "title": "Supply chain",
+        "label": "unavailable",
+        "content": [
+          "Suppliers, lead times, minimum orders and backup sources: collect at least 3 written quotations."
+        ]
+      },
+      "legal_regulatory": {
+        "title": "Legal and regulatory",
+        "label": "assumed",
+        "content": [
+          "Round-2 licence/registration headlines found: 1",
+          "Register with SSM (ssm.com.my) and confirm sector licences before signing supplier or customer contracts."
+        ]
+      },
+      "risk_assessment": {
+        "title": "Risk assessment",
+        "label": "estimated",
+        "content": [
+          "Evidence risk: 0 source(s) could not be fetched (none)",
+          "Demand risk: headlines are not confirmed paying customers.",
+          "Capital risk: funding programmes are eligibility-gated; approval is not assumed.",
+          "Operational risk: staffing, equipment and quality processes are unverified."
+        ]
+      },
+      "growth_strategy": {
+        "title": "Growth strategy",
+        "label": "assumed",
+        "content": [
+          "Suggested path: paid pilot (1 customer, written consent) -> measure actual delivery cost -> scale only if unit economics hold at 0.5x/1x/1.5x scenarios -> expand geography or sector."
+        ]
+      },
+      "opportunity_ranking": {
+        "title": "Opportunity ranking",
+        "label": "estimated",
+        "content": [
+          "Ranking by weighted preliminary score (high value first within requested capital band):",
+          "1. Vietnam Cold-Chain and Agritech Opportunities for Foreign Investors - ASEAN Briefing — score 67/100 [review-required]",
+          "   https://news.google.com/rss/articles/CBMipgFBVV95cUxNQ0s1Um1ZdjY1VnNoTTM4MTFmVnByanVCdDZjUUhuM3NqWENJUlE5bEtBbFRwWEVLd3RxU0xsdXJJRURfMGhTSGVhT2hzWUJ1YVNNNGk5elY2RThiSnR5bGRFWXNQU3k1amdBU1NzTl9WeUNmbFVWb3JQd1M4akhtd0NTWjB0cUdSQzl2SUg3R3dBeHpQM3FjSm1oaEdEZjMwcE1lMmNR?oc=5",
+          "2. Agritech start-ups navigating cost pressures, contributing to food security - The Malaysian Reserve — score 58/100 [review-required]",
+          "   https://news.google.com/rss/articles/CBMiugFBVV95cUxNQTNNM0VaR3VmR1U1UWI5dHZzaURiRUVVeGdYbjdtaXpwYWtfNEIyOHA1Rkd2ajVxSkswYW9zUnl4YklMS2NIU1U2allmRWM1T2Q2NEVXQ2d1VWVwSG1vdHY5MzRVUzV6NThDYnp6Zmt2T2hTSUgwZHVxN0RpNzlrVDRJM2hqRUhnQmV6dVFqNGYwbG1RblNTT0xDZFhpVk9sNTVBVk1GanpKZUdkRTJhaFdVeEIyeHJqd3c?oc=5",
+          "3. Asia's agri-tech startups offer answers to Iran war supply chain crunch - Nikkei Asia — score 58/100 [review-required]",
+          "   https://news.google.com/rss/articles/CBMitwFBVV95cUxOVm5mc1doZ0dDSG93M1hWMW5waWNBVllfaF9kMWs0TW9rb3pOUWpnUW84SllEbDZxb2QtaF9GNWE4NzV3RzdzSVlrVlF4VWJsOGZnRXp3SFdIUDA3MGdlMmxWQ3c0elhPWDlJa0FVeUpfYnhMNnQ0TmpRdjVHd0Y0ck0tdUl4ZExObGwxWkV0NzJQZTAxWDAzeWs3RVpMRVRZb281Unk0eHpNT0w0QXpMYVFVTzFFNkk?oc=5",
+          "4. Collaborative Automation Reduces Disruption in Agriculture Supply Chain, Enhances Food Security - SME & Entrepreneurship Magazine — score 58/100 [review-required]",
+          "   https://news.google.com/rss/articles/CBMisgFBVV95cUxNYzVMNG5HX0hObV9nU0RDb2tQTUdwekQxc0pWNF9sU2JnTF96cjB3eVljek9YNDNJRjRyTG9laG44aDBfWHFQVkhLcVpyN3hWVm5ZRFFJSGhfc2c2akg4d1NlQUFNdHBsLWYtLV82ek5RV0FYSXdJcFhtR1Vqdk1IOGw2bVBsYXNIZEkxd1ZwSHJhX3VReUdhWF92VTJaSVVkdmYySEJfYVlVLXFmbWF1MXJ3?oc=5",
+          "5. Digitalising the agricultural supply chain, from farm to fork - The Business Times — score 58/100 [review-required]",
+          "   https://news.google.com/rss/articles/CBMitgFBVV95cUxNZ2FBQ1h5aF92enU3VURUbWVTaUE5aXgycHRSWkhFRkhWalhGeGJDam5WRXJGR1F2ZWcycklaNXRoT1ZBRGltMmlOOEJfNllBdmJtMXZTQ3V5RzRDb3g4cWVMVGpzTDhMOENvU0NSRUhjX0RwdjV2ZzdGc1NVZGlEeVpQMDZxeWVtOVRaaWNEYkpROFhnRVFHNHI3Rk1TcXB2TWZzOU1NNXNNQmxwSE5ZODhuNUN0dw?oc=5",
+          "6. Invigorating Supply Chain In the Agri-Food Sector - MIDA | Malaysian Investment Development Authority — score 58/100 [review-required]",
+          "   https://news.google.com/rss/articles/CBMif0FVX3lxTE4yQmp0andySWF2UXpDQjJmM2Ywb05iU3d2OHYwOEtmdnV1VEo4NFFhODZuQkxsdUlJTHlESHdFaUVRNXBsVklfc3NnaVh2Z1J1UGd5Y3lJdUZZRnd1VWsyc1R3MzRKQlpmUmFHcm1UUEx0VVF1RkU4M01nclE1RTQ?oc=5",
+          "7. RARE EARTHS UNPACKED: 5 things to know about global supply chain shakeup - S&P Global — score 58/100 [review-required]",
+          "   https://news.google.com/rss/articles/CBMi1gFBVV95cUxQeEQ5c1lvUDlISkE3cjh1aEhyZE41TWMwNUo2UHZ2YnVYQ0djemYwN0VCczZGNUhtUi13RF9qR2lNa1l6TTZQYWdIZ3Z1T2M2cUVaMUJJQTV3aFRzTjlqM3hwOVZlbjFNczJJMGFMU1NTWW91RUJGcmVHdVhpZGtsTnQ3bFNhY1VJV19mV0pSSkhIclpTbDZBQmRpQXZ0eC1ybWJhQS0xYUc1MlBkQlV6anZ3ODlncFVKSnlKdG92Zl83NmdLQnM3NnhySmRKd1h1LTBiRzdR?oc=5",
+          "8. Singapore agritech startup Peptobiotics bags US$6.2 million in Series A - The Business Times — score 58/100 [review-required]",
+          "   https://news.google.com/rss/articles/CBMivwFBVV95cUxPVldPYkpjRkhaMXozMXMzS0xSVFRZRWllM1E2SWh0cWRNYXBIZ1o4b0lnRVVwbUFXb0xIRm1PU25tb0dRU1VOb2dTQVlHQ2x4UWJKRUc2Zm9BME14ZVBjWHJOaVRmd2tqb3V1bGl0WFVDdWxmOV9qT2NySWVFMWdxN1VxYWV0eUcwTFRFeFpnTVRhWmJYSXd6QXJXdWs4WXZLMWVhR2RFMDFRcEtJZjhEMl93YmFDbHR6UndnWTBXaw?oc=5",
+          "9. Temasek's Heliconia Capital leads $11 mil Series A round in local agritech firm Glife - Yahoo Finance Singapore — score 58/100 [review-required]",
+          "   https://news.google.com/rss/articles/CBMijAFBVV95cUxNR0l6TXNma0VqVUtZUXpFRXFXMXRYUHdSYVFjZktIUmJONFJZbzJvTGl5NDdjc0NEYjV0MDRWQmZINjdmVkpLVE9qLV9EejZGcHRCeFBlOEd4ZEpOb0FueWsyUW9DdFdHdG9XdUhiZVdDVUQxblR2OGJsRnVFdGxIUF9rLURCeGIweW9FcA?oc=5",
+          "10. 63 Cleantech Startups Working Towards Making India’s Future Cleaner & Greener - Inc42 — score 54/100 [review-required]",
+          "   https://news.google.com/rss/articles/CBMirgFBVV95cUxPcEtaTk9SV1c4NkNNU25ITmR0aDI3eHlLNDhzalF5R3A0emJkWnRzOFdldm41ckJXeldRTWY4NlVNUTBGRkZEb2xES0JVX3lBN0t2Sm1KeWVLOXpDekNtUWFwaU9JLWh5a1ZtM2hHZnNwMVdReDF3V2VkQ29OVHROMFdFcG5KODJETFRub19QZ0RHR3hNcl9nYVJ2TUhVeXRTZDhpdFlyUTdySm5hOVE?oc=5"
+        ]
+      },
+      "source_verification": {
+        "title": "Source verification",
+        "label": "verified",
+        "content": [
+          "[review-required] https://news.google.com/rss/articles/CBMipgFBVV95cUxNQ0s1Um1ZdjY1VnNoTTM4MTFmVnByanVCdDZjUUhuM3NqWENJUlE5bEtBbFRwWEVLd3RxU0xsdXJJRURfMGhTSGVhT2hzWUJ1YVNNNGk5elY2RThiSnR5bGRFWXNQU3k1amdBU1NzTl9WeUNmbFVWb3JQd1M4akhtd0NTWjB0cUdSQzl2SUg3R3dBeHpQM3FjSm1oaEdEZjMwcE1lMmNR?oc=5 (Vietnam Cold-Chain and Agritech Opportunities for Foreign Investors - ASEAN Brie)",
+          "[review-required] https://news.google.com/rss/articles/CBMiugFBVV95cUxNQTNNM0VaR3VmR1U1UWI5dHZzaURiRUVVeGdYbjdtaXpwYWtfNEIyOHA1Rkd2ajVxSkswYW9zUnl4YklMS2NIU1U2allmRWM1T2Q2NEVXQ2d1VWVwSG1vdHY5MzRVUzV6NThDYnp6Zmt2T2hTSUgwZHVxN0RpNzlrVDRJM2hqRUhnQmV6dVFqNGYwbG1RblNTT0xDZFhpVk9sNTVBVk1GanpKZUdkRTJhaFdVeEIyeHJqd3c?oc=5 (Agritech start-ups navigating cost pressures, contributing to food security - Th)",
+          "[review-required] https://news.google.com/rss/articles/CBMitwFBVV95cUxOVm5mc1doZ0dDSG93M1hWMW5waWNBVllfaF9kMWs0TW9rb3pOUWpnUW84SllEbDZxb2QtaF9GNWE4NzV3RzdzSVlrVlF4VWJsOGZnRXp3SFdIUDA3MGdlMmxWQ3c0elhPWDlJa0FVeUpfYnhMNnQ0TmpRdjVHd0Y0ck0tdUl4ZExObGwxWkV0NzJQZTAxWDAzeWs3RVpMRVRZb281Unk0eHpNT0w0QXpMYVFVTzFFNkk?oc=5 (Asia's agri-tech startups offer answers to Iran war supply chain crunch - Nikkei)",
+          "[review-required] https://news.google.com/rss/articles/CBMisgFBVV95cUxNYzVMNG5HX0hObV9nU0RDb2tQTUdwekQxc0pWNF9sU2JnTF96cjB3eVljek9YNDNJRjRyTG9laG44aDBfWHFQVkhLcVpyN3hWVm5ZRFFJSGhfc2c2akg4d1NlQUFNdHBsLWYtLV82ek5RV0FYSXdJcFhtR1Vqdk1IOGw2bVBsYXNIZEkxd1ZwSHJhX3VReUdhWF92VTJaSVVkdmYySEJfYVlVLXFmbWF1MXJ3?oc=5 (Collaborative Automation Reduces Disruption in Agriculture Supply Chain, Enhance)",
+          "[review-required] https://news.google.com/rss/articles/CBMitgFBVV95cUxNZ2FBQ1h5aF92enU3VURUbWVTaUE5aXgycHRSWkhFRkhWalhGeGJDam5WRXJGR1F2ZWcycklaNXRoT1ZBRGltMmlOOEJfNllBdmJtMXZTQ3V5RzRDb3g4cWVMVGpzTDhMOENvU0NSRUhjX0RwdjV2ZzdGc1NVZGlEeVpQMDZxeWVtOVRaaWNEYkpROFhnRVFHNHI3Rk1TcXB2TWZzOU1NNXNNQmxwSE5ZODhuNUN0dw?oc=5 (Digitalising the agricultural supply chain, from farm to fork - The Business Tim)",
+          "[review-required] https://news.google.com/rss/articles/CBMif0FVX3lxTE4yQmp0andySWF2UXpDQjJmM2Ywb05iU3d2OHYwOEtmdnV1VEo4NFFhODZuQkxsdUlJTHlESHdFaUVRNXBsVklfc3NnaVh2Z1J1UGd5Y3lJdUZZRnd1VWsyc1R3MzRKQlpmUmFHcm1UUEx0VVF1RkU4M01nclE1RTQ?oc=5 (Invigorating Supply Chain In the Agri-Food Sector - MIDA | Malaysian Investment )",
+          "[review-required] https://news.google.com/rss/articles/CBMi1gFBVV95cUxQeEQ5c1lvUDlISkE3cjh1aEhyZE41TWMwNUo2UHZ2YnVYQ0djemYwN0VCczZGNUhtUi13RF9qR2lNa1l6TTZQYWdIZ3Z1T2M2cUVaMUJJQTV3aFRzTjlqM3hwOVZlbjFNczJJMGFMU1NTWW91RUJGcmVHdVhpZGtsTnQ3bFNhY1VJV19mV0pSSkhIclpTbDZBQmRpQXZ0eC1ybWJhQS0xYUc1MlBkQlV6anZ3ODlncFVKSnlKdG92Zl83NmdLQnM3NnhySmRKd1h1LTBiRzdR?oc=5 (RARE EARTHS UNPACKED: 5 things to know about global supply chain shakeup - S&P G)",
+          "[review-required] https://news.google.com/rss/articles/CBMivwFBVV95cUxPVldPYkpjRkhaMXozMXMzS0xSVFRZRWllM1E2SWh0cWRNYXBIZ1o4b0lnRVVwbUFXb0xIRm1PU25tb0dRU1VOb2dTQVlHQ2x4UWJKRUc2Zm9BME14ZVBjWHJOaVRmd2tqb3V1bGl0WFVDdWxmOV9qT2NySWVFMWdxN1VxYWV0eUcwTFRFeFpnTVRhWmJYSXd6QXJXdWs4WXZLMWVhR2RFMDFRcEtJZjhEMl93YmFDbHR6UndnWTBXaw?oc=5 (Singapore agritech startup Peptobiotics bags US$6.2 million in Series A - The Bu)",
+          "[review-required] https://news.google.com/rss/articles/CBMijAFBVV95cUxNR0l6TXNma0VqVUtZUXpFRXFXMXRYUHdSYVFjZktIUmJONFJZbzJvTGl5NDdjc0NEYjV0MDRWQmZINjdmVkpLVE9qLV9EejZGcHRCeFBlOEd4ZEpOb0FueWsyUW9DdFdHdG9XdUhiZVdDVUQxblR2OGJsRnVFdGxIUF9rLURCeGIweW9FcA?oc=5 (Temasek's Heliconia Capital leads $11 mil Series A round in local agritech firm )",
+          "[review-required] https://news.google.com/rss/articles/CBMirgFBVV95cUxPcEtaTk9SV1c4NkNNU25ITmR0aDI3eHlLNDhzalF5R3A0emJkWnRzOFdldm41ckJXeldRTWY4NlVNUTBGRkZEb2xES0JVX3lBN0t2Sm1KeWVLOXpDekNtUWFwaU9JLWh5a1ZtM2hHZnNwMVdReDF3V2VkQ29OVHROMFdFcG5KODJETFRub19QZ0RHR3hNcl9nYVJ2TUhVeXRTZDhpdFlyUTdySm5hOVE?oc=5 (63 Cleantech Startups Working Towards Making India’s Future Cleaner & Greener - )",
+          "[review-required] https://news.google.com/rss/articles/CBMiygFBVV95cUxPa0lhRW5FVng1SUlBRGVkOTlMS0h2c0NRYXAzUlowSFFjcVBnRDR6TXlLaTZVM2NhRG8yY2pKS0p0aWJMN0p4cXF4dFVXTl9wUnN6VEpBNHBhc0VuejV3QXBrTW5jMEhNdUFiN3ZXdWdzcUxKcW80Q3B2Mm1MSGFmaFVjTTZfNHJUOHNYZ3N4Z2RwTXk3VnhqTUM2bHpmWGdVLXlYWjE4TUdKLS10RHpFekNkNENSUkc1T3NoWGM1M3U3OUU0SHNpRkpR?oc=5 (A growing global demand: Agricommodity sector to grab new market opportunities a)",
+          "[review-required] https://news.google.com/rss/articles/CBMixAFBVV95cUxNMXNMOUNSbEhoZVJJbWREZEhGem0xY0dST1BCMkg2M0x5M0pOWjBsTzN1WllJVkxyVWJoWno5b0hld0pxNHZBUFN1Y3pNSm4wN0ZVNlZnNi1XNlNWeU5WQVY3ckdTU3JXS1oyTzNPRkdJYVRIcW9mUDNLeHA3OWt6TW1NY1hqeWNFQkVGRjFXYlM2UVFhc0RVQjJNUnFYUU1nVzhiS1JUVmZOQ3hQTGZ3Szc4YUNVNkNNMkZ0eUQtdHFDRG1y?oc=5 (Aleph Farms plans 2027 cultivated beef launch in Singapore after securing green )",
+          "[review-required] https://news.google.com/rss/articles/CBMisgFBVV95cUxPdlZ2S0dha0NmS1RsVzduMFVfRG5TcHpsNVQ1dE5ZSXZVNEFoSFZIckpmSy1lOS1fQzNZWUlRckhMZVhJZklYcEdKdVdsS2Jzcm4xNHdycFdxVmpWMlhfUl84eElraXpJQkszNTRBQmd2Y05MR2xlTmdfeEhHSjBJR2JpeGppRUFLaUE1MWZ6OV9BXzFRMEJ5SzJCTXFOaVMtei01a3l5d2ZSVGtHeTc0VDBR?oc=5 (Apace 2026 showcases latest aviation, aerospace technologies in Kuching - Borneo)",
+          "[review-required] https://news.google.com/rss/articles/CBMipAFBVV95cUxOdEluVzd1UEhQckN2U0gxQXBDcjJ1dFZFa0FGWHBQUG5JNDRhR3VzT1puWTIwN3hPN2lPVDF6XzhHUk50ck9MaWx6U3dzVFVlWXpISGZwNDIzNWxkaWQ5SkhBbFZoRnBmLVl1c1FueV9Wc3hzMmpsV0twWGpwWjlQYUdXT3RjekpzRXZ2WnRvWTZRWW5FNWd0a0lyS29VR2tqUEJNRw?oc=5 (As El Niño Arrives, Malaysia Explores Cultivated Meat to Battle Climate Change &)",
+          "[review-required] https://news.google.com/rss/articles/CBMiugFBVV95cUxOcTFpd2hPVTlrMjdCRE1UQUdHaG1YSkthVkh4aGdMZl9RVnR4UlZ0STV0MjFnWjZSNmxZbWk0aEJnYWhtX3FGWXowbnYyNlY2dGZTZmFoZHBrVDVITE10RlFzUjJ4b29hVVhXOHZpdTVYcmRnYXNyOWRONkI0VjcwSjZmQ2RQc291bmNJSjZDU2kxMHRzMHRXRWpmVVExVkZqNzEyTFBvNTVLLTl5bF9oM0dKc2FWN2JxekHSAb8BQVVfeXFMTndNTmIzX1MzelROZ1RKdlUwcXlRZDM2VnctUUs1VE5rY2hKU2FYUUdPUG1XNS1fN2xEX0FrV1pBNmZ1RnNDaXFmN0ktbjU0bmYyMWFTWldhSWg0cUdzNEg0Mm5rLWRETGZ1dDVaLVdzZ3Z0V19zNGpJZk5zVXMtVng2YzRIR3laQzVOb0U2NWsxcmZLbEJiT3dEYnJWdHhpUnZoejZ1STVoM1hIVnB5amhkaVdGaFVDV1B5U0xacVk?oc=5 (BMM builds talent pipeline to support Malaysia's push in global MRO market - NST)"
+        ]
+      }
+    },
+    "notice": "Sections are labeled by evidence quality: VERIFIED = fetched and matched; ESTIMATED = derived from retrieved data; ASSUMED = neutral heuristic; UNAVAILABLE = not collected yet. Labels describe evidence, not truth."
+  }
+}
