@@ -9,6 +9,22 @@ const MENU = {inline_keyboard:[
  [{text:"🏷 Sector ▾",callback_data:"bc:sectors"},{text:"🔍 Review required",callback_data:"bc:review"}],
  [{text:"ℹ️ Help",callback_data:"bc:help"}]
 ]};
+export const BOT_COMMANDS=[
+ {command:"start",description:"Open BizCrax36 menu"},
+ {command:"research",description:"Research a business opportunity"},
+ {command:"status",description:"Check bot status"},
+ {command:"sector",description:"Browse business sectors"},
+ {command:"help",description:"Commands and instructions"}
+];
+export async function registerBotCommands(env){
+ if(!env.TELEGRAM_BOT_TOKEN) throw new Error("Missing Telegram bot token");
+ const response=await fetch("https://api.telegram.org/bot"+env.TELEGRAM_BOT_TOKEN+"/setMyCommands",{
+  method:"POST",headers:{"content-type":"application/json"},
+  body:JSON.stringify({commands:BOT_COMMANDS,scope:{type:"default"}})
+ });
+ if(!response.ok) throw new Error("Telegram command registration failed: HTTP "+response.status);
+ return true;
+}
 const SECTORS=["Digital","Energy","Aerospace","Manufacturing","Tourism","Agriculture"];
 const SECTOR_MENU={inline_keyboard:SECTORS.map((x,i)=>[{text:x,callback_data:"sector:"+i}]).concat([[{text:"⬅ Back",callback_data:"bc:home"}]])};
 function allowed(id,env){return String(env.TELEGRAM_ALLOWED_CHAT_IDS||"").split(",").map(x=>x.trim()).includes(String(id))}
