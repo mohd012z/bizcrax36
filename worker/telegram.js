@@ -54,9 +54,14 @@ async function handle(update,env){
   const requestId="tg-"+String(update.update_id);
   try{
    const inserted=await env.DB.prepare("INSERT OR IGNORE INTO research_jobs (request_id,update_id,chat_id,query,state) VALUES (?,?,?,?,?)").bind(requestId,update.update_id,String(chat),query,"QUEUED").run();
-   if(inserted.meta?.changes===0) return reply(env,chat,"Request already received: "+requestId);
+   if(inserted.meta?.changes===0) {
+    const previous=await env.DB.prepare("SELECT state FROM research_jobs WHERE request_id=?").bind(requestId).first();
+    if(previous?.state!=="FAILED") return reply(env,chat,"Request already received: "+requestId);
+    await env.DB.prepare("UPDATE research_jobs SET state=? WHERE request_id=?").bind("QUEUED",requestId).run();
+   }
    await env.RESEARCH_QUEUE.send({request_id:requestId,chat_id:chat,query,received_at:new Date().toISOString()});
   }catch(error){
+   try { await env.DB.prepare("UPDATE research_jobs SET state=? WHERE request_id=?").bind("FAILED",requestId).run(); }catch(_){}
    console.error("Research request persistence or enqueue failed",error.message);
    return reply(env,chat,"Research queue unavailable. Request was not queued; please retry later.");
   }
