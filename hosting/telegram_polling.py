@@ -85,9 +85,9 @@ def process(update):
             send(chat, "Please shorten the research topic to 400 characters.")
             return
         request_id = "tg-" + str(update["update_id"])
-        if not remember_update(update["update_id"]):
-            return
         try:
+            if not remember_update(update["update_id"]):
+                return
             dispatch(query, chat, request_id)
         except Exception:
             logging.exception("Research dispatch failed for %s", request_id)
