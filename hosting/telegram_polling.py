@@ -1,6 +1,7 @@
 """Long-poll Telegram commands; research runs in GitHub Actions."""
 import json
 import logging
+import signal
 import os
 import time
 import urllib.error
@@ -11,6 +12,13 @@ ALLOWED = {x.strip() for x in os.getenv("TELEGRAM_ALLOWED_CHAT_IDS", "").split("
 GITHUB_TOKEN = os.getenv("GITHUB_DISPATCH_TOKEN", "")
 REPOSITORY = os.getenv("GITHUB_REPOSITORY_NAME", "mohd012z/bizcrax36")
 TIMEOUT = 30
+STOP = False
+
+
+def stop_requested(signum, frame):
+    global STOP
+    STOP = True
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
@@ -83,13 +91,17 @@ def main():
     telegram("deleteWebhook", {"drop_pending_updates": False})
     offset = None
     delay = 1
-    while True:
+    signal.signal(signal.SIGTERM, stop_requested)
+    signal.signal(signal.SIGINT, stop_requested)
+    while not STOP:
         try:
             params = {"timeout": TIMEOUT, "allowed_updates": ["message"]}
             if offset is not None:
                 params["offset"] = offset
             updates = telegram("getUpdates", params) or []
             for update in updates:
+                if STOP:
+                    break
                 offset = update["update_id"] + 1
                 try:
                     process(update)
