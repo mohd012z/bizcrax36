@@ -24,7 +24,7 @@ from backend.telegram_result_utils import deduplicate_ideas
 from backend.dossier import build as build_dossier, summary_text
 from backend.research_queue import run_job, is_duplicate, diagnostics_line, validate_topic
 from backend.reports import generate_report
-from backend import ai_bizcollector
+from backend import ai_bizcollector, agent_skill
 
 JOBS_DIR=BASE/"data"/"research-jobs"
 
@@ -98,14 +98,14 @@ def persist_jobs(repository,token,base=BASE):
     if not JOBS_DIR.exists() or not list(JOBS_DIR.glob("*/job.json")):
         return False
     try:
-        _git(base,"add","data/research-jobs")
-        status=subprocess.run(["git","status","--porcelain","data/research-jobs"],
+        _git(base,"add","data/research-jobs","data/agent-skills")
+        status=subprocess.run(["git","status","--porcelain","data/research-jobs","data/agent-skills"],
                               cwd=str(base),capture_output=True,text=True).stdout
         if not status.strip():
             return False
         stamp=_utcnow().strftime("%Y-%m-%d %H:%M UTC")
         _git(base,"-c","user.name=BizCrax36 Research","-c","user.email=research@bizcrax36.local",
-             "commit","-m","research: completed jobs %s"%stamp)
+             "commit","-m","research: completed jobs + agent skills %s"%stamp)
         url="https://x-access-token:%s@github.com/%s.git"%(token,repository)
         _git(base,"push",url,"HEAD:main")
         return True
@@ -153,6 +153,18 @@ def deliver_report(token,chat_id,job):
 
 # ----------------------------------------------------------------- research flow
 
+def study_line(query,result,capital,ai):
+    """Record this research as a study (fail-open) and return the XP line."""
+    try:
+        out=agent_skill.record_study(query,capital,result,new=True,ai=ai)
+        if out["xp_gain"]>0:
+            extra=" (new domain: %s)"%out["domain"] if out.get("new_domain") else ""
+            return ("\n🧠 Agent studied this: +%d XP → Level %d (%d/%d)%s — skill saved."
+                    %(out["xp_gain"],out["level"],out["progress"],agent_skill.XP_PER_LEVEL,extra))
+    except Exception:
+        pass
+    return ""
+
 def run_research(token,chat_id,send,query,capital,repository,job_token,ai=False):
     """Fast ack → staged V2 research → 360° summary → report button."""
     ack=("⚡ Research queued: %s\nCapital band: %s\n"
@@ -184,6 +196,8 @@ def run_research(token,chat_id,send,query,capital,repository,job_token,ai=False)
         synthesis=ai_synthesis(query,result)
         if synthesis:
             summary=(summary+synthesis)[:4000]
+    if recent is None:
+        summary=(summary+study_line(query,result,capital,ai))[:4000]
     send("sendMessage",{"chat_id":chat_id,"text":summary[:4000],
         "reply_markup":report_menu(job["id"]),"disable_web_page_preview":"true"})
 
@@ -289,6 +303,9 @@ def process_update(update, *, send, allowed_ids, database, ideas,
                   "Instant ack → discovery rounds → source verification → scored 360° summary → DOCX report.\n"
                   "Example: /research agrotech small")
             markup=research_help()
+        elif data=="bc:study":
+            text=agent_skill.state_text()
+            markup=agent_skill.study_menu()
         elif data.startswith("bc:ai:"):
             key=data[6:]
             if key=="ask":
@@ -351,6 +368,12 @@ def process_update(update, *, send, allowed_ids, database, ideas,
         return "sent"
     if command=="/aimenu" and token:
         handle_ai_command(token,send,chat_id,"")
+        return "sent"
+    if command in ("/study","/agent"):
+        send("sendMessage",{"chat_id":chat_id,
+            "text":agent_skill.state_text(),
+            "reply_markup":agent_skill.study_menu(),
+            "disable_web_page_preview":"true"})
         return "sent"
     if command in ("/sector","/sectors"):
         response="Select a business sector:"
@@ -419,6 +442,7 @@ def main():
             "commands":json.dumps([
                 {"command":"start","description":"Open the main menu"},
                 {"command":"ai","description":"AI bizcollector — ask anything (research + synthesis)"},
+                {"command":"study","description":"🧠 Agent study — level, XP, domains, saved skills"},
                 {"command":"research","description":"Research engine V2: topic [micro|small|medium|large]"},
                 {"command":"report","description":"Alias of /research with full DOCX report"},
                 {"command":"search","description":"Search saved audited records"},
