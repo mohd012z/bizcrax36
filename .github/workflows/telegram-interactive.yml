@@ -16,6 +16,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check Python runtime
         run: python3 --version
+      - name: Run Telegram and research regression tests
+        run: python3 -m unittest tests.test_agentic_research tests.test_telegram_agentic_research tests.test_telegram_poll_once -v
       - name: Process pending Telegram messages and button clicks
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
