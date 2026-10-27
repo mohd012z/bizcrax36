@@ -1,0 +1,44 @@
+{
+  "id": "SME-OCR-001",
+  "name": "SME document digitization pilot",
+  "sector": "Business software",
+  "horizon": "short",
+  "target_customers": [
+    "small maintenance contractors",
+    "training providers"
+  ],
+  "problem": "Manual document indexing",
+  "solution": "Opt-in document indexing and searchable archive",
+  "region": "Malaysia",
+  "evidence": [],
+  "competitors": [],
+  "suppliers": [],
+  "legal_requirements": [
+    "Confirm appropriate business registration, privacy and customer contract obligations"
+  ],
+  "marketing_channels": [
+    "direct B2B outreach",
+    "customer referrals"
+  ],
+  "operating_steps": [
+    "Interview prospective buyers",
+    "obtain consent for pilot data",
+    "measure processing accuracy"
+  ],
+  "risks": [
+    "sensitive documents",
+    "OCR accuracy",
+    "long sales cycle"
+  ],
+  "assumptions": [
+    "Pricing and demand not yet verified"
+  ],
+  "financials": {
+    "startup_cost": 2000,
+    "price_per_sale": 500,
+    "variable_cost_per_sale": 150,
+    "monthly_fixed_cost": 1000,
+    "sales_per_month": 5,
+    "cash_available": 2500
+  }
+}
