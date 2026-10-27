@@ -50,8 +50,15 @@ async function handle(update,env){
  if(cmd==="/research"){
   const query=text.slice(text.indexOf(" ")+1).trim();
   if(!text.includes(" ")||!query||query.length>120) return reply(env,chat,"Usage: /research aviation training Malaysia (1–120 characters).");
-  // Do not claim research has started without a connected durable queue.
-  return reply(env,chat,"Research request received: "+query+"\nReal-time research dispatch is not connected yet. Scheduled GitHub research remains available.");
+  if(!env.RESEARCH_QUEUE) return reply(env,chat,"Research queue is not configured. Request was not queued.");
+  const requestId="tg-"+String(update.update_id);
+  try{
+   await env.RESEARCH_QUEUE.send({request_id:requestId,chat_id:chat,query,received_at:new Date().toISOString()});
+  }catch(error){
+   console.error("Queue enqueue failed",error.message);
+   return reply(env,chat,"Research queue unavailable. Request was not queued; please retry later.");
+  }
+  return reply(env,chat,"Research queued: "+query+"\\nRequest ID: "+requestId+"\\nAwaiting research processing.");
  }
  return reply(env,chat,"Unknown command. Send /help.");
 }
@@ -64,7 +71,7 @@ export default {
   let update;
   try{update=await request.json()}catch(_){return new Response("Invalid JSON",{status:400})}
   if(!update||typeof update!=="object") return new Response("Invalid update",{status:400});
-  ctx.waitUntil(handle(update,env).catch(e=>console.error("Telegram delivery error:",e.message)));
-  return new Response("OK");
+  try { await handle(update,env); return new Response("OK"); }
+  catch(e) { console.error("Telegram processing failed:",e.message); return new Response("Retry", {status:503}); }
  }
 };
