@@ -53,7 +53,7 @@ async function handle(update,env){
   if(data==="bc:search") return reply(env,chat,"Send /research followed by your topic, for example /research aviation training Malaysia");
   if(["bc:ideas","bc:all","bc:live","bc:review"].includes(data)){
    if(!env.DB) return reply(env,chat,"Research history is unavailable until the database is configured.");
-   const state=data==="bc:live"?"COMPLETE":data==="bc:review"?"QUEUED":null;
+   const state=data==="bc:live"?"COMPLETE":data==="bc:review"?"DISPATCHED":null;
    const sql=state
     ?"SELECT request_id,query,state FROM research_jobs WHERE chat_id=? AND state=? ORDER BY created_at DESC LIMIT 8"
     :"SELECT request_id,query,state FROM research_jobs WHERE chat_id=? ORDER BY created_at DESC LIMIT 8";
@@ -61,7 +61,7 @@ async function handle(update,env){
    const rows=await (state?stmt.bind(String(chat),state):stmt.bind(String(chat))).all();
    const jobs=rows.results||[];
    if(!jobs.length) return reply(env,chat,"No matching research requests found. Send /research followed by a topic.");
-   return reply(env,chat,"Recent research requests:\\n"+jobs.map(j=>j.request_id+" · "+j.state+" · "+j.query).join("\\n"));
+   return reply(env,chat,"Recent research requests:\n"+jobs.map(j=>j.request_id+" · "+j.state+" · "+j.query).join("\n"));
   }
   if(data==="bc:help") return reply(env,chat,"Commands: /start /status /sector /research topic. Research is queued for GitHub Actions processing.");
   if(data.startsWith("sector:")){
