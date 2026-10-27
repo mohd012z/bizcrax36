@@ -76,6 +76,7 @@ def poll_once(token,allowed_ids,database,ideas,telegram_api=api,max_updates=50):
     updates=call("getUpdates",{"timeout":0,"limit":max_updates,
         "allowed_updates":json.dumps(["message","callback_query"])})
     processed=0
+    outcomes={"sent":0,"denied":0,"ignored":0,"suppressed":0}
     # Collapse repeated /start messages from the same chat in this batch.
     # Preserve the newest /start and all other commands and button callbacks.
     newest_start={}
@@ -93,14 +94,16 @@ def poll_once(token,allowed_ids,database,ideas,telegram_api=api,max_updates=50):
         chat_id=(message.get("chat") or {}).get("id") if isinstance(message,dict) else None
         if is_start and newest_start.get(chat_id)!=update["update_id"]:
             suppressed+=1
+            outcomes["suppressed"]+=1
         else:
-            process_update(update,send=call,allowed_ids=allowed_ids,database=database,ideas=ideas)
+            outcome=process_update(update,send=call,allowed_ids=allowed_ids,database=database,ideas=ideas)
+            outcomes[outcome]=outcomes.get(outcome,0)+1
         # Telegram confirms updates strictly below offset. This avoids replay
         # across ephemeral GitHub runners. A failed send stops before ack.
         call("getUpdates",{"timeout":0,"limit":1,"offset":update["update_id"]+1,
             "allowed_updates":json.dumps(["message","callback_query"])})
         processed+=1
-    print(f"Telegram updates acknowledged: {processed}; repeated starts skipped: {suppressed}")
+    print("Telegram diagnostic: "+json.dumps({"received":len(updates),"acknowledged":processed,**outcomes},sort_keys=True),flush=True)
     return processed
 
 def main():
@@ -109,6 +112,10 @@ def main():
     if not token or not allowed_ids:
         raise SystemExit("Missing TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID")
     db=Path(os.environ.get("BIZCRAX_DATABASE",str(BASE/"data/research.sqlite3")))
+    webhook=api(token,"getWebhookInfo",{})
+    if webhook.get("url"):
+        raise SystemExit("Telegram webhook is active: getUpdates polling cannot operate until webhook is disabled on the bot owner account")
+    print("Telegram webhook: inactive; polling enabled",flush=True)
     count=poll_once(token,allowed_ids,db,load_ideas())
     print(f"Telegram updates processed: {count}")
 
