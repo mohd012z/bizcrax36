@@ -146,7 +146,8 @@ def main():
     db=Path(os.environ.get("BIZCRAX_DATABASE",str(BASE/"data/research.sqlite3")))
     webhook=api(token,"getWebhookInfo",{})
     if webhook.get("url"):
-        raise SystemExit("Telegram webhook is active: getUpdates polling cannot operate until webhook is disabled on the bot owner account")
+        print("Telegram webhook active: scheduled polling skipped (webhook handles replies)",flush=True)
+        return
     print("Telegram webhook: inactive; polling enabled",flush=True)
     count=poll_once(token,allowed_ids,db,load_ideas())
     print(f"Telegram updates processed: {count}")
