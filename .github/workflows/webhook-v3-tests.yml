@@ -5,6 +5,7 @@ on:
       - 'worker/**'
       - 'tests/research-state.test.mjs'
       - 'tests/research-dispatch.test.mjs'
+      - 'tests/telegram-webhook.test.mjs'
       - 'tests/test_telegram_command_registration.py'
       - 'scripts/register_telegram_commands.py'
       - '.github/workflows/webhook-v3-tests.yml'
@@ -30,4 +31,4 @@ jobs:
           node --check worker/research-dispatch.js
           node --check worker/research-state.js
       - name: Run dispatch-state regression tests
-        run: node --test tests/research-state.test.mjs tests/research-dispatch.test.mjs
+        run: node --test tests/research-state.test.mjs tests/research-dispatch.test.mjs tests/telegram-webhook.test.mjs
