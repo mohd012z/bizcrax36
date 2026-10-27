@@ -1,0 +1,20 @@
+name: Register Telegram command shortcuts
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/telegram-register-commands.yml'
+      - 'scripts/register_telegram_commands.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  register-commands:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Register slash command shortcuts
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: python3 scripts/register_telegram_commands.py
