@@ -100,6 +100,15 @@ async function handle(update,env){
 export default {
  async fetch(request,env,ctx){
   const url=new URL(request.url);
+  if(url.pathname==="/research-complete"&&request.method==="POST"){
+   if(!env.RESEARCH_COMPLETION_SECRET||request.headers.get("Authorization")!=="Bearer "+env.RESEARCH_COMPLETION_SECRET) return new Response("Unauthorized",{status:403});
+   if(!env.DB) return new Response("Database unavailable",{status:503});
+   let event;
+   try{event=await request.json()}catch(_){return new Response("Invalid JSON",{status:400})}
+   if(!event||!/^tg-\\d+$/.test(String(event.request_id))||!["COMPLETE","FAILED"].includes(event.state)) return new Response("Invalid completion",{status:400});
+   const result=await env.DB.prepare("UPDATE research_jobs SET state=? WHERE request_id=? AND state IN ('DISPATCHED','COMPLETE','FAILED')").bind(event.state,event.request_id).run();
+   return new Response(result.meta?.changes?"Updated":"No matching dispatched request",{status:result.meta?.changes?200:409});
+  }
   if(url.pathname!=="/telegram"||request.method!=="POST") return new Response("Not found",{status:404});
   const secret=request.headers.get("X-Telegram-Bot-Api-Secret-Token");
   if(!env.TELEGRAM_WEBHOOK_SECRET||!env.TELEGRAM_BOT_TOKEN||!env.TELEGRAM_ALLOWED_CHAT_IDS||secret!==env.TELEGRAM_WEBHOOK_SECRET) return new Response("Unauthorized",{status:403});
