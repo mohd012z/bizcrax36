@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 from backend.telegram_bot import api,allowed,search_text,handle_callback,BASE
 from backend.telegram_menu import home
+from backend.telegram_result_utils import deduplicate_ideas
 
 def load_ideas(root=BASE):
     ideas=[]
@@ -18,7 +19,7 @@ def load_ideas(root=BASE):
             items=json.loads(p.read_text(encoding="utf-8"))
             if isinstance(items,list):
                 ideas.extend(items)
-    return ideas
+    return deduplicate_ideas(ideas)
 
 def process_update(update, *, send, allowed_ids, database, ideas):
     callback=update.get("callback_query")
