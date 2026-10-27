@@ -51,7 +51,8 @@ async function handle(update,env){
   if(data==="bc:sectors") return reply(env,chat,"Select business sector:",SECTOR_MENU);
   if(data==="bc:home") return reply(env,chat,"BizCrax36 — choose an option:");
   if(data==="bc:search") return reply(env,chat,"Send /research followed by your topic, for example /research aviation training Malaysia");
-  if(data==="bc:help") return reply(env,chat,"Commands: /start /status /sector /research topic. Research runs separately on GitHub Actions.");
+  if(["bc:ideas","bc:all","bc:live","bc:review"].includes(data)) return reply(env,chat,"This research view is not available yet. Use /research followed by a topic to start a new request.");
+  if(data==="bc:help") return reply(env,chat,"Commands: /start /status /sector /research topic. Research is queued for GitHub Actions processing.");
   if(data.startsWith("sector:")){
    const i=Number(data.slice(7));
    if(Number.isInteger(i)&&i>=0&&i<SECTORS.length) return reply(env,chat,"Research topic: "+SECTORS[i]+". Send /research "+SECTORS[i]+" Malaysia");
@@ -61,7 +62,7 @@ async function handle(update,env){
  const text=typeof msg.text==="string"?msg.text.trim():"";
  const cmd=commandText(text);
  if(cmd==="/start"||cmd==="/help") return reply(env,chat,"BizCrax36 is online. Send /research <topic> to request business research, or use the menu.");
- if(cmd==="/status") return reply(env,chat,"BizCrax36 webhook online. Research is handled by a separate scheduled workflow.");
+ if(cmd==="/status") return reply(env,chat,"BizCrax36 webhook online. Research requests are queued for GitHub Actions processing.");
  if(cmd==="/sector"||cmd==="/sectors") return reply(env,chat,"Select a business sector:",SECTOR_MENU);
  if(cmd==="/research"){
   const query=text.slice(text.indexOf(" ")+1).trim();
