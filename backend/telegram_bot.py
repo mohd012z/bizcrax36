@@ -12,6 +12,7 @@ from urllib.parse import urlencode
 from backend.search_api import load_records
 from backend.unified_search import one_search
 from pathlib import Path
+from backend.telegram_menu import home, sectors, results_menu, resolve, SECTORS
 
 BASE=Path(__file__).resolve().parent.parent
 MAX_RESULTS=5
@@ -24,7 +25,7 @@ def search_text(message, database, ideas):
     parts=message.strip().split(maxsplit=1)
     command=parts[0].split("@",1)[0].lower() if parts else ""
     if command in ("/start","/help"):
-        return "BizCrax36 research bot. Commands: /search keyword, /ideas keyword, /live keyword, /status. Results are research leads; verify directly with issuers."
+        return "BizCrax36 research bot. Choose a menu button or send /search keyword, /ideas keyword, /live keyword, /status. Research leads require independent verification."
     if command=="/status":
         return "BizCrax36 read-only search active. Live tender status requires current issuer verification."
     if command not in ("/search","/ideas","/live"):
@@ -44,6 +45,32 @@ def search_text(message, database, ideas):
         lines.append(f"{i}. {title}\nStatus: {state}"+(f"\nSource: {url}" if isinstance(url,str) and url.startswith("https://") else ""))
     lines.append("Verify source, deadline, eligibility and costs before acting.")
     return "\n\n".join(lines)[:3800]
+
+def handle_callback(data, database, ideas):
+    action=resolve(data)
+    if not action:
+        return "Invalid or outdated menu selection.",home()
+    if action=="bc:home":
+        return "BizCrax36 — choose an option:",home()
+    if action=="bc:help":
+        return search_text("/help",database,ideas),home()
+    if action=="bc:search":
+        return "Send /search followed by a keyword, e.g. /search aviation",home()
+    if action=="bc:sectors":
+        return "Select business sector:",sectors()
+    if action.startswith("bc:sector:"):
+        sector=SECTORS[int(action.split(":")[-1])]
+        if sector=="All":
+            return "All sectors. Choose a search mode:",home()
+        result=one_search(load_records(database),ideas,sector=sector,mode="all")
+        titles=[str(x.get("title") or "Untitled")[:90] for x in result["results"][:5]]
+        text=f"{sector}: {result['count']} research leads\\n"+("\\n".join("• "+t for t in titles) if titles else "No matches")
+        return text+"\\nResearch ideas are unverified.",home()
+    mode=action.split(":")[-1]
+    result=one_search(load_records(database),ideas,mode=mode)
+    titles=[str(x.get("title") or "Untitled")[:90] for x in result["results"][:5]]
+    text=f"{mode.upper()}: {result['count']} leads\\n"+("\\n".join("• "+t for t in titles) if titles else "No matching records")
+    return text+"\\nCheck source and eligibility.",results_menu(mode)
 
 def api(token, method, payload):
     req=Request(f"https://api.telegram.org/bot{token}/{method}",
@@ -69,16 +96,28 @@ def run():
     offset=0
     while True:
         try:
-            updates=api(token,"getUpdates",{"timeout":25,"offset":offset,"allowed_updates":json.dumps(["message"])})
+            updates=api(token,"getUpdates",{"timeout":25,"offset":offset,"allowed_updates":json.dumps(["message","callback_query"])})
             for update in updates:
                 offset=max(offset,int(update["update_id"])+1)
+                callback=update.get("callback_query")
+                if isinstance(callback,dict):
+                    chat_id=callback.get("message",{}).get("chat",{}).get("id")
+                    callback_id=callback.get("id")
+                    if callback_id:
+                        api(token,"answerCallbackQuery",{"callback_query_id":callback_id})
+                    if allowed(chat_id,ids):
+                        text,markup=handle_callback(callback.get("data",""),db,ideas)
+                        api(token,"sendMessage",{"chat_id":chat_id,"text":text,
+                            "reply_markup":markup,"disable_web_page_preview":"true"})
+                    continue
                 message=update.get("message",{})
                 chat=message.get("chat",{})
                 chat_id=chat.get("id")
                 if not allowed(chat_id,ids) or not isinstance(message.get("text"),str):
                     continue
                 response=search_text(message["text"],db,ideas)
-                api(token,"sendMessage",{"chat_id":chat_id,"text":response,"disable_web_page_preview":"true"})
+                api(token,"sendMessage",{"chat_id":chat_id,"text":response,
+                    "reply_markup":home(),"disable_web_page_preview":"true"})
         except (OSError,ValueError,RuntimeError,KeyError) as exc:
             # Never include token, request URLs, or raw responses in logs.
             print("Telegram polling error:",type(exc).__name__,flush=True)
