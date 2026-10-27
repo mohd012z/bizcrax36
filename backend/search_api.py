@@ -13,6 +13,7 @@ from pathlib import Path
 import sqlite3
 from urllib.parse import parse_qs, urlsplit
 from backend.opportunity_filter import status as opportunity_status
+from backend.global_search import search_global
 
 def load_records(dbpath):
     if not dbpath.exists():
@@ -67,12 +68,18 @@ def make_handler(database):
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             path = urlsplit(self.path)
-            if path.path not in ("/api/health", "/api/opportunities"):
+            if path.path not in ("/api/health", "/api/opportunities", "/api/global-opportunities"):
                 return self.respond(404, {"error":"not_found"})
             if path.path == "/api/health":
                 return self.respond(200, {"status":"ok","database_exists":database.exists()})
             try:
-                data = query_records(load_records(database),parse_qs(path.query,keep_blank_values=True))
+                params=parse_qs(path.query,keep_blank_values=True)
+                if path.path == "/api/global-opportunities":
+                    data=search_global(load_records(database),query=params.get("q",[""])[0],
+                        country=params.get("country",[""])[0],kind=params.get("type",[""])[0],
+                        status=params.get("status",["live"])[0])
+                else:
+                    data=query_records(load_records(database),params)
                 self.respond(200,data)
             except (ValueError, sqlite3.Error) as exc:
                 self.respond(400,{"error":"invalid_query_or_database","detail":str(exc)[:120]})
