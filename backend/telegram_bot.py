@@ -64,13 +64,13 @@ def handle_callback(data, database, ideas):
             return "All sectors. Choose a search mode:",home()
         result=one_search(load_records(database),ideas,sector=sector,mode="all")
         titles=[str(x.get("title") or "Untitled")[:90] for x in result["results"][:5]]
-        text=f"{sector}: {result['count']} research leads\\n"+("\\n".join("• "+t for t in titles) if titles else "No matches")
-        return text+"\\nResearch ideas are unverified.",home()
+        text=f"{sector}: {result['count']} research leads\n"+("\n".join("• "+t for t in titles) if titles else "No matches")
+        return text+"\nResearch ideas are unverified.",home()
     mode=action.split(":")[-1]
     result=one_search(load_records(database),ideas,mode=mode)
     titles=[str(x.get("title") or "Untitled")[:90] for x in result["results"][:5]]
-    text=f"{mode.upper()}: {result['count']} leads\\n"+("\\n".join("• "+t for t in titles) if titles else "No matching records")
-    return text+"\\nCheck source and eligibility.",results_menu(mode)
+    text=f"{mode.upper()}: {result['count']} leads\n"+("\n".join("• "+t for t in titles) if titles else "No matching records")
+    return text+"\nCheck source and eligibility.",results_menu(mode)
 
 def api(token, method, payload):
     req=Request(f"https://api.telegram.org/bot{token}/{method}",
