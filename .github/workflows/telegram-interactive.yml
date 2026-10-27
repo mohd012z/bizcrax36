@@ -14,11 +14,10 @@ jobs:
     timeout-minutes: 3
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Check Python runtime
+        run: python3 --version
       - name: Process pending Telegram messages and button clicks
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python -m backend.telegram_poll_once
+        run: python3 -m backend.telegram_poll_once
