@@ -50,12 +50,14 @@ async function handle(update,env){
  if(cmd==="/research"){
   const query=text.slice(text.indexOf(" ")+1).trim();
   if(!text.includes(" ")||!query||query.length>120) return reply(env,chat,"Usage: /research aviation training Malaysia (1–120 characters).");
-  if(!env.RESEARCH_QUEUE) return reply(env,chat,"Research queue is not configured. Request was not queued.");
+  if(!env.RESEARCH_QUEUE || !env.DB) return reply(env,chat,"Research storage or queue is not configured. Request was not queued.");
   const requestId="tg-"+String(update.update_id);
   try{
+   const inserted=await env.DB.prepare("INSERT OR IGNORE INTO research_jobs (request_id,update_id,chat_id,query,state) VALUES (?,?,?,?,?)").bind(requestId,update.update_id,String(chat),query,"QUEUED").run();
+   if(inserted.meta?.changes===0) return reply(env,chat,"Request already received: "+requestId);
    await env.RESEARCH_QUEUE.send({request_id:requestId,chat_id:chat,query,received_at:new Date().toISOString()});
   }catch(error){
-   console.error("Queue enqueue failed",error.message);
+   console.error("Research request persistence or enqueue failed",error.message);
    return reply(env,chat,"Research queue unavailable. Request was not queued; please retry later.");
   }
   return reply(env,chat,"Research queued: "+query+"\\nRequest ID: "+requestId+"\\nAwaiting research processing.");
