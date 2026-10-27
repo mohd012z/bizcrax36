@@ -6,7 +6,7 @@ import time
 import urllib.error
 import urllib.request
 
-TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 ALLOWED = {x.strip() for x in os.getenv("TELEGRAM_ALLOWED_CHAT_IDS", "").split(",") if x.strip()}
 GITHUB_TOKEN = os.getenv("GITHUB_DISPATCH_TOKEN", "")
 REPOSITORY = os.getenv("GITHUB_REPOSITORY_NAME", "mohd012z/bizcrax36")
@@ -77,8 +77,8 @@ def process(update):
 
 
 def main():
-    if not ALLOWED:
-        raise RuntimeError("Set TELEGRAM_ALLOWED_CHAT_IDS before starting")
+    if not TOKEN or not ALLOWED:
+        raise RuntimeError("Set TELEGRAM_BOT_TOKEN and TELEGRAM_ALLOWED_CHAT_IDS before starting")
     # Polling and webhook delivery are mutually exclusive.
     telegram("deleteWebhook", {"drop_pending_updates": False})
     offset = None
