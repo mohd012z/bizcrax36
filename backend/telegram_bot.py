@@ -27,6 +27,8 @@ def search_text(message, database, ideas):
     command=parts[0].split("@",1)[0].lower() if parts else ""
     if command in ("/start","/help"):
         return "BizCrax36 research bot. Choose a menu button or send /search keyword, /ideas keyword, /live keyword, /status. Research leads require independent verification."
+    if command in ("/sector","/sectors"):
+        return "Choose Sector ▾ from the buttons below to select a business sector."
     if command=="/status":
         return "BizCrax36 read-only search active. Live tender status requires current issuer verification."
     if command not in ("/search","/ideas","/live"):
@@ -80,7 +82,7 @@ def show_page(kind,value,index,database,ideas):
     subset=page(result["results"],index,MAX_RESULTS)
     lines=[f"{label}: {subset['total']} research leads | Page {subset['page']+1}/{subset['pages']}"]
     for n,entry in enumerate(subset["items"],subset["page"]*MAX_RESULTS+1):
-        title=str(entry.get("title") or "Untitled").replace("\\n"," ")[:110]
+        title=str(entry.get("title") or "Untitled").replace("\n"," ")[:110]
         status=str(entry.get("status") or "review_required")
         lines.append(f"{n}. {title} [{status}]")
         url=entry.get("source_url")
@@ -89,7 +91,7 @@ def show_page(kind,value,index,database,ideas):
     if not subset["items"]:
         lines.append("No matching records.")
     lines.append("Research leads require independent source verification.")
-    return "\\n".join(lines)[:3800],paged_menu(kind,value,subset["page"],subset["pages"])
+    return "\n".join(lines)[:3800],paged_menu(kind,value,subset["page"],subset["pages"])
 
 def api(token, method, payload):
     req=Request(f"https://api.telegram.org/bot{token}/{method}",
