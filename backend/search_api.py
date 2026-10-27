@@ -14,6 +14,7 @@ import sqlite3
 from urllib.parse import parse_qs, urlsplit
 from backend.opportunity_filter import status as opportunity_status
 from backend.global_search import search_global
+from backend.unified_search import one_search
 
 def load_records(dbpath):
     if not dbpath.exists():
@@ -68,13 +69,19 @@ def make_handler(database):
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             path = urlsplit(self.path)
-            if path.path not in ("/api/health", "/api/opportunities", "/api/global-opportunities"):
+            if path.path not in ("/api/health", "/api/opportunities", "/api/global-opportunities", "/api/search"):
                 return self.respond(404, {"error":"not_found"})
             if path.path == "/api/health":
                 return self.respond(200, {"status":"ok","database_exists":database.exists()})
             try:
                 params=parse_qs(path.query,keep_blank_values=True)
-                if path.path == "/api/global-opportunities":
+                if path.path == "/api/search":
+                    ideas_path=Path("data/business_ideas.json")
+                    ideas=json.loads(ideas_path.read_text(encoding="utf-8")) if ideas_path.exists() else []
+                    data=one_search(load_records(database),ideas,query=params.get("q",[""])[0],
+                        country=params.get("country",[""])[0],sector=params.get("sector",[""])[0],
+                        mode=params.get("mode",["all"])[0])
+                elif path.path == "/api/global-opportunities":
                     data=search_global(load_records(database),query=params.get("q",[""])[0],
                         country=params.get("country",[""])[0],kind=params.get("type",[""])[0],
                         status=params.get("status",["live"])[0])
