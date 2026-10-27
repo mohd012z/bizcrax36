@@ -1,0 +1,51 @@
+name: BizCrax36 Agentic Research V2
+on:
+  workflow_dispatch:
+    inputs:
+      query:
+        description: "Business topic to investigate"
+        required: true
+        type: string
+      capital:
+        description: "Capital band"
+        required: false
+        default: all
+        type: choice
+        options: [all, micro, small, medium, large]
+permissions:
+  contents: read
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Unit tests
+        run: python -m unittest tests.test_research_v2 tests.test_dossier_queue tests.test_reports -v
+      - name: Run staged V2 research and generate 360-degree report
+        env:
+          RESEARCH_QUERY: ${{ inputs.query }}
+          RESEARCH_CAPITAL: ${{ inputs.capital }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          from backend.research_queue import run_job
+          from backend.dossier import build as build_dossier
+          from backend.reports import generate_report
+          query = os.environ["RESEARCH_QUERY"]
+          capital = os.environ.get("RESEARCH_CAPITAL") or "all"
+          job, result, dossier = run_job(query, capital=capital)
+          out = Path("v2-report")
+          report = generate_report(dossier, result, out)
+          print("Job:", job["status"], "| diagnostics:", job["diagnostics"])
+          print("DOCX:", report["docx"])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v2-report
+          path: v2-report
+          retention-days: 7

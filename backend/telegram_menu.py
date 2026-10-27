@@ -13,6 +13,7 @@ def keyboard(rows):
 
 def home():
     return keyboard([
+        [{"text":"🚀 Research engine","callback_data":"bc:research"}],
         [{"text":"🔎 Search opportunities","callback_data":"bc:search"},
          {"text":"💡 Business ideas","callback_data":"bc:mode:ideas"}],
         [{"text":"📋 All research","callback_data":"bc:mode:all"},
@@ -20,6 +21,19 @@ def home():
         [{"text":"🏷 Sector ▾","callback_data":"bc:sectors"},
          {"text":"🔍 Review required","callback_data":"bc:mode:review"}],
         [{"text":"ℹ️ Help","callback_data":"bc:help"}]
+    ])
+
+def research_help():
+    return keyboard([
+        [{"text":"💬 How to use","callback_data":"bc:research"}],
+        [{"text":"🏠 Main menu","callback_data":"bc:home"}]
+    ])
+
+def report_menu(job_id):
+    return keyboard([
+        [{"text":"📄 Report (DOCX)","callback_data":"bc:report:%s"%job_id}],
+        [{"text":"🔁 New research","callback_data":"bc:research"},
+         {"text":"🏠 Main menu","callback_data":"bc:home"}]
     ])
 
 def sectors():
@@ -51,8 +65,13 @@ def results_menu(mode,sector=""):
          {"text":"🏠 Main menu","callback_data":"bc:home"}]
     ])
 
+def _valid_job_id(value):
+    return len(value)==12 and all(c in "0123456789abcdef" for c in value.lower())
+
 def resolve(data):
-    if data in ("bc:home","bc:help","bc:search","bc:sectors"):
+    if data in ("bc:home","bc:help","bc:search","bc:sectors","bc:research"):
+        return data
+    if data.startswith("bc:report:") and _valid_job_id(data[10:]):
         return data
     if data.startswith("bc:mode:") and data[8:] in MODES:
         return data

@@ -6,27 +6,34 @@ on:
       - 'backend/telegram_poll_once.py'
       - 'backend/telegram_bot.py'
       - 'backend/agentic_research.py'
+      - 'backend/research_v2.py'
+      - 'backend/research_queue.py'
+      - 'backend/dossier.py'
+      - 'backend/reports.py'
       - '.github/workflows/telegram-interactive.yml'
   workflow_dispatch:
   schedule:
     - cron: '*/5 * * * *'
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: bizcrax36-telegram-updates
   cancel-in-progress: false
 jobs:
   process-updates:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Check Python runtime
         run: python3 --version
       - name: Run Telegram and research regression tests
-        run: python3 -m unittest tests.test_agentic_research tests.test_telegram_agentic_research tests.test_telegram_poll_once -v
+        run: python3 -m unittest tests.test_agentic_research tests.test_research_v2 tests.test_dossier_queue tests.test_reports tests.test_telegram_agentic_research tests.test_telegram_poll_once -v
       - name: Process pending Telegram messages and button clicks
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 -m backend.telegram_poll_once

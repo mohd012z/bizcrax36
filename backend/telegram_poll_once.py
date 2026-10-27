@@ -1,17 +1,31 @@
-"""Bounded Telegram update processor for GitHub Actions.
+"""Bounded Telegram update processor for GitHub Actions — Agentic Research V2.
 
-Telegram stores pending updates; explicit getUpdates(offset=last+1) acknowledges
-each successfully handled update. No Git commits or mutable runner state needed.
-Delivery and acknowledgement are not atomic: a crash may cause one duplicate.
+Fast-response flow: the bot acknowledges /research instantly, runs the staged
+V2 engine (discovery rounds → verification → scoring), then delivers a
+360° summary with a one-tap DOCX report button. Completed jobs are persisted
+to the repository under data/research-jobs/ (git push) so a later polling run
+on a fresh ephemeral runner can still send the stored report on button tap.
+
+Telegram stores pending updates; explicit getUpdates(offset=last+1)
+acknowledges each successfully handled update. Delivery and acknowledgement
+are not atomic: a crash may cause one duplicate.
 """
 import json
 import os
-from urllib.error import HTTPError
+import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
+
 from backend.telegram_bot import api,allowed,search_text,handle_callback,BASE
-from backend.telegram_menu import home, sectors
+from backend.telegram_menu import home, sectors, research_help, report_menu
 from backend.telegram_result_utils import deduplicate_ideas
-from backend.agentic_research import research
+from backend.dossier import build as build_dossier, summary_text
+from backend.research_queue import run_job, is_duplicate, diagnostics_line, validate_topic
+from backend.reports import generate_report
+
+JOBS_DIR=BASE/"data"/"research-jobs"
 
 def load_ideas(root=BASE):
     ideas=[]
@@ -23,15 +37,163 @@ def load_ideas(root=BASE):
                 ideas.extend(items)
     return deduplicate_ideas(ideas)
 
-def format_research(result):
-    items=result['candidates'][:5]
-    lines=[f"Research: {result['plan']['query']}", f"Candidates: {len(result['candidates'])} | source errors: {len(result['errors'])}"]
-    for i, item in enumerate(items, 1):
-        lines.append(f"{i}. {item['title']}\n{item['source_url']}\nStatus: REVIEW_REQUIRED")
-    if not items:
-        lines.append('No candidates discovered. Sources may be unavailable; try a narrower topic.')
-    lines.append('News leads only; profitability, demand and tender eligibility are NOT verified.')
-    return '\n\n'.join(lines)[:3900]
+def _utcnow():
+    return datetime.now(timezone.utc)
+
+# ------------------------------------------------------------------ job store
+
+def job_dir(job_id):
+    return JOBS_DIR/job_id
+
+def load_job(job_id):
+    if job_id is None:
+        return None
+    path=job_dir(job_id)/"job.json"
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return None
+
+def list_completed_jobs():
+    jobs=[]
+    if not JOBS_DIR.exists():
+        return jobs
+    for path in sorted(JOBS_DIR.glob("*/job.json")):
+        try:
+            job=json.loads(path.read_text(encoding="utf-8"))
+        except (ValueError, OSError):
+            continue
+        if job.get("status")=="completed":
+            jobs.append(job)
+    return jobs
+
+def save_job(job, result, report_paths):
+    d=job_dir(job["id"])
+    d.mkdir(parents=True,exist_ok=True)
+    payload={"id":job["id"],"query":job["query"],"country":job["country"],
+             "capital":job["capital"],"status":job["status"],
+             "created_at":job["created_at"],"finished_at":job.get("finished_at"),
+             "duration_seconds":job.get("duration_seconds"),
+             "diagnostics":job.get("diagnostics"),"error":job.get("error"),
+             "result":result,"report":report_paths}
+    (d/"job.json").write_text(json.dumps(payload,indent=2,ensure_ascii=False),encoding="utf-8")
+    return d
+
+def _git(cwd,*args):
+    env=dict(os.environ)
+    env["GIT_TERMINAL_PROMPT"]="0"
+    completed=subprocess.run(["git",*args],cwd=str(cwd),env=env,
+                             capture_output=True,text=True,timeout=120)
+    if completed.returncode!=0:
+        raise RuntimeError("git %s failed: %s"%(args[0],completed.stderr.strip()[:200]))
+    return completed.stdout.strip()
+
+def persist_jobs(repository,token,base=BASE):
+    """Commit and push new research jobs so later runners can serve them. Fail-open."""
+    if not repository or not token:
+        return False
+    if not JOBS_DIR.exists() or not list(JOBS_DIR.glob("*/job.json")):
+        return False
+    try:
+        _git(base,"add","data/research-jobs")
+        status=subprocess.run(["git","status","--porcelain","data/research-jobs"],
+                              cwd=str(base),capture_output=True,text=True).stdout
+        if not status.strip():
+            return False
+        stamp=_utcnow().strftime("%Y-%m-%d %H:%M UTC")
+        _git(base,"-c","user.name=BizCrax36 Research","-c","user.email=research@bizcrax36.local",
+             "commit","-m","research: completed jobs %s"%stamp)
+        url="https://x-access-token:%s@github.com/%s.git"%(token,repository)
+        _git(base,"push",url,"HEAD:main")
+        return True
+    except (OSError, subprocess.SubprocessError, RuntimeError) as exc:
+        print("Job persist skipped:",type(exc).__name__,flush=True)
+        return False
+
+# ------------------------------------------------------------- report delivery
+
+def _multipart_send(token, method, fields, file_field, file_path):
+    boundary="bizcrax36boundary9f27c1"
+    body=b""
+    for key,value in fields.items():
+        body+=("--%s\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n"
+               %(boundary,key,value)).encode("utf-8")
+    file_name=os.path.basename(str(file_path))
+    body+=("--%s\r\nContent-Disposition: form-data; name=\"%s\"; filename=\"%s\"\r\n"
+           "Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document\r\n\r\n"
+           %(boundary,file_field,file_name)).encode("utf-8")
+    body+=Path(str(file_path)).read_bytes()
+    body+=("\r\n--%s--\r\n"%boundary).encode("utf-8")
+    req=Request("https://api.telegram.org/bot%s/%s"%(token,method),data=body,method="POST")
+    req.add_header("Content-Type","multipart/form-data; boundary=%s"%boundary)
+    with urlopen(req,timeout=60) as response:
+        data=json.loads(response.read(1_000_000))
+    if not data.get("ok"):
+        raise RuntimeError("Telegram API rejected document send")
+    return data["result"]
+
+def deliver_report(token,chat_id,job):
+    """Send the stored DOCX report for a completed job. Returns True on success."""
+    docx=job_dir(job["id"])/"report.docx"
+    if not docx.exists():
+        return False
+    d=job.get("diagnostics") or {}
+    caption=("360° Report — %s\n%s | %d leads | %d source-verified | top score %s/100\n"
+             "All leads review_required until independently verified.")% (
+        job.get("query"),job.get("country"),d.get("candidates",0),
+        d.get("source_verified",0),d.get("top_score","?"))[:1000]
+    _multipart_send(token,"sendDocument",
+                    {"chat_id":str(chat_id),"caption":caption,
+                     "disable_web_page_preview":"true"},
+                    "document",docx)
+    return True
+
+# ----------------------------------------------------------------- research flow
+
+def run_research(token,chat_id,send,query,capital,repository,job_token):
+    """Fast ack → staged V2 research → 360° summary → report button."""
+    ack=("⚡ Research queued: %s\nCapital band: %s\n"
+         "Flow: demand discovery → gap queries (competition, licensing, demand evidence) → "
+         "source verification → scoring → 360° dossier.\n"
+         "This ack arrives first, confirming fast response.")%(query,capital)
+    send("sendMessage",{"chat_id":chat_id,"text":ack[:4000],
+        "reply_markup":research_help(),"disable_web_page_preview":"true"})
+    recent=is_duplicate(list_completed_jobs(),query,capital,country="Malaysia")
+    if recent is not None:
+        job=recent
+        result=job.get("result")
+    else:
+        job,result,_=run_job(query,capital=capital)
+    if job["status"]!="completed" or result is None:
+        text=("❌ Research failed (%s). Sources may be rate-limited; try again in a few minutes."
+              %job.get("error","unknown"))[:4000]
+        send("sendMessage",{"chat_id":chat_id,"text":text,"reply_markup":research_help(),
+            "disable_web_page_preview":"true"})
+        return
+    dossier=build_dossier(result)
+    if recent is None:
+        report_paths=generate_report(dossier,result,job_dir(job["id"]))
+        save_job(job,result,report_paths)
+        persist_jobs(repository,job_token)
+    summary=summary_text(dossier,result)
+    summary+="\n\n"+diagnostics_line(job)
+    send("sendMessage",{"chat_id":chat_id,"text":summary[:4000],
+        "reply_markup":report_menu(job["id"]),"disable_web_page_preview":"true"})
+
+def handle_research_command(token,send,chat_id,body):
+    query,capital=validate_topic(body)
+    if not query:
+        send("sendMessage",{"chat_id":chat_id,
+            "text":("Usage: /research <topic> [micro|small|medium|large]\n"
+                    "Example: /research energy efficiency services small\n"
+                    "Instant ack → scored 360° summary → tap 📄 Report for the full DOCX dossier."),
+            "reply_markup":research_help(),"disable_web_page_preview":"true"})
+        return
+    run_research(token,chat_id,send,query,capital,"","")
+
+# ----------------------------------------------------------------- update loop
 
 def safe_callback_answer(send, callback_id, **extra):
     if not callback_id:
@@ -43,7 +205,8 @@ def safe_callback_answer(send, callback_id, **extra):
             raise
         # Scheduled GitHub polling often receives callbacks after Telegram expiry.
 
-def process_update(update, *, send, allowed_ids, database, ideas, researcher=research):
+def process_update(update, *, send, allowed_ids, database, ideas,
+                   token=None, repository="", job_token=""):
     callback=update.get("callback_query")
     if isinstance(callback,dict):
         callback_id=callback.get("id")
@@ -52,7 +215,22 @@ def process_update(update, *, send, allowed_ids, database, ideas, researcher=res
             if callback_id:
                 safe_callback_answer(send,callback_id,text="Not authorized",show_alert="true")
             return "denied"
-        text,markup=handle_callback(callback.get("data",""),database,ideas)
+        data=callback.get("data","")
+        if data=="bc:research":
+            text=("Research engine (V2): send /research <topic> [micro|small|medium|large]\n"
+                  "Instant ack → discovery rounds → source verification → scored 360° summary → DOCX report.\n"
+                  "Example: /research agrotech small")
+            markup=research_help()
+        elif data.startswith("bc:report:"):
+            job=load_job(data[10:])
+            if job and job.get("status")=="completed" and token:
+                if deliver_report(token,chat_id,job):
+                    return "sent"
+            text=("Report for this job is not on this runner yet. Send /research with the same "
+                  "topic to rebuild it, or tap the button again after the next scheduled run.")
+            markup=research_help()
+        else:
+            text,markup=handle_callback(data,database,ideas)
         # Acknowledge only after successful message delivery.
         original=callback.get("message") or {}
         message_id=original.get("message_id")
@@ -82,24 +260,22 @@ def process_update(update, *, send, allowed_ids, database, ideas, researcher=res
     if not isinstance(text,str):
         return "ignored"
     command=text.strip().split(maxsplit=1)[0].split("@",1)[0].lower() if text.strip() else ""
-    if command=="/research":
-        query=text.strip().partition(" ")[2].strip()
-        if not query or len(query)>120:
-            response="Usage: /research aviation training Malaysia (1–120 characters)."
-        else:
-            try:
-                response=format_research(researcher(query,max_queries=3))
-            except (OSError, ValueError) as exc:
-                response="Research temporarily unavailable. Please try again later."
-                print("Research error:",type(exc).__name__,flush=True)
+    body=text.strip().partition(" ")[2].strip() if text.strip() else ""
+    if command in ("/research","/report") and token:
+        handle_research_command(token,send,chat_id,body)
+        return "sent"
+    if command in ("/sector","/sectors"):
+        response="Select a business sector:"
+        markup=sectors()
     else:
-        response="Select a business sector:" if command in ("/sector","/sectors") else search_text(text,database,ideas)
-    markup=sectors() if command in ("/sector","/sectors") else home()
+        response=search_text(text,database,ideas)
+        markup=home()
     send("sendMessage",{"chat_id":chat_id,"text":response,
         "reply_markup":markup,"disable_web_page_preview":"true"})
     return "sent"
 
-def poll_once(token,allowed_ids,database,ideas,telegram_api=api,max_updates=50):
+def poll_once(token,allowed_ids,database,ideas,telegram_api=api,max_updates=50,
+             repository="",job_token=""):
     if not token or not allowed_ids:
         raise ValueError("Telegram credentials missing")
     def call(method,payload):
@@ -126,9 +302,10 @@ def poll_once(token,allowed_ids,database,ideas,telegram_api=api,max_updates=50):
         chat_id=(message.get("chat") or {}).get("id") if isinstance(message,dict) else None
         if is_start and newest_start.get(chat_id)!=update["update_id"]:
             suppressed+=1
-            outcomes["suppressed"]+=1
+            outcomes["suppressed"]=outcomes.get("suppressed",0)+1
         else:
-            outcome=process_update(update,send=call,allowed_ids=allowed_ids,database=database,ideas=ideas)
+            outcome=process_update(update,send=call,allowed_ids=allowed_ids,database=database,
+                                   ideas=ideas,token=token,repository=repository,job_token=job_token)
             outcomes[outcome]=outcomes.get(outcome,0)+1
         # Telegram confirms updates strictly below offset. This avoids replay
         # across ephemeral GitHub runners. A failed send stops before ack.
@@ -148,7 +325,9 @@ def main():
     if webhook.get("url"):
         raise SystemExit("Telegram webhook is active: getUpdates polling cannot operate until webhook is disabled on the bot owner account")
     print("Telegram webhook: inactive; polling enabled",flush=True)
-    count=poll_once(token,allowed_ids,db,load_ideas())
+    repository=os.environ.get("GITHUB_REPOSITORY","")
+    job_token=os.environ.get("GITHUB_TOKEN","")
+    count=poll_once(token,allowed_ids,db,load_ideas(),repository=repository,job_token=job_token)
     print(f"Telegram updates processed: {count}")
 
 if __name__=="__main__":
