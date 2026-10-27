@@ -55,6 +55,7 @@ def one_search(records, ideas, query="", country="", sector="", mode="all", now=
                 "description":idea.get("description"),"status":"research_hypothesis",
                 "verified":False,"capital_min":idea.get("capital_min"),
                 "capital_max":idea.get("capital_max"),
+                "research_sources":idea.get("research_sources",[]),
                 "next_steps":idea.get("next_steps",[
                     "Interview potential customers and validate willingness to pay",
                     "Research competitors, supplier quotations and compliance",
