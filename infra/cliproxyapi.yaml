@@ -1,0 +1,30 @@
+# Optional CLIProxyAPI sidecar for bizcrax36.
+#
+# CLIProxyAPI wraps the team's EXISTING Claude Code / ChatGPT / Gemini CLI
+# logins into ONE OpenAI-compatible API. That lets the bot add credential-pool
+# failover without any new vendor keys: Minda stays primary; when Minda is
+# flaky the AI layer falls through to this proxy (see backend/llm_endpoints.py).
+#
+# Run once:
+#   docker compose -f infra/cliproxyapi.yaml up -d
+#   # log in once with a provider CLI, e.g.:
+#   docker compose -f infra/cliproxyapi.yaml run --rm cliproxyapi \
+#       auth login --provider claude
+#
+# Then add to the bot env / GitHub secrets:
+#   LLM_PROXY_BASE_URL=http://<host>:8317/v1
+#   LLM_PROXY_API_KEY=<any local token>
+#   LLM_PROXY_MODEL=<a model name the sidecar serves>
+#
+# The bot already has MINDA_* set; these three are optional and additive.
+
+services:
+  cliproxyapi:
+    image: eceasy/cli-proxy-api:latest
+    container_name: bizcrax36-cliproxyapi
+    restart: unless-stopped
+    ports:
+      - "8317:8317"
+    volumes:
+      - ./cliproxy-auths:/app/auths
+    command: ["--config", "/app/config.yaml"]

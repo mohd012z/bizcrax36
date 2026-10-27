@@ -19,12 +19,12 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from backend.telegram_bot import api,allowed,search_text,handle_callback,BASE
-from backend.telegram_menu import home, sectors, research_help, report_menu
+from backend.telegram_menu import home, sectors, research_help, report_menu, news_menu
 from backend.telegram_result_utils import deduplicate_ideas
 from backend.dossier import build as build_dossier, summary_text
 from backend.research_queue import run_job, is_duplicate, diagnostics_line, validate_topic
-from backend.reports import generate_report
-from backend import ai_bizcollector
+from backend.reports import generate_report, generate_news_report
+from backend import ai_bizcollector, agent_skill, news_agent
 
 JOBS_DIR=BASE/"data"/"research-jobs"
 
@@ -98,14 +98,14 @@ def persist_jobs(repository,token,base=BASE):
     if not JOBS_DIR.exists() or not list(JOBS_DIR.glob("*/job.json")):
         return False
     try:
-        _git(base,"add","data/research-jobs")
-        status=subprocess.run(["git","status","--porcelain","data/research-jobs"],
+        _git(base,"add","data/research-jobs","data/agent-skills")
+        status=subprocess.run(["git","status","--porcelain","data/research-jobs","data/agent-skills"],
                               cwd=str(base),capture_output=True,text=True).stdout
         if not status.strip():
             return False
         stamp=_utcnow().strftime("%Y-%m-%d %H:%M UTC")
         _git(base,"-c","user.name=BizCrax36 Research","-c","user.email=research@bizcrax36.local",
-             "commit","-m","research: completed jobs %s"%stamp)
+             "commit","-m","research: completed jobs + agent skills %s"%stamp)
         url="https://x-access-token:%s@github.com/%s.git"%(token,repository)
         _git(base,"push",url,"HEAD:main")
         return True
@@ -153,6 +153,18 @@ def deliver_report(token,chat_id,job):
 
 # ----------------------------------------------------------------- research flow
 
+def study_line(query,result,capital,ai):
+    """Record this research as a study (fail-open) and return the XP line."""
+    try:
+        out=agent_skill.record_study(query,capital,result,new=True,ai=ai)
+        if out["xp_gain"]>0:
+            extra=" (new domain: %s)"%out["domain"] if out.get("new_domain") else ""
+            return ("\n🧠 Agent studied this: +%d XP → Level %d (%d/%d)%s — skill saved."
+                    %(out["xp_gain"],out["level"],out["progress"],agent_skill.XP_PER_LEVEL,extra))
+    except Exception:
+        pass
+    return ""
+
 def run_research(token,chat_id,send,query,capital,repository,job_token,ai=False):
     """Fast ack → staged V2 research → 360° summary → report button."""
     ack=("⚡ Research queued: %s\nCapital band: %s\n"
@@ -184,6 +196,8 @@ def run_research(token,chat_id,send,query,capital,repository,job_token,ai=False)
         synthesis=ai_synthesis(query,result)
         if synthesis:
             summary=(summary+synthesis)[:4000]
+    if recent is None:
+        summary=(summary+study_line(query,result,capital,ai))[:4000]
     send("sendMessage",{"chat_id":chat_id,"text":summary[:4000],
         "reply_markup":report_menu(job["id"]),"disable_web_page_preview":"true"})
 
@@ -257,6 +271,126 @@ def ai_synthesis(query,result):
         return ""
     return "\n\n🤖 AI SYNTHESIS (Minda, FACT/INFER/ASSUME labeled):\n"+text
 
+# ------------------------------------------------------------- news agent flow
+
+def _news_docx_send(token, chat_id, docx, caption):
+    _multipart_send(token, "sendDocument",
+                    {"chat_id": str(chat_id), "caption": caption,
+                     "disable_web_page_preview": "true"},
+                    "document", docx)
+
+def news_scan_text(items, errors):
+    lines = ["📰 News agent — business-development scan",
+             "Read %d headlines across %d feeds in a few seconds." % (
+                 len(items), len({i.get("source") for i in items}))]
+    if errors:
+        lines.append("Feed errors (fail-open): %d" % len(errors))
+    for it in items[:18]:
+        lines.append("• [%s] %s" % (it.get("source", "?")[:24], it.get("title", "")[:110]))
+    lines.append("")
+    lines.append("👉 To build a full business plan + DOCX from one of these, "
+                 "send the article link to me, or use /newsplan on your last research.")
+    return "\n".join(lines)[:4000]
+
+def news_plan_text(plan):
+    sig = plan["signals"]
+    b = plan["budget"]
+    lines = ["🧩 Business implementation plan — %s" % plan["topic"][:90],
+             "Sector: %s · Horizon: %s · Potential: %s (growth score %d)" % (
+                 plan["sector"], plan["horizon"], plan["potential_class"], sig["growth_score"])]
+    lines.append("Illustrative budget: RM %s (%s band)" % ("{:,}".format(b["total"]), b["band"]))
+    top_risk = plan["risks"][0] if plan["risks"] else None
+    if top_risk:
+        lines.append("Top risk [%d/9]: %s" % (top_risk["score"], top_risk["risk"][:80]))
+    lines.append("")
+    lines.append("Included: live market evidence (macro), implementation flow, "
+                 "budget, investment/funding routes, merger (M&A) + joint-venture "
+                 "routes, marketing plan, risk register, phased 12-month plan.")
+    lines.append("📄 Full DOCX attached. REVIEW_REQUIRED until assumptions confirmed.")
+    return "\n".join(lines)[:4000]
+
+def run_news_scan(token, send, chat_id):
+    send("sendMessage", {"chat_id": chat_id, "text": "📰 Scanning business feeds…",
+        "reply_markup": news_menu(), "disable_web_page_preview": "true"})
+    try:
+        items, errors = news_agent.scan(limit=25, workers=6)
+    except Exception as exc:
+        send("sendMessage", {"chat_id": chat_id, "text": "News scan failed: %s" % type(exc).__name__,
+            "reply_markup": news_menu(), "disable_web_page_preview": "true"})
+        return
+    if not items:
+        send("sendMessage", {"chat_id": chat_id, "text": "No news items retrieved (feeds may be "
+            "rate-limited). Try again in a minute.", "reply_markup": news_menu(),
+            "disable_web_page_preview": "true"})
+        return
+    send("sendMessage", {"chat_id": chat_id, "text": news_scan_text(items, errors),
+        "reply_markup": news_menu(), "disable_web_page_preview": "true"})
+
+def _latest_research_result():
+    jobs = list_completed_jobs()
+    if not jobs:
+        return None
+    jobs.sort(key=lambda j: j.get("finished_at") or j.get("created_at") or "")
+    return jobs[-1]
+
+def run_news_plan(token, send, chat_id, url=None, job_id=None):
+    send("sendMessage", {"chat_id": chat_id, "text": "🧩 Building your business plan "
+        "(reading source + live macro + budget/risk)…" if url else "🧩 Building your business "
+        "plan from the top of your last research…",
+        "reply_markup": news_menu(), "disable_web_page_preview": "true"})
+    try:
+        if url:
+            article = news_agent.fetch_article(url)
+            if article.get("basis") == "unavailable":
+                send("sendMessage", {"chat_id": chat_id, "text": "Couldn't read that article "
+                    "(%s). Try a direct publisher link (not a Google News wrapper)." %
+                    article.get("error"), "reply_markup": news_menu(), "disable_web_page_preview": "true"})
+                return
+            plan = news_agent.implementation_plan(article, topic=article["title"][:100])
+            items = []
+        else:
+            job = load_job(job_id) if job_id else _latest_research_result()
+            if not job or job.get("status") != "completed" or not job.get("result"):
+                send("sendMessage", {"chat_id": chat_id, "text": "No completed research found. "
+                    "Run /research <topic> first, then /newsplan.",
+                    "reply_markup": news_menu(), "disable_web_page_preview": "true"})
+                return
+            plan = news_agent.plan_from_result(job["result"])
+            items = []
+        dossier = news_agent.news_dossier(plan, items)
+        out_dir = JOBS_DIR / ("newsplan-%d" % int(datetime.now(timezone.utc).timestamp()))
+        paths = generate_news_report(dossier, plan, out_dir)
+    except Exception as exc:
+        send("sendMessage", {"chat_id": chat_id, "text": "Plan build failed: %s. Try again or "
+            "send a direct article link." % type(exc).__name__,
+            "reply_markup": news_menu(), "disable_web_page_preview": "true"})
+        return
+    send("sendMessage", {"chat_id": chat_id, "text": news_plan_text(plan),
+        "reply_markup": news_menu(), "disable_web_page_preview": "true"})
+    try:
+        _news_docx_send(token, chat_id, paths["docx"], "Business plan DOCX — %s" % plan["topic"][:120])
+    except Exception as exc:
+        send("sendMessage", {"chat_id": chat_id, "text": "Plan is ready (above) but the DOCX "
+            "send failed: %s" % type(exc).__name__, "reply_markup": news_menu(),
+            "disable_web_page_preview": "true"})
+
+def handle_news_command(token, send, chat_id, body):
+    """`/news` = scan; `/news <url>` = plan from that article; `/newsplan` = plan
+    from the latest research."""
+    body = (body or "").strip()
+    if not body:
+        run_news_scan(token, send, chat_id)
+        return
+    if body.startswith("http://") or body.startswith("https://"):
+        run_news_plan(token, send, chat_id, url=body)
+        return
+    send("sendMessage", {"chat_id": chat_id,
+        "text": "News agent:\n• /news  — scan all business feeds now\n"
+                "• /news <article-link>  — build a business plan + DOCX from that news\n"
+                "• /newsplan  — business plan + DOCX from your latest /research\n"
+                "Paste a direct publisher link (not a Google News wrapper) for full text.",
+        "reply_markup": news_menu(), "disable_web_page_preview": "true"})
+
 # ----------------------------------------------------------------- update loop
 
 def safe_callback_answer(send, callback_id, **extra):
@@ -279,6 +413,11 @@ def process_update(update, *, send, allowed_ids, database, ideas,
             if callback_id:
                 safe_callback_answer(send,callback_id,text="Not authorized",show_alert="true")
             return "denied"
+        # Stop the button spinner IMMEDIATELY, before any processing. The
+        # GitHub Actions runner wakes on a 5-minute schedule, so without this
+        # the spinner runs for up to ~30s and the menu feels frozen.
+        if callback_id:
+            safe_callback_answer(send,callback_id,text="⏳ Working…")
         data=callback.get("data","")
         if data=="bc:aimenu":
             text=("🤖 BizCrax AI — ask me ANYTHING about business opportunities, or tap a shortcut.\n"
@@ -289,6 +428,9 @@ def process_update(update, *, send, allowed_ids, database, ideas,
                   "Instant ack → discovery rounds → source verification → scored 360° summary → DOCX report.\n"
                   "Example: /research agrotech small")
             markup=research_help()
+        elif data=="bc:study":
+            text=agent_skill.state_text()
+            markup=agent_skill.study_menu()
         elif data.startswith("bc:ai:"):
             key=data[6:]
             if key=="ask":
@@ -311,6 +453,20 @@ def process_update(update, *, send, allowed_ids, database, ideas,
             text=("Report for this job is not on this runner yet. Send /research with the same "
                   "topic to rebuild it, or tap the button again after the next scheduled run.")
             markup=research_help()
+        elif data=="bc:news:scan":
+            run_news_scan(token,send,chat_id)
+            return "sent"
+        elif data=="bc:news:plan":
+            run_news_plan(token,send,chat_id)
+            return "sent"
+        elif data=="bc:news":
+            text=("📰 News agent — reads business-development news and builds a business plan "
+                  "(flow, budget, investment, M&A + joint venture, marketing, risk).\n"
+                  "• Tap 'Scan latest' to read every feed now\n"
+                  "• Tap 'Business plan from top research' to turn your last /research into a plan\n"
+                  "• Or paste an article link (direct publisher URL, not a Google News wrapper) "
+                  "and I will build a plan + DOCX from it")
+            markup=news_menu()
         else:
             text,markup=handle_callback(data,database,ideas)
         # Acknowledge only after successful message delivery.
@@ -329,8 +485,8 @@ def process_update(update, *, send, allowed_ids, database, ideas,
         else:
             send("sendMessage",{"chat_id":chat_id,"text":text[:4000],
                 "reply_markup":markup,"disable_web_page_preview":"true"})
-        if callback_id:
-            safe_callback_answer(send,callback_id)
+        # The callback was already answered at the top of the handler (fast ack);
+        # a second answer is rejected by Telegram (400) so it is intentionally omitted.
         return "sent"
     message=update.get("message")
     if not isinstance(message,dict):
@@ -343,6 +499,11 @@ def process_update(update, *, send, allowed_ids, database, ideas,
         return "ignored"
     command=text.strip().split(maxsplit=1)[0].split("@",1)[0].lower() if text.strip() else ""
     body=text.strip().partition(" ")[2].strip() if text.strip() else ""
+    # A bare pasted article link (no command) → build a business plan from it.
+    if token and text.strip().startswith(("http://","https://")):
+        url=text.strip().split()[0]
+        run_news_plan(token,send,chat_id,url=url)
+        return "sent"
     if command in ("/research","/report") and token:
         handle_research_command(token,send,chat_id,body)
         return "sent"
@@ -351,6 +512,18 @@ def process_update(update, *, send, allowed_ids, database, ideas,
         return "sent"
     if command=="/aimenu" and token:
         handle_ai_command(token,send,chat_id,"")
+        return "sent"
+    if command in ("/study","/agent"):
+        send("sendMessage",{"chat_id":chat_id,
+            "text":agent_skill.state_text(),
+            "reply_markup":agent_skill.study_menu(),
+            "disable_web_page_preview":"true"})
+        return "sent"
+    if command=="/news" and token:
+        handle_news_command(token,send,chat_id,body)
+        return "sent"
+    if command in ("/newsplan","/plan") and token:
+        run_news_plan(token,send,chat_id)
         return "sent"
     if command in ("/sector","/sectors"):
         response="Select a business sector:"
@@ -419,7 +592,10 @@ def main():
             "commands":json.dumps([
                 {"command":"start","description":"Open the main menu"},
                 {"command":"ai","description":"AI bizcollector — ask anything (research + synthesis)"},
+                {"command":"study","description":"🧠 Agent study — level, XP, domains, saved skills"},
                 {"command":"research","description":"Research engine V2: topic [micro|small|medium|large]"},
+                {"command":"news","description":"News agent: scan business feeds or /news <article-link> for a plan"},
+                {"command":"newsplan","description":"Business plan + DOCX from your latest research"},
                 {"command":"report","description":"Alias of /research with full DOCX report"},
                 {"command":"search","description":"Search saved audited records"},
                 {"command":"sector","description":"Browse by sector"},

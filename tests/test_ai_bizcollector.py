@@ -204,7 +204,8 @@ class TelegramAiFlowTests(unittest.TestCase):
             send=lambda m, p: calls.append((m, p)), allowed_ids="1",
             database=None, ideas=[], token="tok")
         self.assertEqual(outcome, "sent")
-        self.assertIn("bc:ai:hot", calls[0][1]["reply_markup"])
+        # calls[0] is the fast ack (answerCallbackQuery); the menu is the message.
+        self.assertIn("bc:ai:hot", calls[1][1]["reply_markup"])
 
 
 if __name__ == "__main__":

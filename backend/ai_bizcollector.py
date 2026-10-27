@@ -50,6 +50,17 @@ def _minda_settings(base_url=None, api_key=None, model=None):
     return base_url.rstrip("/"), api_key, model
 
 
+def _endpoints(base_url=None, api_key=None, model=None):
+    """Ordered endpoint list for a call. Explicit args -> that single endpoint
+    (used by tests). Otherwise the failover chain: Minda, then the optional
+    CLIProxyAPI sidecar."""
+    if base_url is not None or api_key is not None or model is not None:
+        s = _minda_settings(base_url, api_key, model)
+        return [s] if s else []
+    from backend import llm_endpoints
+    return llm_endpoints.chain()
+
+
 def _chat(settings, messages, max_tokens=300, timeout=45):
     url = settings[0] + "/chat/completions"
     payload = {"model": settings[2], "max_tokens": max_tokens,
@@ -61,6 +72,19 @@ def _chat(settings, messages, max_tokens=300, timeout=45):
     with urlopen(req, timeout=timeout) as response:
         data = json.loads(response.read(1_000_000))
     return data["choices"][0]["message"]["content"].strip()
+
+
+def _chat_failover(settings, messages, max_tokens=300, timeout=45):
+    """Try each endpoint in order; return the first successful reply. Returns
+    None only if every endpoint fails (fail-open caller behaviour unchanged)."""
+    last = None
+    for endpoint in settings:
+        try:
+            return _chat(endpoint, messages, max_tokens=max_tokens, timeout=timeout)
+        except Exception as exc:
+            last = exc
+    _ = last  # not logged: the key and endpoint are in it
+    return None
 
 
 def _clean_json(raw):
@@ -75,11 +99,17 @@ def ask_intent(text, base_url=None, api_key=None, model=None, timeout=45):
     """Parse a free-text message. Returns {"intent","topic","capital"} or None."""
     if not text or not text.strip():
         return None
-    settings = _minda_settings(base_url, api_key, model)
-    if not settings:
+    endpoints = _endpoints(base_url, api_key, model)
+    if not endpoints:
         return None
     try:
-        payload = _clean_json(_chat(settings, [{"role": "user", "content": INTENT_PROMPT + text[:400]}], max_tokens=60, timeout=timeout))
+        raw = _chat_failover(endpoints, [{"role": "user", "content": INTENT_PROMPT + text[:400]}], max_tokens=60, timeout=timeout)
+    except Exception:
+        return None
+    if not raw:
+        return None
+    try:
+        payload = _clean_json(raw)
     except Exception:
         return None
     intent = payload.get("intent")
@@ -98,8 +128,8 @@ def ask_intent(text, base_url=None, api_key=None, model=None, timeout=45):
 
 def synthesize(query, result, max_chars=900, base_url=None, api_key=None, model=None, timeout=60):
     """AI synthesis paragraph over the deterministic result. Returns str or None."""
-    settings = _minda_settings(base_url, api_key, model)
-    if not settings:
+    endpoints = _endpoints(base_url, api_key, model)
+    if not endpoints:
         return None
     candidates = result.get("candidates") or []
     if not candidates:
@@ -121,10 +151,12 @@ def synthesize(query, result, max_chars=900, base_url=None, api_key=None, model=
                     "\n".join(lines)))
     prompt = ("Write the synthesis now.\n\nEVIDENCE:\n" + evidence[:6000])
     try:
-        text = _chat(settings, [
+        text = _chat_failover(endpoints, [
             {"role": "system", "content": SYSTEM_SYNTH},
             {"role": "user", "content": prompt},
         ], max_tokens=400, timeout=timeout)
     except Exception:
+        return None
+    if not text:
         return None
     return re.sub(r"\s+", " ", text)[:max_chars]

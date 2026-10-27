@@ -2,10 +2,13 @@ import json
 from urllib.error import HTTPError
 import tempfile
 import unittest
+import unittest.mock as mock
 from pathlib import Path
 from backend.telegram_poll_once import poll_once,process_update
 
 class PollOnceTests(unittest.TestCase):
+ def _mock(self, target, attribute, new):
+  return mock.patch.object(target, attribute, new)
  def setUp(self):
   self.tmp=tempfile.TemporaryDirectory()
   self.addCleanup(self.tmp.cleanup)
@@ -24,8 +27,8 @@ class PollOnceTests(unittest.TestCase):
     send=lambda method,payload:calls.append((method,payload)),
     allowed_ids="123",database=self.db,ideas=[])
   self.assertEqual(result,"sent")
-  self.assertEqual([x[0] for x in calls],["sendMessage","answerCallbackQuery"])
-  self.assertIn("bc:sector:1",calls[0][1]["reply_markup"])
+  self.assertEqual([x[0] for x in calls],["answerCallbackQuery","sendMessage"])
+  self.assertIn("bc:sector:1",calls[1][1]["reply_markup"])
  def test_unauthorized_denied(self):
   calls=[]
   result=process_update({"message":{"chat":{"id":999},"text":"/start"}},
@@ -60,9 +63,9 @@ class PollOnceTests(unittest.TestCase):
     send=lambda method,payload:calls.append((method,payload)),
     allowed_ids="123",database=self.db,ideas=[])
   self.assertEqual(result,"sent")
-  self.assertEqual(calls[0][0],"editMessageText")
-  self.assertEqual(calls[0][1]["message_id"],77)
-  self.assertEqual(calls[1][0],"answerCallbackQuery")
+  self.assertEqual(calls[0][0],"answerCallbackQuery")
+  self.assertEqual(calls[1][0],"editMessageText")
+  self.assertEqual(calls[1][1]["message_id"],77)
  def test_repeated_start_collapsed(self):
   calls=[]
   def fake(token,method,payload):
@@ -85,5 +88,66 @@ class PollOnceTests(unittest.TestCase):
     "message":{"message_id":77,"chat":{"id":123}}}},
     send=send,allowed_ids="123",database=self.db,ideas=[])
   self.assertEqual(result,"sent")
-  self.assertEqual(calls,["editMessageText","sendMessage","answerCallbackQuery"])
+  self.assertEqual(calls,["answerCallbackQuery","editMessageText","sendMessage"])
+ def test_home_menu_has_news_button(self):
+  calls=[]
+  result=process_update({"message":{"chat":{"id":123},"text":"/start"}},
+    send=lambda method,payload:calls.append((method,payload)),
+    allowed_ids="123",database=self.db,ideas=[])
+  self.assertEqual(result,"sent")
+  self.assertIn("bc:news",calls[0][1]["reply_markup"])
+ def test_news_command_no_arg_scans(self):
+  import backend.telegram_poll_once as tpo
+  calls=[]
+  scanned={}
+  def fake_scan(limit,workers):
+   scanned["yes"]=1
+   return [{"source":"FMT","title":"A headline","body_readable":True}],[]
+  with self._mock(tpo,"news_agent",mock.Mock(scan=fake_scan)):
+   result=process_update({"message":{"chat":{"id":123},"text":"/news"}},
+     send=lambda method,payload:calls.append((method,payload)),
+     allowed_ids="123",database=self.db,ideas=[],token="tok")
+  self.assertEqual(result,"sent")
+  self.assertEqual(scanned.get("yes"),1)
+  self.assertTrue(any("News agent" in c[1].get("text","") for c in calls))
+ def test_news_command_with_url_builds_plan(self):
+  import backend.telegram_poll_once as tpo
+  calls=[]
+  sent_docx=[]
+  plan={"topic":"data centre hub","sector":"technology","horizon":"long",
+    "potential_class":"high","signals":{"growth_score":9},"budget":{"total":400000,"band":"medium"},
+    "risks":[{"score":6,"risk":"top risk"}]}
+  def fake_plan(token,send,chat_id,url=None,job_id=None):
+   plan["called_url"]=url
+  def fake_docx(token,method,fields,field,path):
+   sent_docx.append(path)
+  with self._mock(tpo,"run_news_plan",mock.MagicMock(side_effect=fake_plan)), \
+       self._mock(tpo,"_news_docx_send",mock.MagicMock(side_effect=fake_docx)):
+   result=process_update({"message":{"chat":{"id":123},
+     "text":"https://example.com/article"}},
+     send=lambda method,payload:calls.append((method,payload)),
+     allowed_ids="123",database=self.db,ideas=[],token="tok")
+  self.assertEqual(result,"sent")
+  self.assertEqual(plan.get("called_url"),"https://example.com/article")
+ def test_newsplan_command_routes(self):
+  import backend.telegram_poll_once as tpo
+  calls=[]
+  called={}
+  def fake_plan(token,send,chat_id,url=None,job_id=None):
+   called["yes"]=1
+  with self._mock(tpo,"run_news_plan",mock.MagicMock(side_effect=fake_plan)):
+   result=process_update({"message":{"chat":{"id":123},"text":"/newsplan"}},
+     send=lambda method,payload:calls.append((method,payload)),
+     allowed_ids="123",database=self.db,ideas=[],token="tok")
+  self.assertEqual(result,"sent")
+  self.assertEqual(called.get("yes"),1)
+ def test_news_callback_help(self):
+  calls=[]
+  result=process_update({"callback_query":{"id":"cb","data":"bc:news",
+    "message":{"chat":{"id":123}}}},
+    send=lambda method,payload:calls.append((method,payload)),
+    allowed_ids="123",database=self.db,ideas=[],token="tok")
+  self.assertEqual(result,"sent")
+  self.assertIn("News agent",calls[1][1]["text"])
+  self.assertIn("bc:news:scan",calls[1][1]["reply_markup"])
 if __name__=="__main__":unittest.main()

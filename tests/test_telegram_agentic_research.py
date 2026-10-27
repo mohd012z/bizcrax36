@@ -91,7 +91,9 @@ class ResearchTelegramTests(unittest.TestCase):
                                 "message": {"chat": {"id": 123}, "message_id": 9}}},
             send=send, allowed_ids="123", database=Path("missing.db"), ideas=[])
         self.assertEqual(outcome, "sent")
-        self.assertEqual(calls, ["editMessageText", "answerCallbackQuery"])
+        # The fast ack (answerCallbackQuery) comes first; a 400 (expired) is
+        # swallowed and the menu edit still happens. No second answer.
+        self.assertEqual(calls, ["answerCallbackQuery", "editMessageText"])
 
     def test_report_callback_missing_job_falls_back(self):
         calls = []
@@ -102,7 +104,7 @@ class ResearchTelegramTests(unittest.TestCase):
                                 "message": {"chat": {"id": 123}}}},
             send=send, allowed_ids="123", database=Path("missing.db"), ideas=[], token="tok")
         self.assertEqual(outcome, "sent")
-        self.assertIn("not on this runner yet", calls[0][1]["text"])
+        self.assertIn("not on this runner yet", calls[1][1]["text"])
 
 
 if __name__ == "__main__":
