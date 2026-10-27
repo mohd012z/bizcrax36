@@ -293,6 +293,11 @@ def process_update(update, *, send, allowed_ids, database, ideas,
             if callback_id:
                 safe_callback_answer(send,callback_id,text="Not authorized",show_alert="true")
             return "denied"
+        # Stop the button spinner IMMEDIATELY, before any processing. The
+        # GitHub Actions runner wakes on a 5-minute schedule, so without this
+        # the spinner runs for up to ~30s and the menu feels frozen.
+        if callback_id:
+            safe_callback_answer(send,callback_id,text="⏳ Working…")
         data=callback.get("data","")
         if data=="bc:aimenu":
             text=("🤖 BizCrax AI — ask me ANYTHING about business opportunities, or tap a shortcut.\n"
@@ -346,8 +351,8 @@ def process_update(update, *, send, allowed_ids, database, ideas,
         else:
             send("sendMessage",{"chat_id":chat_id,"text":text[:4000],
                 "reply_markup":markup,"disable_web_page_preview":"true"})
-        if callback_id:
-            safe_callback_answer(send,callback_id)
+        # The callback was already answered at the top of the handler (fast ack);
+        # a second answer is rejected by Telegram (400) so it is intentionally omitted.
         return "sent"
     message=update.get("message")
     if not isinstance(message,dict):

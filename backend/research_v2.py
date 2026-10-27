@@ -56,6 +56,30 @@ STOP = {"the", "and", "for", "with", "from", "business", "opportunities", "oppor
 SCHEMA_VERSION = 2
 
 
+def detect_sector(words):
+    """Pick the sector whose terms best match the topic words.
+
+    Max-match scoring instead of first-hit: a full multi-word term match
+    (e.g. 'cold chain') outweighs a single shared word, so 'agritech cold
+    chain' maps to agriculture, not aerospace ('...supply chain'). An exact
+    sector name in the topic wins outright. Ties keep the earlier sector.
+    """
+    word_set = set(words)
+    best_key, best_score = "general", 0
+    for key, terms in TOPICS.items():
+        score = 0
+        if key in word_set:
+            score += 10
+        for term in terms:
+            twords = set(term.lower().split())
+            hit = len(twords & word_set)
+            if hit:
+                score += 3 if hit == len(twords) else hit
+        if score > best_score:
+            best_key, best_score = key, score
+    return best_key
+
+
 def plan(query, country="Malaysia", capital="all", max_queries=6):
     words = [w for w in re.findall(r"[a-z0-9]+", query.lower()) if len(w) > 2 and w not in STOP]
     if not words:
@@ -63,8 +87,7 @@ def plan(query, country="Malaysia", capital="all", max_queries=6):
     if capital not in BAND_NAMES and capital != "all":
         raise ValueError("capital must be one of %s, all" % (", ".join(BAND_NAMES),))
     topic = " ".join(words[:8])
-    sector = next((key for key, terms in TOPICS.items()
-                   if key in words or any(set(term.lower().split()) & set(words) for term in terms)), "general")
+    sector = detect_sector(words)
     demand = [
         "%s %s market demand" % (topic, country),
         "%s %s SME supplier opportunities" % (topic, country),

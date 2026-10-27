@@ -6,6 +6,7 @@ on:
       - 'backend/telegram_poll_once.py'
       - 'backend/telegram_bot.py'
       - 'backend/agent_skill.py'
+      - 'backend/telegram_poll_continuous.py'
       - 'backend/agentic_research.py'
       - 'backend/research_v2.py'
       - 'backend/research_queue.py'
@@ -21,7 +22,10 @@ concurrency:
   group: bizcrax36-telegram-updates
   cancel-in-progress: false
 jobs:
+  # Scheduled + manual runs: poll FIRST so queued button presses are picked up
+  # as soon as the runner is up (no test-suite pre-flight on the hot path).
   process-updates:
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -30,8 +34,6 @@ jobs:
           fetch-depth: 0
       - name: Check Python runtime
         run: python3 --version
-      - name: Run Telegram and research regression tests
-        run: python3 -m unittest tests.test_agentic_research tests.test_research_v2 tests.test_dossier_queue tests.test_reports tests.test_telegram_agentic_research tests.test_telegram_poll_once tests.test_ai_bizcollector tests.test_agent_skill -v
       - name: Process pending Telegram messages and button clicks
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -41,3 +43,19 @@ jobs:
           MINDA_API_KEY: ${{ secrets.MINDA_API_KEY }}
           MINDA_MODEL: ${{ secrets.MINDA_MODEL }}
         run: python3 -m backend.telegram_poll_once
+      - name: Regression tests after the poll (proves the run that answered is healthy)
+        continue-on-error: true
+        run: python3 -m unittest tests.test_agentic_research tests.test_research_v2 tests.test_dossier_queue tests.test_reports tests.test_telegram_agentic_research tests.test_telegram_poll_once tests.test_ai_bizcollector tests.test_agent_skill -v
+  # Code pushes: full test gate before anything runs against main.
+  tests-on-push:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check Python runtime
+        run: python3 --version
+      - name: Run Telegram and research regression tests
+        run: python3 -m unittest tests.test_agentic_research tests.test_research_v2 tests.test_dossier_queue tests.test_reports tests.test_telegram_agentic_research tests.test_telegram_poll_once tests.test_ai_bizcollector tests.test_agent_skill -v

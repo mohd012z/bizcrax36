@@ -109,6 +109,18 @@ class PlanTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             research_v2.plan("the and for", "Malaysia")
 
+    def test_sector_detection_full_term_beats_shared_word(self):
+        # Regression: "cold chain" is a full agriculture term and must beat the
+        # single shared word "chain" in "aerospace supply chain".
+        self.assertEqual(research_v2.detect_sector("agritech cold chain".split()), "agriculture")
+        self.assertEqual(research_v2.plan("agritech cold chain", "Malaysia", "medium")["sector"], "agriculture")
+        self.assertEqual(research_v2.detect_sector("solar maintenance".split()), "energy")
+        self.assertEqual(research_v2.detect_sector("aviation training".split()), "aerospace")
+        self.assertEqual(research_v2.detect_sector("hospitality technology tourism".split()), "tourism")
+        self.assertEqual(research_v2.detect_sector("quantum foobar".split()), "general")
+        # exact sector name wins outright
+        self.assertEqual(research_v2.detect_sector("agriculture".split()), "agriculture")
+
 
 class BandTests(unittest.TestCase):
     def test_band_boundaries(self):

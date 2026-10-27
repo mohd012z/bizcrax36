@@ -24,8 +24,8 @@ class PollOnceTests(unittest.TestCase):
     send=lambda method,payload:calls.append((method,payload)),
     allowed_ids="123",database=self.db,ideas=[])
   self.assertEqual(result,"sent")
-  self.assertEqual([x[0] for x in calls],["sendMessage","answerCallbackQuery"])
-  self.assertIn("bc:sector:1",calls[0][1]["reply_markup"])
+  self.assertEqual([x[0] for x in calls],["answerCallbackQuery","sendMessage"])
+  self.assertIn("bc:sector:1",calls[1][1]["reply_markup"])
  def test_unauthorized_denied(self):
   calls=[]
   result=process_update({"message":{"chat":{"id":999},"text":"/start"}},
@@ -60,9 +60,9 @@ class PollOnceTests(unittest.TestCase):
     send=lambda method,payload:calls.append((method,payload)),
     allowed_ids="123",database=self.db,ideas=[])
   self.assertEqual(result,"sent")
-  self.assertEqual(calls[0][0],"editMessageText")
-  self.assertEqual(calls[0][1]["message_id"],77)
-  self.assertEqual(calls[1][0],"answerCallbackQuery")
+  self.assertEqual(calls[0][0],"answerCallbackQuery")
+  self.assertEqual(calls[1][0],"editMessageText")
+  self.assertEqual(calls[1][1]["message_id"],77)
  def test_repeated_start_collapsed(self):
   calls=[]
   def fake(token,method,payload):
@@ -85,5 +85,5 @@ class PollOnceTests(unittest.TestCase):
     "message":{"message_id":77,"chat":{"id":123}}}},
     send=send,allowed_ids="123",database=self.db,ideas=[])
   self.assertEqual(result,"sent")
-  self.assertEqual(calls,["editMessageText","sendMessage","answerCallbackQuery"])
+  self.assertEqual(calls,["answerCallbackQuery","editMessageText","sendMessage"])
 if __name__=="__main__":unittest.main()
