@@ -5,8 +5,8 @@
  */
 const MENU = {inline_keyboard:[
  [{text:"🔎 Search opportunities",callback_data:"bc:search"},{text:"💡 Business ideas",callback_data:"bc:ideas"}],
- [{text:"📋 All research",callback_data:"bc:all"},{text:"✅ Verified live",callback_data:"bc:live"}],
- [{text:"🏷 Sector ▾",callback_data:"bc:sectors"},{text:"🔍 Review required",callback_data:"bc:review"}],
+ [{text:"📋 All research",callback_data:"bc:all"},{text:"📨 Completed requests",callback_data:"bc:live"}],
+ [{text:"🏷 Sector ▾",callback_data:"bc:sectors"},{text:"⏳ Dispatched",callback_data:"bc:review"}],
  [{text:"ℹ️ Help",callback_data:"bc:help"}]
 ]};
 export const BOT_COMMANDS=[
