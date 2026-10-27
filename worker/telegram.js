@@ -105,7 +105,7 @@ export default {
    if(!env.DB) return new Response("Database unavailable",{status:503});
    let event;
    try{event=await request.json()}catch(_){return new Response("Invalid JSON",{status:400})}
-   if(!event||!/^tg-\\d+$/.test(String(event.request_id))||!["COMPLETE","FAILED"].includes(event.state)) return new Response("Invalid completion",{status:400});
+   if(!event||!/^tg-\d+$/.test(String(event.request_id))||!["COMPLETE","FAILED"].includes(event.state)) return new Response("Invalid completion",{status:400});
    const result=await env.DB.prepare("UPDATE research_jobs SET state=? WHERE request_id=? AND state IN ('DISPATCHED','COMPLETE','FAILED')").bind(event.state,event.request_id).run();
    return new Response(result.meta?.changes?"Updated":"No matching dispatched request",{status:result.meta?.changes?200:409});
   }
