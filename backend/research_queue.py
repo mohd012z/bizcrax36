@@ -76,6 +76,7 @@ def run_job(query, country="Malaysia", capital="all", fetch=None, verify_fetch=N
             "source_errors": len(result.get("errors", [])),
             "gap_hits": result.get("gap_hits", {}),
             "top_score": result["candidates"][0]["score"]["total"] if result["candidates"] else None,
+            "duration_seconds": round(time.monotonic() - started, 2),
             "stages": [{"name": s["name"], "seconds": round(s["at"], 2)} for s in job["stages"]],
         }
         return job, result, dossier

@@ -36,4 +36,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MINDA_BASE_URL: ${{ secrets.MINDA_BASE_URL }}
+          MINDA_API_KEY: ${{ secrets.MINDA_API_KEY }}
+          MINDA_MODEL: ${{ secrets.MINDA_MODEL }}
         run: python3 -m backend.telegram_poll_once

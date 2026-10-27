@@ -13,6 +13,7 @@ def keyboard(rows):
 
 def home():
     return keyboard([
+        [{"text":"🤖 AI bizcollector","callback_data":"bc:aimenu"}],
         [{"text":"🚀 Research engine","callback_data":"bc:research"}],
         [{"text":"🔎 Search opportunities","callback_data":"bc:search"},
          {"text":"💡 Business ideas","callback_data":"bc:mode:ideas"}],

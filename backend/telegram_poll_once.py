@@ -24,6 +24,7 @@ from backend.telegram_result_utils import deduplicate_ideas
 from backend.dossier import build as build_dossier, summary_text
 from backend.research_queue import run_job, is_duplicate, diagnostics_line, validate_topic
 from backend.reports import generate_report
+from backend import ai_bizcollector
 
 JOBS_DIR=BASE/"data"/"research-jobs"
 
@@ -152,7 +153,7 @@ def deliver_report(token,chat_id,job):
 
 # ----------------------------------------------------------------- research flow
 
-def run_research(token,chat_id,send,query,capital,repository,job_token):
+def run_research(token,chat_id,send,query,capital,repository,job_token,ai=False):
     """Fast ack → staged V2 research → 360° summary → report button."""
     ack=("⚡ Research queued: %s\nCapital band: %s\n"
          "Flow: demand discovery → gap queries (competition, licensing, demand evidence) → "
@@ -179,6 +180,10 @@ def run_research(token,chat_id,send,query,capital,repository,job_token):
         persist_jobs(repository,job_token)
     summary=summary_text(dossier,result)
     summary+="\n\n"+diagnostics_line(job)
+    if ai:
+        synthesis=ai_synthesis(query,result)
+        if synthesis:
+            summary=(summary+synthesis)[:4000]
     send("sendMessage",{"chat_id":chat_id,"text":summary[:4000],
         "reply_markup":report_menu(job["id"]),"disable_web_page_preview":"true"})
 
@@ -191,7 +196,66 @@ def handle_research_command(token,send,chat_id,body):
                     "Instant ack → scored 360° summary → tap 📄 Report for the full DOCX dossier."),
             "reply_markup":research_help(),"disable_web_page_preview":"true"})
         return
-    run_research(token,chat_id,send,query,capital,"","")
+    run_research(token,chat_id,send,query,capital,"","",ai=False)
+
+# ------------------------------------------------------- AI bizcollector flow
+
+AI_SHORTCUTS=[
+    ("hot",  "🔥 High potential — any sector, any capital", "high potential business opportunities"),
+    ("low",  "💰 Low cost starts (micro <RM10k)",           "low cost home based business ideas"),
+    ("small","📈 Small investment (RM10k–250k)",            "small business opportunities"),
+    ("med",  "🏗️ Medium investment (RM250k–2M)",           "medium scale business expansion"),
+    ("large","🏢 Large investment (RM2M+)",                 "large scale investment opportunities"),
+]
+
+def ai_menu():
+    rows=[[{"text":label,"callback_data":"bc:ai:%s"%key}] for key,label,_ in AI_SHORTCUTS]
+    rows.append([{"text":"✍️ Ask AI (type a topic)","callback_data":"bc:ai:ask"}])
+    rows.append([{"text":"🏠 Main menu","callback_data":"bc:home"}])
+    return json.dumps({"inline_keyboard":rows},separators=(",",":"))
+
+def ai_shortcut(key):
+    for k,label,topic in AI_SHORTCUTS:
+        if k==key:
+            return topic
+    return None
+
+def handle_ai_command(token,send,chat_id,body):
+    """AI bizcollector: Minda intent parsing (fail-open) → V2 research → AI synthesis."""
+    if not body:
+        intent=ai_bizcollector.ask_intent("show the business research menu")
+        send("sendMessage",{"chat_id":chat_id,
+            "text":("🤖 BizCrax AI — ask me ANYTHING about business opportunities, or tap a shortcut.\n"
+                    "Example: /ai find a small capital food business in Malaysia\n"
+                    "I parse your request with AI, run the full evidence-first research, "
+                    "and add an AI synthesis. No AI? I still answer deterministically."),
+            "reply_markup":ai_menu(),"disable_web_page_preview":"true"})
+        return
+    # Fast ack FIRST so the reply is instant; AI parsing happens right after.
+    send("sendMessage",{"chat_id":chat_id,
+        "text":"🤖 AI bizcollector: parsing your request…",
+        "reply_markup":ai_menu(),"disable_web_page_preview":"true"})
+    intent=ai_bizcollector.ask_intent(body)
+    if intent and intent["intent"] in ("research","report") and intent["topic"]:
+        query,capital=intent["topic"],intent["capital"]
+    else:
+        query,capital=validate_topic(body)
+    if not query:
+        send("sendMessage",{"chat_id":chat_id,
+            "text":"Tell me a business topic, e.g. /ai solar maintenance small capital",
+            "reply_markup":ai_menu(),"disable_web_page_preview":"true"})
+        return
+    run_research(token,chat_id,send,query,capital,"","",ai=True)
+
+def ai_synthesis(query,result):
+    """Best-effort AI paragraph; returns '' when Minda is unavailable (fail-open)."""
+    try:
+        text=ai_bizcollector.synthesize(query,result)
+    except Exception:
+        text=None
+    if not text:
+        return ""
+    return "\n\n🤖 AI SYNTHESIS (Minda, FACT/INFER/ASSUME labeled):\n"+text
 
 # ----------------------------------------------------------------- update loop
 
@@ -216,11 +280,29 @@ def process_update(update, *, send, allowed_ids, database, ideas,
                 safe_callback_answer(send,callback_id,text="Not authorized",show_alert="true")
             return "denied"
         data=callback.get("data","")
-        if data=="bc:research":
+        if data=="bc:aimenu":
+            text=("🤖 BizCrax AI — ask me ANYTHING about business opportunities, or tap a shortcut.\n"
+                  "Example: /ai find a small capital food business in Malaysia")
+            markup=ai_menu()
+        elif data=="bc:research":
             text=("Research engine (V2): send /research <topic> [micro|small|medium|large]\n"
                   "Instant ack → discovery rounds → source verification → scored 360° summary → DOCX report.\n"
                   "Example: /research agrotech small")
             markup=research_help()
+        elif data.startswith("bc:ai:"):
+            key=data[6:]
+            if key=="ask":
+                text=("✍️ Ask the AI anything, e.g.:\n"
+                      "/ai find a low cost food business in Kuala Lumpur\n"
+                      "/ai high potential tech services small capital")
+            else:
+                topic=ai_shortcut(key)
+                if not topic:
+                    text="Unknown shortcut."
+                else:
+                    handle_ai_command(token,send,chat_id,topic)
+                    return "sent"
+            markup=ai_menu()
         elif data.startswith("bc:report:"):
             job=load_job(data[10:])
             if job and job.get("status")=="completed" and token:
@@ -263,6 +345,12 @@ def process_update(update, *, send, allowed_ids, database, ideas,
     body=text.strip().partition(" ")[2].strip() if text.strip() else ""
     if command in ("/research","/report") and token:
         handle_research_command(token,send,chat_id,body)
+        return "sent"
+    if command in ("/ai","/biz") and token:
+        handle_ai_command(token,send,chat_id,body)
+        return "sent"
+    if command=="/aimenu" and token:
+        handle_ai_command(token,send,chat_id,"")
         return "sent"
     if command in ("/sector","/sectors"):
         response="Select a business sector:"
@@ -325,6 +413,20 @@ def main():
     if webhook.get("url"):
         raise SystemExit("Telegram webhook is active: getUpdates polling cannot operate until webhook is disabled on the bot owner account")
     print("Telegram webhook: inactive; polling enabled",flush=True)
+    # Register the bottom-left ⋮ command menu (best effort, never fatal).
+    try:
+        api(token,"setMyCommands",{
+            "commands":json.dumps([
+                {"command":"start","description":"Open the main menu"},
+                {"command":"ai","description":"AI bizcollector — ask anything (research + synthesis)"},
+                {"command":"research","description":"Research engine V2: topic [micro|small|medium|large]"},
+                {"command":"report","description":"Alias of /research with full DOCX report"},
+                {"command":"search","description":"Search saved audited records"},
+                {"command":"sector","description":"Browse by sector"},
+                {"command":"help","description":"Instructions"}])})
+        print("Telegram commands registered",flush=True)
+    except (OSError, ValueError, RuntimeError) as exc:
+        print("Command menu registration skipped:",type(exc).__name__,flush=True)
     repository=os.environ.get("GITHUB_REPOSITORY","")
     job_token=os.environ.get("GITHUB_TOKEN","")
     count=poll_once(token,allowed_ids,db,load_ideas(),repository=repository,job_token=job_token)

@@ -29,7 +29,9 @@ queued → researching → verifying → scoring → completed   (staged, audita
 |---|---|
 | `/research <topic> [band]` | Full V2 pipeline: ack → summary → DOCX report button |
 | `/report <topic> [band]` | Alias of `/research` |
-| `/search`, `/ideas`, `/live`, `/sector` | Unchanged V1 audited-record search |
+| `/ai <anything>` | **AI bizcollector** (Minda, same method as AI_msa): free text → AI intent parsing (topic + capital band) → full V2 research → AI synthesis with FACT/INFER/ASSUME labels. Fail-open: without Minda the deterministic engine still answers. |
+| `/aimenu` | AI menu: shortcuts (high potential / low cost / small / medium / large) + ask box |
+| 🤖 AI bizcollector button | Home-menu shortcut to the AI menu |
 | 📄 Report button | Delivers the stored DOCX (jobs persisted to `data/research-jobs/`) |
 | 🚀 Research engine button | Shows V2 usage |
 
@@ -88,3 +90,21 @@ job, result, dossier = run_job("energy efficiency services", capital="small")
 print(generate_report(dossier, result, "out/"))
 PY
 ```
+
+## Web (360° Command Center) + APK backup
+
+- `python -m backend.web_api --host 127.0.0.1 --port 8765`
+  serves `web/index.html` (the Command Center) plus the API:
+  `/api/research?topic=&capital=&country=` (same V2 engine, persisted jobs),
+  `/api/jobs`, `/api/job/<id>`, `/api/job/<id>/report` (DOCX),
+  `/api/job/<id>/chart/<name>` (PNG). Optional `WEB_API_TOKEN` env adds an
+  `X-BizCrax-Token` header requirement on `/api/research`.
+- **APK** (`android/`): a WebView shell that renders the same `web/index.html`
+  from app assets and proxies `/api/*` to the configured backend host
+  (⚙️ button in the UI sets the base URL). Emulator default `http://10.0.2.2:8765`;
+  on a phone use the machine's LAN IP with `web_api --host 0.0.0.0`.
+  Build: `cd android && ./gradlew assembleDebug` (AGP 8.5.2, Kotlin 1.9.24,
+  minSdk 26). CI: `.github/workflows/apk.yml` uploads the APK as an artifact.
+- The UI is a single file with zero external dependencies (offline-capable),
+  so the HTML, browser and APK always render identical output for the same
+  API response.

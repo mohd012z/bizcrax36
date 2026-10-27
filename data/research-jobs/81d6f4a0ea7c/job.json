@@ -1,0 +1,615 @@
+{
+  "id": "81d6f4a0ea7c",
+  "query": "agrotech",
+  "country": "Malaysia",
+  "capital": "all",
+  "status": "completed",
+  "created_at": "2026-10-27T13:43:41.012024+00:00",
+  "finished_at": "2026-10-27T13:43:42.902783+00:00",
+  "duration_seconds": 1.89,
+  "diagnostics": {
+    "candidates": 9,
+    "source_verified": 0,
+    "source_errors": 0,
+    "gap_hits": {
+      "competition": 0,
+      "regulation": 0
+    },
+    "top_score": 44,
+    "duration_seconds": 1.89,
+    "stages": [
+      {
+        "name": "researching",
+        "seconds": 0.0
+      },
+      {
+        "name": "verifying",
+        "seconds": 0.9
+      },
+      {
+        "name": "scoring",
+        "seconds": 1.89
+      },
+      {
+        "name": "completed",
+        "seconds": 1.89
+      }
+    ]
+  },
+  "error": null,
+  "result": {
+    "schema_version": 2,
+    "generated_at": "2026-10-27T13:43:42.902691+00:00",
+    "plan": {
+      "query": "agrotech",
+      "country": "Malaysia",
+      "capital": "all",
+      "sector": "general",
+      "rounds": [
+        [
+          "agrotech Malaysia market demand",
+          "agrotech Malaysia SME supplier opportunities",
+          "agrotech Malaysia government programme",
+          "agrotech Malaysia procurement tender"
+        ],
+        [
+          "agrotech Malaysia competitors pricing",
+          "agrotech Malaysia licence registration requirement",
+          "agrotech Malaysia customer demand survey"
+        ]
+      ]
+    },
+    "candidates": [
+      {
+        "title": "Agrotech Farming and Trading to implement cost-effective organic farming in Malaysia, says adviser - Malay Mail",
+        "source_url": "https://news.google.com/rss/articles/CBMi5wFBVV95cUxOU0VBZEFzc01yMWl3bm5uT09odUNpdHkxUDI0UWFuMUx6VXp6OWJyWnQzcjV3QXRlM3JzYS1qb1FXQVFhQno4V2lDbEZ1NEFoTDNhVnhQYlVlWDVZNEhidThmbEFJSW14ZjN0WWpMS2NqX0wxRTNOREtJWTBnSEJEZ2RkVFc0M3RhdTFHNk83M2tmZFhrQXZnN2kxbGJBNjdzOGdtU1RsdTB0Tmc3N2g0US0telMtU2RsYXZfcGVELU51MlQ2WmlXU0ZuOEpJLU1YWE1zel9Fc1dNODd5SWEyOEZBeC1jSFHSAewBQVVfeXFMUFU2bEhTZG9xT29ycGQyYm10RUJBdlQ0MGVmeHNLa1FvUEdOYkRUdXpsQW4tUjZwTDBnMW4ydzZNdWtwNUNGZVVUb3U3RTNTV2Q1UnRoR3RQNWFNT0pWSVM0bDJGVkFlMDdUbXNYMWY3cXdKZ0FFaUQ3LTFPSjhiaE5FZ2NOeWFWT2dBR19sWkEtZ2tvR0lfdjVaRjdqV2V3MldlVDEtcXh3SU1OUUtHM1BvV3NZQ3E5T2dmR2pObXVnRjdjRWVrQ21tWmpHVWxCalZ3Z3BMX3RFdkZiZzNTcHRQcWpsRWk5enJ2ZDM?oc=5",
+        "published_at": "Sun, 11 Feb 2024 08:00:00 GMT",
+        "discovery_query": "agrotech Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "b8e884a99aaa6919042c",
+        "verification": {
+          "verified": false,
+          "match_ratio": 0.0,
+          "retrieved_at": "2026-10-27T13:43:42.189915+00:00",
+          "source_sha256": "4615a511d5aab77ffa16",
+          "reason": "insufficient_title_match"
+        },
+        "score": {
+          "total": 44,
+          "metrics": {
+            "demand": {
+              "value": 43,
+              "basis": "evidence",
+              "note": "1 headline term matches, 0 verified sources; published 23742h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "0 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 45,
+              "basis": "assumed",
+              "note": "large band; project financing typically required (assumed)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "0 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "all"
+        }
+      },
+      {
+        "title": "Malaysia Seeks to Deepen Agrotech and Supply Chain Ties with Cambodia - Construction & Property News",
+        "source_url": "https://news.google.com/rss/articles/CBMipwFBVV95cUxQNU1INjh5NGs2SFMxOGdTd0JPMmU2ZloxY0F1cWxTMmNrNGNoRFlWRGJsY2ROX00wa2s3b2ZnalI2ZlFkQ0xVQUt4UzlvX1BteVpYRVExcE1nTnduYUZTLVNtR0xXNGVPb19TRkVfbEpvWHF4bGM1VDl0OHppSVlHUHlzdXA0WExpMk9sQzNuMDk2YTdpZnN6ZlN5YTNjTE9INS1YNk9VWQ?oc=5",
+        "published_at": "Wed, 15 Jul 2026 07:00:00 GMT",
+        "discovery_query": "agrotech Malaysia SME supplier opportunities",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "0cd9bd0e6e0393b161a3",
+        "verification": {
+          "verified": false,
+          "match_ratio": 0.0,
+          "retrieved_at": "2026-10-27T13:43:42.732686+00:00",
+          "source_sha256": "36f5759d7793805e6ccf",
+          "reason": "insufficient_title_match"
+        },
+        "score": {
+          "total": 44,
+          "metrics": {
+            "demand": {
+              "value": 43,
+              "basis": "evidence",
+              "note": "1 headline term matches, 0 verified sources; published 2503h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "0 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 45,
+              "basis": "assumed",
+              "note": "large band; project financing typically required (assumed)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "0 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "all"
+        }
+      },
+      {
+        "title": "CPO futures to decline in 2H amid weaker export; US policy a wild card, says industry expert - The Edge Malaysia",
+        "source_url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE1jemhiOW1KQUlCRXJBLTVzdUEwbHhOSndBbHdvQmQ0QWhLMmg5Z1ZXLTJwNk9Qd2xJVllIeTYxTEhUbDVXaldkT2JISnRoWUhT?oc=5",
+        "published_at": "Mon, 24 Feb 2025 08:00:00 GMT",
+        "discovery_query": "agrotech Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "ef9a4ee6c0d3a75204ca",
+        "score": {
+          "total": 40,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 14646h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "0 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 45,
+              "basis": "assumed",
+              "note": "large band; project financing typically required (assumed)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "0 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "all"
+        }
+      },
+      {
+        "title": "India's edible oil output seen covering just 40% demand in 2025-26: IVPA - Business Standard",
+        "source_url": "https://news.google.com/rss/articles/CBMi7gFBVV95cUxPTEZ6UUV0RjUzZW1zODVnWE9qbVBuckR3UFNoaktFMXpLdG1TekJ3OXJTakFiNEJLRW5OcTVjZ2pmOHJWUTh0OUZjSC1DbnI2Y1JmNTdXNVNOSWRWdnN6SkhTZk9PMDRRcEQ0X0JIZXZEbF8wTHl4UlNteVBtT01YNVpXa3ZSOW5RUDFaTTB6WHFDTDlpQUowTUpqRjc2Tm5yb3hIcVJsNkNJVXRXWlJzcWVuLXFaUFJVX3p1aFdIb1RKTlYyS2lDS3Nha1hsaWZUR2loOFc1MncyMlhGOEFOcVEyb2hJeEFpRlo0cENn0gHzAUFVX3lxTFBEUU9pdDlrV0o0ZzFaUFctc0RhRmtfQ2ZfN2ozQnJQNHpscWJDVXdFVVpydGNVV1BiaUgxaGR2MlkzNk1YZTBtS1ZPa2FaSTdVN3lRd3pING5UeTBBTGQtaGhFT3MtbHhXQWt1YjNUZGY3MG9pRmVTV0xsTHBnMjBsanlOU285LXA4Z1FWNmxDdFc3VFpRc254aU1CU1lPS0RZQ2ZQdnFzSzJtOGlBYmVlaDhEUWh5NGMxVDVnMnN3OE51dEthYUVtV295X3RiQVRlclVZZWNkX0FYeHE0ZzltcEJTUThnWUZETU9McjdiMnVEbw?oc=5",
+        "published_at": "Mon, 09 Feb 2026 08:00:00 GMT",
+        "discovery_query": "agrotech Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "ed393aa6c1653af27ef5",
+        "verification": {
+          "verified": false,
+          "match_ratio": 0.0,
+          "retrieved_at": "2026-10-27T13:43:42.902341+00:00",
+          "source_sha256": "cb591e6881c67e650e43",
+          "reason": "insufficient_title_match"
+        },
+        "score": {
+          "total": 40,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 6246h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "0 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 45,
+              "basis": "assumed",
+              "note": "large band; project financing typically required (assumed)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "0 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "all"
+        }
+      },
+      {
+        "title": "Policy shifts, price swings may dampen demand for Malaysian palm oil, warns Indian trade body - The Edge Malaysia",
+        "source_url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE5JVXZXMF80emswMm5GMDJwdzhLRjI2eWRFWWY2VjVEbGYtUGg5MEhlZDZWVHB0dkg3cjFaazgzWTNhaFo5UlRjd2JJZG9PRnhi?oc=5",
+        "published_at": "Mon, 09 Feb 2026 08:00:00 GMT",
+        "discovery_query": "agrotech Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "7e9cf1753d421668f393",
+        "score": {
+          "total": 40,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 6246h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "0 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 45,
+              "basis": "assumed",
+              "note": "large band; project financing typically required (assumed)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "0 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "all"
+        }
+      },
+      {
+        "title": "Technical Textiles Market worth $324.83 billion in 2030 - MarketsandMarkets",
+        "source_url": "https://news.google.com/rss/articles/CBMieEFVX3lxTFBjS1VKbWtpM3ZhYWRGdjZEZk45Y2tXRk9vNzFvaUdqQ1AyVHJWaVdXc0NZcjZEbzRmdHVEaGYwSVNKUnljWWtNU1p2VUF0TFhJRmxnRnlmM0l1UGpaeklEcWlXSTR3T3F0R0JvUXItdGNabnJlbThrNg?oc=5",
+        "published_at": "Tue, 15 Jul 2025 07:00:00 GMT",
+        "discovery_query": "agrotech Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "fc566ed0711d5c12c062",
+        "score": {
+          "total": 40,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 11263h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "0 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 45,
+              "basis": "assumed",
+              "note": "large band; project financing typically required (assumed)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "0 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "all"
+        }
+      },
+      {
+        "title": "This M’sian Startup’s Value Will Skyrocket If A Zombie Apocalypse Ever Happens - Vulcan Post",
+        "source_url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE42NlFVUnRyWnV0MnlnSGl6ZjhSWm81OEtLeHNZVWZlNDJrWkpweVVlTHhIRTFqQkV0TENjM3ZweUhfYUMwNndVM09NU0ptWDkxQXR2VENqcmxKR3NRU2p0MnpaTG5PNVB2MDI5Zk0xS0dvNWVUamI1dkljLXM?oc=5",
+        "published_at": "Wed, 31 Oct 2018 07:00:00 GMT",
+        "discovery_query": "agrotech Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "349decd49d1534f5c593",
+        "score": {
+          "total": 40,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 70039h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "0 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 45,
+              "basis": "assumed",
+              "note": "large band; project financing typically required (assumed)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "0 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "all"
+        }
+      },
+      {
+        "title": "UK Pyrolysis Pioneer Onnu Accelerates Carbon Removal in Asia - AZoCleantech",
+        "source_url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFBPVDZISGR5SnR1d1NfWmR0anQ2YUI3b0M0ZFB0eF9QWnA2VkNrV0N6RVV4MWcydkl4cTFIb0pURjZ2d0R2clh4RVQwUEljNnNaWXN2cVp0eEVOSGtndkxvbA?oc=5",
+        "published_at": "Tue, 25 Nov 2025 08:00:00 GMT",
+        "discovery_query": "agrotech Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "2bae1369617d5f61d5a9",
+        "score": {
+          "total": 40,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 8070h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "0 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 45,
+              "basis": "assumed",
+              "note": "large band; project financing typically required (assumed)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "0 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "all"
+        }
+      },
+      {
+        "title": "Wasco Greenergy optimistic on long-term prospects, unfazed by soft debut on Bursa - The Sun Malaysia",
+        "source_url": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxNZEpYNXlHWnhVY2UwUGdselAxd1YtUEMtYm9CZUFIWk52RVZ0ckY0N284YmpOdHBaQ2k2MWNJX3pRbWtpU0twQWVxN3J5aDdFUUxaT0NPaXZ2UkpXQjhfZWpkYzQ4UTJCOXNIYzJVaGJCMDF2OFZYZ2dJbWxMS3kwXy02aFVOc2tpaVI3NHJTN1lVeUJLN1BjYWhLWHNLMWJSNmwtLWVQMnlJUVpIV2FLUkstWks3aC1uYUJJeDNyLWM?oc=5",
+        "published_at": "Thu, 11 Dec 2025 13:39:06 GMT",
+        "discovery_query": "agrotech Malaysia market demand",
+        "source_type": "news_rss",
+        "status": "review_required",
+        "id": "20363336a23193d2ce24",
+        "score": {
+          "total": 40,
+          "metrics": {
+            "demand": {
+              "value": 25,
+              "basis": "assumed",
+              "note": "no demand terms in headline; neutral low score; published 7680h ago"
+            },
+            "unit_economics": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "no pricing evidence retrieved; run /blueprint financial model with real quotes"
+            },
+            "competition": {
+              "value": 40,
+              "basis": "assumed",
+              "note": "0 competition/pricing headlines in round 2"
+            },
+            "capital_accessibility": {
+              "value": 45,
+              "basis": "assumed",
+              "note": "large band; project financing typically required (assumed)"
+            },
+            "operational_feasibility": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "neutral until operations, staffing and equipment are researched"
+            },
+            "regulatory_readiness": {
+              "value": 50,
+              "basis": "assumed",
+              "note": "0 licence/registration headlines in round 2"
+            }
+          },
+          "weights": {
+            "demand": 25,
+            "unit_economics": 15,
+            "competition": 15,
+            "capital_accessibility": 15,
+            "operational_feasibility": 15,
+            "regulatory_readiness": 15
+          },
+          "score_type": "weighted_preliminary",
+          "currency": "MYR",
+          "capital_band": "all"
+        }
+      }
+    ],
+    "errors": [],
+    "gap_hits": {
+      "competition": 0,
+      "regulation": 0
+    },
+    "notice": "Research leads only. Headlines and heuristic scores do not prove business viability, open tenders, or verified demand. Every lead stays review_required until issuer and commercial evidence is independently confirmed."
+  },
+  "report": {
+    "docx": "/opt/data/cache/scratch/bizcrax36/data/research-jobs/81d6f4a0ea7c/report.docx",
+    "report": "/opt/data/cache/scratch/bizcrax36/data/research-jobs/81d6f4a0ea7c/report.json",
+    "charts": [
+      "/opt/data/cache/scratch/bizcrax36/data/research-jobs/81d6f4a0ea7c/charts/scores.png",
+      "/opt/data/cache/scratch/bizcrax36/data/research-jobs/81d6f4a0ea7c/charts/metrics.png"
+    ],
+    "summary": {
+      "candidates": 9,
+      "top_score": 44,
+      "sections": {
+        "executive_summary": "estimated",
+        "industry_intelligence": "unavailable",
+        "customer_demand": "assumed",
+        "competition": "assumed",
+        "business_model": "unavailable",
+        "startup_capital": "assumed",
+        "financial_forecast": "unavailable",
+        "funding_investment": "estimated",
+        "supply_chain": "unavailable",
+        "legal_regulatory": "unavailable",
+        "risk_assessment": "estimated",
+        "growth_strategy": "assumed",
+        "opportunity_ranking": "estimated",
+        "source_verification": "verified"
+      }
+    }
+  }
+}

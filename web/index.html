@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BizCrax36 — 360° Command Center</title>
+<style>
+:root{color-scheme:dark;--bg:#091525;--panel:#10233b;--panel2:#132c47;--line:#365574;--txt:#edf5ff;--mut:#9db4cc;--acc:#37a3f0;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;--v:#34d399;--e:#fbbf24;--a:#9db4cc;--u:#f87171}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:linear-gradient(135deg,#0c2038,#123152);padding:18px 20px;border-bottom:1px solid var(--line)}
+header h1{margin:0;font-size:21px;letter-spacing:.3px}
+header small{color:var(--mut)}
+main{padding:18px;max-width:1200px;margin:auto}
+.controls{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin:14px 0}
+@media(max-width:760px){.controls{grid-template-columns:1fr 1fr}.controls .grow{grid-column:1/-1}}
+input,select,button{border:1px solid #456584;border-radius:10px;background:#17334f;color:#fff;padding:11px 12px;font:inherit}
+input{min-width:0}
+button{cursor:pointer;background:#176ac0}
+button:active{transform:translateY(1px)}
+button.ghost{background:transparent;border-color:#456584;color:var(--mut)}
+button:disabled{opacity:.5;cursor:wait}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.card h2{margin:0 0 10px;font-size:15px;color:var(--mut);text-transform:uppercase;letter-spacing:.8px}
+.stat{font-size:26px;font-weight:700}
+.stat small{font-size:12px;color:var(--mut);display:block;font-weight:400}
+.pipeline{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+.stage{flex:1;min-width:100px;text-align:center;border:1px solid var(--line);border-radius:10px;padding:8px 6px;background:var(--panel2);color:var(--mut);font-size:12px}
+.stage .t{display:block;margin-top:2px;font-size:11px;opacity:.8}
+.stage.active{border-color:var(--acc);color:var(--txt);box-shadow:0 0 0 2px rgba(55,163,240,.25)}
+.stage.done{border-color:var(--ok);color:var(--ok)}
+.tag{display:inline-block;border:1px solid #6884a0;border-radius:20px;padding:2px 10px;font-size:11.5px;margin-right:6px}
+.tag.v{border-color:var(--v);color:var(--v)}
+.tag.e{border-color:var(--e);color:var(--e)}
+.tag.a{border-color:var(--a);color:var(--a)}
+.tag.u{border-color:var(--u);color:var(--u)}
+.lead{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0;background:var(--panel2)}
+.lead .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.lead h3{margin:0;font-size:15px}
+.lead .score{font-weight:800;font-size:17px;white-space:nowrap}
+.bar{height:8px;border-radius:6px;background:#1c3a5c;overflow:hidden;margin:8px 0 6px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#38bdf8)}
+.bar i.low{background:linear-gradient(90deg,#475569,#64748b)}
+.lead a{color:#8cc9ff;text-decoration:none;font-size:13px;word-break:break-all}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:8px}
+.metric{background:#0e2036;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px}
+.metric b{display:block;font-size:16px}
+.metric .basis{font-size:10.5px;color:var(--mut)}
+section.dossier{margin-top:18px}
+.dossier details{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin:8px 0;padding:0}
+.dossier summary{cursor:pointer;padding:12px 16px;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.dossier summary::-webkit-details-marker{display:none}
+.dossier .body{padding:0 16px 14px;color:var(--txt);font-size:14px}
+.dossier .body li{margin:5px 0}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+@media(max-width:800px){.chart-row{grid-template-columns:1fr}}
+.chart-row .card{padding:12px}
+svg text{fill:var(--mut);font:11px system-ui,sans-serif}
+.notice{background:#17334f;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:14px 0;font-size:13px;color:var(--mut)}
+#status{color:var(--mut);min-height:22px;margin:8px 0}
+#status.err{color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #1e3a5a}
+th{color:var(--mut);font-weight:600}
+.jobrow{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:9px 4px;border-bottom:1px solid #1e3a5a;font-size:13.5px}
+.jobrow:last-child{border-bottom:0}
+.spinning{display:inline-block;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.hidden{display:none}
+.fin{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+@media(max-width:700px){.fin{grid-template-columns:1fr 1fr}}
+footer{color:var(--mut);font-size:12px;padding:18px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <h1>🌐 BizCrax36 — 360° Command Center <button id="cfg" class="ghost" style="padding:2px 10px;font-size:13px;vertical-align:middle">⚙️</button></h1>
+  <small>Agentic Research V2 · one orchestrator · evidence-first · low→high capital bands</small>
+</header>
+<main>
+  <div class="notice">
+    Evidence-first research: every lead is <b>review_required</b> until issuer, demand and cost evidence
+    is independently confirmed. Sections are labeled <span class="tag v">VERIFIED</span>
+    <span class="tag e">ESTIMATED</span> <span class="tag a">ASSUMED</span> <span class="tag u">UNAVAILABLE</span>.
+    Scores are preliminary heuristics, not profitability claims.
+  </div>
+
+  <div class="controls">
+    <input id="topic" class="grow" placeholder="Research any business topic — e.g. energy efficiency services" aria-label="Topic">
+    <select id="capital" aria-label="Capital band">
+      <option value="all">All capital</option>
+      <option value="micro">Micro (RM 0–10k)</option>
+      <option value="small">Small (RM 10k–250k)</option>
+      <option value="medium">Medium (RM 250k–2M)</option>
+      <option value="large">Large (RM 2M+)</option>
+    </select>
+    <input id="country" placeholder="Country (default Malaysia)" aria-label="Country">
+    <button id="go">🚀 Research</button>
+  </div>
+  <p id="status" role="status" aria-live="polite">Ready. Send a topic or tap a stored job below.</p>
+
+  <div id="result" class="hidden">
+    <div class="grid">
+      <div class="card"><h2>Pipeline</h2><div class="pipeline" id="pipeline"></div></div>
+      <div class="card"><h2>Evidence</h2>
+        <div class="grid" style="grid-template-columns:1fr 1fr">
+          <div class="stat"><span id="st-leads">–</span><small>candidate leads</small></div>
+          <div class="stat"><span id="st-verified">–</span><small>source-verified</small></div>
+          <div class="stat"><span id="st-top">–</span><small>top score /100</small></div>
+          <div class="stat"><span id="st-time">–</span><small>total seconds</small></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="dl-docx" class="ghost">📄 Download full report (DOCX)</button>
+      <button id="copy-summary" class="ghost">📋 Copy summary</button>
+    </div>
+
+    <div class="card">
+      <h2>Charts</h2>
+      <div class="chart-row">
+        <div class="card"><h2 style="font-size:12px">Top leads — preliminary score</h2><div id="chart-scores"></div></div>
+        <div class="card"><h2 style="font-size:12px">Top lead — metric breakdown</h2><div id="chart-metrics"></div></div>
+      </div>
+      <details style="margin-top:8px"><summary>Financial scenario chart (optional, user inputs only)</summary>
+        <div class="fin" id="fin">
+          <input id="f-startup" type="number" placeholder="Startup cost RM" min="0">
+          <input id="f-price" type="number" placeholder="Price per sale RM" min="0">
+          <input id="f-variable" type="number" placeholder="Variable cost RM" min="0">
+          <input id="f-fixed" type="number" placeholder="Monthly fixed RM" min="0">
+          <input id="f-volume" type="number" placeholder="Sales / month" min="0">
+          <input id="f-cash" type="number" placeholder="Cash available RM" min="0">
+        </div>
+        <button id="fin-go" class="ghost" style="margin-top:8px">Calculate 12-month scenarios</button>
+        <div id="fin-out" class="card" style="margin-top:8px"></div>
+      </details>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h2>Top leads (high value first)</h2>
+      <div id="leads"></div>
+    </div>
+
+    <section class="dossier">
+      <div class="card"><h2>360° Dossier — 14 sections</h2><div id="dossier"></div></div>
+    </section>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2>Stored research jobs</h2>
+    <div id="jobs"><span style="color:var(--mut)">Loading…</span></div>
+  </div>
+</main>
+<footer>BizCrax36 · Agentic Research V2 · research leads only — verify sources, deadlines and costs before acting.</footer>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+// API base: empty when served by the Python web API (same origin);
+// configurable (localStorage "bc36base") when running offline from file:// (APK).
+const API_BASE=()=> location.protocol==="file:" ? (localStorage.getItem("bc36base")||"http://10.0.2.2:8765") : "";
+
+function barSVG(rows){
+  const W=560,rowH=34,h=40+rows.length*rowH;
+  let out=`<svg viewBox="0 0 ${W} ${h}" width="100%" role="img" aria-label="score chart">`;
+  rows.forEach((r,i)=>{
+    const y=34+i*rowH, bw=Math.max(3,(W-210)*r.value/100);
+    out+=`<text x="0" y="${y-4}">${esc(r.label)}</text>`;
+    out+=`<rect x="0" y="${y}" width="${bw}" height="14" rx="4" fill="${r.verified?"#38bdf8":"#475569"}"/>`;
+    out+=`<text x="${bw+8}" y="${y+11}">${r.value}/100${r.verified?"  ✓":""}</text>`;
+  });
+  out+=`</svg>`;
+  return out;
+}
+function metricSVG(m){
+  const W=560,rows=Object.entries(m.metrics||{}).map(([k,v])=>({label:k.replace(/_/g," "),value:v.value,basis:v.basis}));
+  const rowH=44,h=30+rows.length*rowH;
+  let out=`<svg viewBox="0 0 ${W} ${h}" width="100%" role="img" aria-label="metric chart">`;
+  rows.forEach((r,i)=>{
+    const y=24+i*rowH,bw=Math.max(3,(W-260)*r.value/100);
+    out+=`<text x="0" y="${y-4}">${esc(r.label)}</text>`;
+    out+=`<rect x="0" y="${y}" width="${bw}" height="12" rx="4" fill="${r.basis==="evidence"?"#34d399":"#64748b"}"/>`;
+    out+=`<text x="${bw+8}" y="${y+10}">${r.value} · ${esc(r.basis)}</text>`;
+  });
+  out+=`<text x="0" y="${h-8}">green = evidence-based · gray = assumed · weights: demand 25, others 15</text>`;
+  return out+`</svg>`;
+}
+function lineSVG(series){
+  const W=560,H=260,p={x0:50,y0:20,x1:W-15,y1:H-40};
+  const vals=series.flatMap(s=>s.values);
+  let lo=Math.min(...vals),hi=Math.max(...vals); if(lo===hi)hi=lo+1;
+  const X=i=>p.x0+(i/(series[0].values.length-1))*(p.x1-p.x0);
+  const Y=v=>p.y1-((v-lo)/(hi-lo))*(p.y1-p.y0);
+  let out=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="scenario chart">`;
+  const zero=lo<0&&hi>0?Y(0):null;
+  if(zero!==null)out+=`<line x1="${p.x0}" y1="${zero}" x2="${p.x1}" y2="${zero}" stroke="#475569" stroke-dasharray="4 4"/>`;
+  series.forEach(s=>{
+    const pts=s.values.map((v,i)=>`${X(i)},${Y(v)}`).join(" ");
+    out+=`<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2"/>`;
+  });
+  out+=`<text x="${p.x0}" y="${H-12}">M1</text><text x="${p.x1-24}" y="${H-12}">M12</text>`;
+  out+=`<text x="0" y="14">unit: RM (thousands) · illustrative, user-supplied inputs only</text></svg>`;
+  return out;
+}
+function localScenarios(f){
+  const contrib=f.price-f.variable, start=f.cash-f.startup;
+  const mk=m=>{let c=start,arr=[];for(let i=0;i<12;i++){if(i>0)c+=(contrib*f.volume*m-f.fixed);arr.push(Math.round(c/1000*10)/10)}return arr};
+  return [
+    {label:"0.5x",color:"#f87171",values:mk(0.5)},
+    {label:"1x",color:"#38bdf8",values:mk(1)},
+    {label:"1.5x",color:"#34d399",values:mk(1.5)}
+  ];
+}
+
+const STAGES=["queued","researching","verifying","scoring","completed"];
+function renderPipeline(job){
+  const st=job.stages||[];
+  $("pipeline").innerHTML=STAGES.map(s=>{
+    const at=st.find(x=>x.name===s);
+    const cls=at?"done":(job.status===s?"active":"");
+    return `<div class="stage ${cls}">${s}${at?`<span class="t">${at.seconds}s</span>`:""}</div>`;
+  }).join("");
+}
+function renderResult(data){
+  const {job,result,dossier}=data;
+  $("result").classList.remove("hidden");
+  renderPipeline(job);
+  $("st-leads").textContent=job.diagnostics?.candidates??result.candidates.length;
+  $("st-verified").textContent=job.diagnostics?.source_verified??0;
+  $("st-top").textContent=job.diagnostics?.top_score??"–";
+  $("st-time").textContent=job.diagnostics?.duration_seconds??"–";
+  const top=result.candidates.slice(0,8).map(c=>({label:c.title.slice(0,34),value:c.score?.total??0,verified:!!c.verification?.verified}));
+  $("chart-scores").innerHTML=top.length?barSVG(top):"<span style='color:var(--mut)'>No candidates.</span>";
+  $("chart-metrics").innerHTML=(result.candidates[0]?.score?.metrics)?metricSVG(result.candidates[0].score):"<span style='color:var(--mut)'>No metrics.</span>";
+  $("leads").innerHTML=result.candidates.slice(0,10).map((c,i)=>{
+    const s=c.score||{},v=c.verification||{};
+    return `<div class="lead"><div class="top"><h3>${i+1}. ${esc(c.title)} ${v.verified?"✅":"🔎"}</h3><div class="score" style="color:${(s.total||0)>=60?"var(--ok)":"var(--warn)"}">${s.total??0}/100</div></div>
+    <div class="bar"><i class="${(s.total||0)>=60?"":"low"}" style="width:${s.total||0}%"></i></div>
+    <div style="font-size:12.5px;color:var(--mut)">${esc(v.verified?("source verified "+(v.retrieved_at||"")):"review required — fetch source before acting")}</div>
+    ${c.source_url?`<div><a href="${esc(c.source_url)}" target="_blank" rel="noopener noreferrer">${esc(c.source_url)}</a></div>`:""}
+    </div>`;
+  }).join("")||"<span style='color:var(--mut)'>No candidates discovered.</span>";
+  $("dossier").innerHTML=Object.entries(dossier.sections).map(([k,sec])=>{
+    const cls={verified:"v",estimated:"e",assumed:"a",unavailable:"u"}[sec.label]||"a";
+    return `<details ${k==="executive_summary"?"open":""}><summary><span>${esc(sec.title)}</span><span class="tag ${cls}">${sec.label.toUpperCase()}</span></summary>
+    <div class="body"><ul>${sec.content.map(l=>`<li>${esc(l)}</li>`).join("")}</ul></div></details>`;
+  }).join("");
+  $("dl-docx").onclick=()=>location.href=API_BASE()+"/api/job/"+job.id+"/report";
+  $("copy-summary").onclick=async()=>{
+    try{await navigator.clipboard.writeText(data.summary);$("copy-summary").textContent="✅ Copied";}catch(e){$("copy-summary").textContent="Copy failed";}
+  };
+}
+
+async function research(){
+  const topic=$("topic").value.trim();
+  if(!topic){$("status").textContent="Enter a research topic first.";return;}
+  const capital=$("capital").value,country=$("country").value.trim()||"Malaysia";
+  $("status").className="";$("status").innerHTML=`<span class="spinning">⏳</span> Queued — discovering (round 1: demand, round 2: gaps), verifying sources, scoring… this can take 10–60s.`;
+  $("go").disabled=true;
+  try{
+    const r=await fetch(API_BASE()+`/api/research?topic=${encodeURIComponent(topic)}&capital=${capital}&country=${encodeURIComponent(country)}`,{cache:"no-store"});
+    const data=await r.json();
+    if(!r.ok)throw new Error(data.detail||data.error||("HTTP "+r.status));
+    renderResult(data);
+    $("status").className="";
+    $("status").textContent=`✅ Completed in ${data.job.diagnostics?.duration_seconds??"?"}s — ${data.job.diagnostics?.candidates??0} leads, ${data.job.diagnostics?.source_verified??0} source-verified.`;
+    loadJobs();
+  }catch(e){
+    $("status").className="err";$("status").textContent="❌ "+e.message;
+  }finally{$("go").disabled=false;}
+}
+$("go").onclick=research;
+$("topic").onkeydown=e=>{if(e.key==="Enter")research()};
+$("cfg").onclick=()=>{
+  const cur=location.protocol==="file:"?(localStorage.getItem("bc36base")||"http://10.0.2.2:8765"):"";
+  const next=prompt("Backend base URL (empty = same origin):\n"+
+    "Serve the engine: python -m backend.web_api --host 0.0.0.0 --port 8765\n"+
+    "Phone → this machine's LAN IP, e.g. http://192.168.1.20:8765\nEmulator: http://10.0.2.2:8765",cur);
+  if(next===null)return;
+  localStorage.setItem("bc36base",next.trim());
+  location.reload();
+};
+
+$("fin-go").onclick=()=>{
+  const f={startup:+$("f-startup").value||0,price:+$("f-price").value||0,variable:+$("f-variable").value||0,
+           fixed:+$("f-fixed").value||0,volume:+$("f-volume").value||0,cash:+$("f-cash").value||0};
+  if(!f.price||!f.volume){$("fin-out").innerHTML="<span style='color:var(--mut)'>Price and volume are required.</span>";return;}
+  const series=localScenarios(f);
+  const contrib=f.price-f.variable,be=contrib>0?Math.ceil(f.fixed/contrib):null;
+  $("fin-out").innerHTML=lineSVG(series)+`<div style="font-size:13px;margin-top:8px">
+    Contribution/sale: RM ${contrib.toLocaleString()} · Break-even: <b>${be===null?"no break-even (negative margin)":be+" sales/month"}</b> ·
+    Monthly operating profit @1x: RM ${(contrib*f.volume-f.fixed).toLocaleString()}.
+    <br><small style="color:var(--mut)">Formula: break-even = fixed cost ÷ (price − variable cost). User inputs only — no market data assumed.</small></div>`;
+};
+
+async function loadJobs(){
+  try{
+    const r=await fetch(API_BASE()+"/api/jobs",{cache:"no-store"});
+    const data=await r.json();
+    if(!data.jobs?.length){$("jobs").innerHTML="<span style='color:var(--mut)'>No stored jobs yet — run a research above.</span>";return;}
+    $("jobs").innerHTML=data.jobs.map(j=>`<div class="jobrow">
+      <div><b>${esc(j.query)}</b> <span style="color:var(--mut)">· ${esc(j.capital)} · ${esc(j.finished_at?.slice(0,16)||"")}</span><br>
+      <small style="color:var(--mut)">${j.diagnostics?.candidates??0} leads · top ${j.diagnostics?.top_score??"–"}/100 · ${j.diagnostics?.duration_seconds??"?"}s</small></div>
+      <div style="display:flex;gap:6px">
+        <button class="ghost" data-load="${j.id}">Open</button>
+        <a class="ghost" style="display:inline-flex;align-items:center;text-decoration:none" href="${API_BASE()}/api/job/${j.id}/report">📄</a>
+      </div></div>`).join("");
+    $("jobs").querySelectorAll("[data-load]").forEach(b=>b.onclick=async()=>{
+      const r2=await fetch(API_BASE()+"/api/job/"+b.dataset.load,{cache:"no-store"});
+      const job=await r2.json();
+      renderResult({job,result:job.result,dossier:buildLocalDossier(job),summary:""});
+      window.scrollTo({top:$("result").offsetTop-90,behavior:"smooth"});
+    });
+  }catch(e){$("jobs").innerHTML="<span style='color:var(--mut)'>Jobs API unavailable.</span>";}
+}
+function buildLocalDossier(job){
+  if(job.dossier && job.dossier.sections) return job.dossier;
+  // Rebuild minimal dossier sections from stored result when API returns raw job.
+  const r=job.result||{};
+  const secs={};
+  const put=(k,t,label,lines)=>secs[k]={title:t,label,content:lines};
+  put("executive_summary","Executive summary","estimated",[
+    `Topic: ${r.plan?.query} | Country: ${r.plan?.country} | Capital: ${r.plan?.capital}`,
+    `Leads: ${(r.candidates||[]).length} · source-verified: ${(r.candidates||[]).filter(c=>c.verification?.verified).length} · errors: ${(r.errors||[]).length}`]);
+  put("customer_demand","Customer demand","assumed",(r.candidates||[]).slice(0,5).map(c=>c.title+" — "+(c.source_url||"")));
+  put("competition","Competition",r.gap_hits?.competition?"estimated":"assumed",[`Round-2 competition headlines: ${r.gap_hits?.competition??0}`]);
+  put("financial_forecast","Financial forecast","unavailable",["No forecast without real inputs — use the scenario calculator above."]);
+  put("funding_investment","Funding and investment","estimated",["SME Bank facilities (smebank.com.my) · MIDA incentives · SME Corp grants · SEDA efficiency schemes — verify eligibility."]);
+  put("risk_assessment","Risk assessment","estimated",[`${(r.errors||[]).length} source error(s). Headlines ≠ confirmed demand. Funding is eligibility-gated.`]);
+  put("opportunity_ranking","Opportunity ranking","estimated",(r.candidates||[]).slice(0,10).map((c,i)=>`${i+1}. ${c.title} — ${c.score?.total}/100`));
+  put("source_verification","Source verification","verified",(r.candidates||[]).slice(0,15).map(c=>`${c.verification?.verified?"[verified]":"[review]"} ${c.source_url||"no link"}`));
+  return {sections:secs};
+}
+loadJobs();
+</script>
+</body>
+</html>

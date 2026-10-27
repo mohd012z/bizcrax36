@@ -1,0 +1,32 @@
+{
+  "schema_version": 2,
+  "generated_at": "2026-10-27T13:43:09.671387+00:00",
+  "topic": "food business in Malaysia",
+  "country": "Malaysia",
+  "capital_band": "small",
+  "docx": "/opt/data/cache/scratch/bizcrax36/data/research-jobs/87ee079cb830/report.docx",
+  "charts": [
+    "/opt/data/cache/scratch/bizcrax36/data/research-jobs/87ee079cb830/charts/scores.png",
+    "/opt/data/cache/scratch/bizcrax36/data/research-jobs/87ee079cb830/charts/metrics.png"
+  ],
+  "summary": {
+    "candidates": 87,
+    "top_score": 48,
+    "sections": {
+      "executive_summary": "estimated",
+      "industry_intelligence": "unavailable",
+      "customer_demand": "assumed",
+      "competition": "estimated",
+      "business_model": "unavailable",
+      "startup_capital": "assumed",
+      "financial_forecast": "unavailable",
+      "funding_investment": "estimated",
+      "supply_chain": "unavailable",
+      "legal_regulatory": "assumed",
+      "risk_assessment": "estimated",
+      "growth_strategy": "assumed",
+      "opportunity_ranking": "estimated",
+      "source_verification": "verified"
+    }
+  }
+}
