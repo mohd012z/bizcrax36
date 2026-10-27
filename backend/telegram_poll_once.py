@@ -31,8 +31,15 @@ def process_update(update, *, send, allowed_ids, database, ideas):
             return "denied"
         text,markup=handle_callback(callback.get("data",""),database,ideas)
         # Acknowledge only after successful message delivery.
-        send("sendMessage",{"chat_id":chat_id,"text":text[:4000],
-            "reply_markup":markup,"disable_web_page_preview":"true"})
+        original=callback.get("message") or {}
+        message_id=original.get("message_id")
+        if isinstance(message_id,int):
+            send("editMessageText",{"chat_id":chat_id,"message_id":message_id,
+                "text":text[:4000],"reply_markup":markup,
+                "disable_web_page_preview":"true"})
+        else:
+            send("sendMessage",{"chat_id":chat_id,"text":text[:4000],
+                "reply_markup":markup,"disable_web_page_preview":"true"})
         if callback_id:
             send("answerCallbackQuery",{"callback_query_id":callback_id})
         return "sent"
@@ -58,15 +65,31 @@ def poll_once(token,allowed_ids,database,ideas,telegram_api=api,max_updates=50):
     updates=call("getUpdates",{"timeout":0,"limit":max_updates,
         "allowed_updates":json.dumps(["message","callback_query"])})
     processed=0
+    # Collapse repeated /start messages from the same chat in this batch.
+    # Preserve the newest /start and all other commands and button callbacks.
+    newest_start={}
+    for update in updates:
+        message=update.get("message") if isinstance(update,dict) else None
+        if isinstance(message,dict) and str(message.get("text","")).strip().split("@")[0]=="/start":
+            chat_id=(message.get("chat") or {}).get("id")
+            newest_start[chat_id]=update.get("update_id")
+    suppressed=0
     for update in updates:
         if not isinstance(update,dict) or not isinstance(update.get("update_id"),int):
             raise ValueError("invalid Telegram update")
-        process_update(update,send=call,allowed_ids=allowed_ids,database=database,ideas=ideas)
+        message=update.get("message")
+        is_start=isinstance(message,dict) and str(message.get("text","")).strip().split("@")[0]=="/start"
+        chat_id=(message.get("chat") or {}).get("id") if isinstance(message,dict) else None
+        if is_start and newest_start.get(chat_id)!=update["update_id"]:
+            suppressed+=1
+        else:
+            process_update(update,send=call,allowed_ids=allowed_ids,database=database,ideas=ideas)
         # Telegram confirms updates strictly below offset. This avoids replay
         # across ephemeral GitHub runners. A failed send stops before ack.
         call("getUpdates",{"timeout":0,"limit":1,"offset":update["update_id"]+1,
             "allowed_updates":json.dumps(["message","callback_query"])})
         processed+=1
+    print(f"Telegram updates acknowledged: {processed}; repeated starts skipped: {suppressed}")
     return processed
 
 def main():
