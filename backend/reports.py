@@ -244,29 +244,36 @@ def render_scenario_chart(series, path, title="ILLUSTRATIVE CASH FLOW SCENARIOS 
     c.text(16, 386, "Unit: %s. Inputs supplied by the user; no market data assumed." % unit, FAINT, 1)
     return _save(path, c)
 
-def render_flow_chart(flow, path, title="IMPLEMENTATION FLOW — DISCOVER → SCALE"):
+def render_flow_chart(flow, path, title="IMPLEMENTATION FLOW"):
     from pathlib import Path
     path = Path(path)
-    c = Canvas(640, 150)
-    c.text(16, 14, title, FAINT, 1)
     n = len(flow) or 1
-    gap = 12
-    bw = int((640 - 32 - gap * (n - 1)) / n)
-    x = 16
+    c = Canvas(640, 210)
+    c.text(16, 14, title[:46], FAINT, 1)
+    gap = 10
+    x0, x1 = 16, 640 - 16
+    bw = int((x1 - x0 - gap * (n - 1)) / n)
+    y = 50
+    x = x0
     for i, stage in enumerate(flow):
         color = INK if i % 2 == 0 else INK_ALT
-        c.fill_rect(x, 46, x + bw, 78, color)
-        label = (stage.get("stage") or "?")[:8]
-        c.text(x + 4, 56, label, (255, 255, 255), 1)
+        c.fill_rect(x, y, x + bw, y + 30, color)
+        label = (stage.get("stage") or "?")[:max(4, bw // 6 - 1)]
+        c.text(x + 3, y + 9, label, (255, 255, 255), 1)
         if i < n - 1:
             ax = x + bw
-            c.line(ax + 1, 62, ax + gap, 62, (100, 116, 139))
-            c.line(ax + gap - 3, 58, ax + gap, 62, (100, 116, 139))
-            c.line(ax + gap - 3, 66, ax + gap, 62, (100, 116, 139))
-        note = (stage.get("note") or "")[:30]
-        c.text(x, 88, note, LABEL, 1)
+            c.line(ax + 1, y + 15, ax + gap, y + 15, (100, 116, 139))
+            c.line(ax + gap - 3, y + 11, ax + gap, y + 15, (100, 116, 139))
+            c.line(ax + gap - 3, y + 19, ax + gap, y + 15, (100, 116, 139))
         x += bw + gap
-    c.text(16, 130, "Standard go/no-go gated flow. Each stage produces evidence before the next begins.", FAINT, 1)
+    # Stage outputs as a clean list below (avoids per-box label collision).
+    c.text(16, 92, "STAGE OUTPUT (go/no-go gate):", LABEL, 1)
+    ly = 108
+    for stage in flow:
+        c.text(16, ly, "- %s: %s" % (stage.get("stage", "?"),
+                                     (stage.get("note") or "")[:60]), FAINT, 1)
+        ly += 14
+    c.text(16, ly + 2, "Each stage must produce evidence before the next begins.", FAINT, 1)
     return _save(path, c)
 
 
@@ -537,7 +544,7 @@ def generate_news_report(dossier, plan, out_dir):
     os.makedirs(charts_dir, exist_ok=True)
     images = []
     render_flow_chart(plan.get("flow") or [], os.path.join(charts_dir, "flow.png"))
-    images.append(("flow.png", 640, 150, "flow"))
+    images.append(("flow.png", 640, 210, "flow"))
     budget = plan.get("budget") or {}
     render_budget_chart(budget, os.path.join(charts_dir, "budget.png"))
     images.append(("budget.png", 640, 90 + len((budget.get("items") or {})) * 40, "budget"))
