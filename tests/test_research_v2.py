@@ -132,6 +132,59 @@ class BandTests(unittest.TestCase):
         self.assertEqual(research_v2.band_of(10_000_000), "large")
 
 
+class ShortenUrlTests(unittest.TestCase):
+    def test_short_publisher_url_passes_through(self):
+        # <=70 chars and not a wrapper -> unchanged (no network call)
+        self.assertEqual(research_v2.shorten_url("https://example.org/a"),
+                         "https://example.org/a")
+
+    def test_short_wrapper_passes_through(self):
+        # news.google.com but short -> unchanged
+        self.assertEqual(research_v2.shorten_url("https://news.google.com/a"),
+                         "https://news.google.com/a")
+
+    def test_long_wrapper_gets_shortened(self):
+        long_url = ("https://news.google.com/rss/articles/"
+                    "CBMi8AFBVV95cUxOWjZUbUhuamFLTV9xbHNBMDZ1T05MbW1hU1hrT" + "x" * 200)
+        # offline fetch returns a fixed is.gd link
+        def fetch(target):
+            return b"https://is.gd/abcd12"
+        self.assertEqual(research_v2.shorten_url(long_url, fetch=fetch),
+                         "https://is.gd/abcd12")
+
+    def test_fallback_when_ismain_fails(self):
+        long_url = ("https://news.google.com/rss/articles/"
+                    "CBMi8AFBVV95cUxOWjZUbUhuamFLTV9xbHNBMDZ1T05MbW1hU1hrT" + "y" * 200)
+        calls = []
+        def fetch(target):
+            calls.append(target)
+            if "is.gd" in target:
+                raise OSError("down")
+            return b"https://tinyurl.com/zz99"
+        self.assertEqual(research_v2.shorten_url(long_url, fetch=fetch),
+                         "https://tinyurl.com/zz99")
+        self.assertTrue(any("is.gd" in t for t in calls))
+        self.assertTrue(any("tinyurl" in t for t in calls))
+
+    def test_fail_open_returns_original(self):
+        long_url = ("https://news.google.com/rss/articles/"
+                    "CBMi8AFBVV95cUxOWjZUbUhuamFLTV9xbHNBMDZ1T05MbW1hU1hrT" + "z" * 200)
+        def fetch(target):
+            raise OSError("both down")
+        self.assertEqual(research_v2.shorten_url(long_url, fetch=fetch), long_url)
+
+    def test_cached(self):
+        long_url = ("https://news.google.com/rss/articles/"
+                    "CBMi8AFBVV95cUxOWjZUbUhuamFLTV9xbHNBMDZ1T05MbW1hU1hrT" + "c" * 200)
+        calls = []
+        def fetch(target):
+            calls.append(1)
+            return b"https://is.gd/cache1"
+        self.assertEqual(research_v2.shorten_url(long_url, fetch=fetch), "https://is.gd/cache1")
+        n = len(calls)
+        self.assertEqual(research_v2.shorten_url(long_url, fetch=fetch), "https://is.gd/cache1")
+        self.assertEqual(len(calls), n)  # second call served from cache
+
 class VerifyTests(unittest.TestCase):
     def test_verified_on_title_match(self):
         candidate = {"title": "Solar panel maintenance demand surges in Malaysia",

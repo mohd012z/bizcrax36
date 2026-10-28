@@ -19,7 +19,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from backend.telegram_bot import api,allowed,search_text,handle_callback,BASE
-from backend.telegram_menu import home, sectors, research_help, report_menu, news_menu
+from backend.telegram_menu import home, sectors, research_help, report_menu, news_menu, news_page_menu
 from backend.telegram_result_utils import deduplicate_ideas
 from backend.dossier import build as build_dossier, summary_text
 from backend.research_queue import run_job, is_duplicate, diagnostics_line, validate_topic
@@ -122,9 +122,12 @@ def _multipart_send(token, method, fields, file_field, file_path):
         body+=("--%s\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n"
                %(boundary,key,value)).encode("utf-8")
     file_name=os.path.basename(str(file_path))
+    mime={".pdf":"application/pdf",
+          ".docx":"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}.get(
+              os.path.splitext(str(file_path))[1].lower(),"application/octet-stream")
     body+=("--%s\r\nContent-Disposition: form-data; name=\"%s\"; filename=\"%s\"\r\n"
-           "Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document\r\n\r\n"
-           %(boundary,file_field,file_name)).encode("utf-8")
+           "Content-Type: %s\r\n\r\n"
+           %(boundary,file_field,file_name,mime)).encode("utf-8")
     body+=Path(str(file_path)).read_bytes()
     body+=("\r\n--%s--\r\n"%boundary).encode("utf-8")
     req=Request("https://api.telegram.org/bot%s/%s"%(token,method),data=body,method="POST")
@@ -136,20 +139,39 @@ def _multipart_send(token, method, fields, file_field, file_path):
     return data["result"]
 
 def deliver_report(token,chat_id,job):
-    """Send the stored DOCX report for a completed job. Returns True on success."""
-    docx=job_dir(job["id"])/"report.docx"
+    """Send the stored proposal (DOCX + locked PDF) for a completed job.
+    Falls back to the legacy report.docx name for pre-rename jobs.
+    Returns True if at least one file was sent."""
+    jd=job_dir(job["id"])
+    docx=jd/"proposal.docx" if (jd/"proposal.docx").exists() else jd/"report.docx"
+    pdf=jd/"proposal.pdf"
     if not docx.exists():
         return False
     d=job.get("diagnostics") or {}
-    caption=("360° Report — %s\n%s | %d leads | %d source-verified | top score %s/100\n"
+    caption=("Business Plan Proposal — %s\n%s | %d leads | %d source-verified | top score %s/100\n"
              "All leads review_required until independently verified.")% (
         job.get("query"),job.get("country"),d.get("candidates",0),
         d.get("source_verified",0),d.get("top_score","?"))[:1000]
-    _multipart_send(token,"sendDocument",
-                    {"chat_id":str(chat_id),"caption":caption,
-                     "disable_web_page_preview":"true"},
-                    "document",docx)
-    return True
+    sent=False
+    try:
+        _multipart_send(token,"sendDocument",
+                        {"chat_id":str(chat_id),"caption":caption,
+                         "disable_web_page_preview":"true"},
+                        "document",docx)
+        sent=True
+    except Exception:
+        sent=False
+    if pdf.exists():
+        try:
+            _multipart_send(token,"sendDocument",
+                            {"chat_id":str(chat_id),
+                             "caption":"Locked print-only version. Full editable version above.",
+                             "disable_web_page_preview":"true"},
+                            "document",pdf)
+            sent=True
+        except Exception:
+            pass
+    return sent
 
 # ----------------------------------------------------------------- research flow
 
@@ -279,18 +301,99 @@ def _news_docx_send(token, chat_id, docx, caption):
                      "disable_web_page_preview": "true"},
                     "document", docx)
 
-def news_scan_text(items, errors):
-    lines = ["📰 News agent — business-development scan",
-             "Read %d headlines across %d feeds in a few seconds." % (
-                 len(items), len({i.get("source") for i in items}))]
-    if errors:
+_NEWS_CACHE_TTL = 180  # seconds; Next/page taps reuse the same scan, no re-fetch
+_news_cache = {}
+
+NEWS_PAGE_SIZE = 10
+
+
+def _news_topic_key(topic):
+    return topic if topic and topic in news_agent.TOPIC_FEEDS else "all"
+
+
+_DISPLAY_LINK_CACHE = {}
+
+
+def _display_link(link):
+    """Shorten opaque news.google.com wrappers (is.gd, cached, fail-open);
+    real publisher URLs pass through untouched."""
+    if not link or not link.startswith("http"):
+        return link
+    if "news.google.com" not in link and "apiclick.aspx" not in link:
+        return link
+    if link in _DISPLAY_LINK_CACHE:
+        return _DISPLAY_LINK_CACHE[link]
+    out = link
+    try:
+        from backend import research_v2
+        out = research_v2.shorten_url(link)
+    except Exception:
+        out = link
+    _DISPLAY_LINK_CACHE[link] = out
+    return out
+
+
+def news_scan_text(items, errors, topic="all", page=1):
+    t = _news_topic_key(topic)
+    label = news_agent.TOPIC_LABELS.get(t, "📰 All sources")
+    page_count = max(1, (len(items) + NEWS_PAGE_SIZE - 1) // NEWS_PAGE_SIZE)
+    page = min(max(1, page), page_count)
+    start = (page - 1) * NEWS_PAGE_SIZE
+    chunk = items[start:start + NEWS_PAGE_SIZE]
+    srcs = len({i.get("source") for i in items})
+    lines = ["%s — page %d/%d · %d items from %d sources" % (label, page, page_count, len(items), srcs)]
+    if t != "all":
+        lines.append("Filter: %s · MY + global · last 24-48h" % label)
+    if errors and page == 1:
         lines.append("Feed errors (fail-open): %d" % len(errors))
-    for it in items[:18]:
+    for it in chunk:
+        link = _display_link((it.get("link") or it.get("url") or "").strip())
         lines.append("• [%s] %s" % (it.get("source", "?")[:24], it.get("title", "")[:110]))
+        if link and link.startswith("http"):
+            lines.append("   %s" % link)
     lines.append("")
-    lines.append("👉 To build a full business plan + DOCX from one of these, "
-                 "send the article link to me, or use /newsplan on your last research.")
+    lines.append("👉 Send an article link to build a full business plan + DOCX (or /newsplan).")
     return "\n".join(lines)[:4000]
+
+
+def run_news_scan(token, send, chat_id, topic="all", page=1):
+    t = _news_topic_key(topic)
+    label = news_agent.TOPIC_LABELS.get(t, "📰 All")
+    page = max(1, int(page or 1))
+    now = datetime.now(timezone.utc)
+    cached = _news_cache.get(t)
+    if cached and (now - cached[0]).total_seconds() < _NEWS_CACHE_TTL:
+        items, errors = cached[1], cached[2]
+        page_count = max(1, (len(items) + NEWS_PAGE_SIZE - 1) // NEWS_PAGE_SIZE)
+        if page <= page_count:
+            send("sendMessage", {"chat_id": chat_id, "text": news_scan_text(items, errors, t, page),
+                "reply_markup": news_page_menu(t, page, page > 1, page < page_count),
+                "disable_web_page_preview": "true"})
+            return
+    send("sendMessage", {"chat_id": chat_id, "text": "📰 Scanning %s business feeds (Malaysia + global)…" % ("all" if t == "all" else label),
+        "reply_markup": news_menu(), "disable_web_page_preview": "true"})
+    try:
+        if t == "all":
+            items, errors = news_agent.scan(limit=25, workers=8)
+        else:
+            # topic buttons are pure filters: only the topic-scoped MY + global feeds
+            only = {name for (name, _, _, _) in news_agent.TOPIC_FEEDS[t]}
+            items, errors = news_agent.scan(limit=60, workers=8, topic=t, only=only)
+    except Exception as exc:
+        send("sendMessage", {"chat_id": chat_id, "text": "News scan failed: %s" % type(exc).__name__,
+            "reply_markup": news_menu(), "disable_web_page_preview": "true"})
+        return
+    if not items:
+        send("sendMessage", {"chat_id": chat_id, "text": "No news items retrieved (feeds may be "
+            "rate-limited). Try again in a minute.", "reply_markup": news_menu(),
+            "disable_web_page_preview": "true"})
+        return
+    _news_cache[t] = (now, items, errors)
+    page_count = max(1, (len(items) + NEWS_PAGE_SIZE - 1) // NEWS_PAGE_SIZE)
+    page = min(page, page_count)
+    send("sendMessage", {"chat_id": chat_id, "text": news_scan_text(items, errors, t, page),
+        "reply_markup": news_page_menu(t, page, page > 1, page < page_count),
+        "disable_web_page_preview": "true"})
 
 def news_plan_text(plan):
     sig = plan["signals"]
@@ -308,23 +411,6 @@ def news_plan_text(plan):
                  "routes, marketing plan, risk register, phased 12-month plan.")
     lines.append("📄 Full DOCX attached. REVIEW_REQUIRED until assumptions confirmed.")
     return "\n".join(lines)[:4000]
-
-def run_news_scan(token, send, chat_id):
-    send("sendMessage", {"chat_id": chat_id, "text": "📰 Scanning business feeds…",
-        "reply_markup": news_menu(), "disable_web_page_preview": "true"})
-    try:
-        items, errors = news_agent.scan(limit=25, workers=6)
-    except Exception as exc:
-        send("sendMessage", {"chat_id": chat_id, "text": "News scan failed: %s" % type(exc).__name__,
-            "reply_markup": news_menu(), "disable_web_page_preview": "true"})
-        return
-    if not items:
-        send("sendMessage", {"chat_id": chat_id, "text": "No news items retrieved (feeds may be "
-            "rate-limited). Try again in a minute.", "reply_markup": news_menu(),
-            "disable_web_page_preview": "true"})
-        return
-    send("sendMessage", {"chat_id": chat_id, "text": news_scan_text(items, errors),
-        "reply_markup": news_menu(), "disable_web_page_preview": "true"})
 
 def _latest_research_result():
     jobs = list_completed_jobs()
@@ -453,8 +539,15 @@ def process_update(update, *, send, allowed_ids, database, ideas,
             text=("Report for this job is not on this runner yet. Send /research with the same "
                   "topic to rebuild it, or tap the button again after the next scheduled run.")
             markup=research_help()
-        elif data=="bc:news:scan":
-            run_news_scan(token,send,chat_id)
+        elif data.startswith("bc:news:scan"):
+            # bc:news:scan | bc:news:scan:<topic>:<page>
+            parts = data.split(":")
+            topic = parts[3] if len(parts) > 3 else "all"
+            try:
+                page = int(parts[4]) if len(parts) > 4 else 1
+            except (ValueError, IndexError):
+                page = 1
+            run_news_scan(token, send, chat_id, topic=topic, page=page)
             return "sent"
         elif data=="bc:news:plan":
             run_news_plan(token,send,chat_id)

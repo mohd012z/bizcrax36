@@ -24,7 +24,7 @@ class MenuTests(unittest.TestCase):
  def test_start_menu(self):
   with tempfile.TemporaryDirectory() as temp:
    text,markup=handle_callback("bc:home",Path(temp)/"empty.db",[])
-   self.assertIn("choose",text)
+   self.assertIn("choose",text.lower())
    self.assertIn("bc:sectors",markup)
  def test_next_previous_callbacks(self):
   markup=json.loads(paged_menu("mode","ideas",1,3))

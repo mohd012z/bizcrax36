@@ -4,3 +4,5 @@ __pycache__/
 .venv/
 agentic-research-result.json
 data/research-jobs/*/charts/
+_diag*.py
+_pdf_section.py
