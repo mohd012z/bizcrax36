@@ -718,13 +718,16 @@ def news_dossier(plan, items):
     return {
         "schema_version": 1,
         "generated_at": plan["generated_at"],
+        "title": "Proposal for Business Plan — %s" % (plan["topic"][:70] or "Business Opportunity"),
         "topic": plan["topic"],
+        "scope": plan["country"],
         "country": plan["country"],
         "capital_band": plan["budget"]["band"],
         "notice": "Business setup & implementation plan. Evidence labels show "
                   "what was fetched live (evidence) vs. illustrative (estimated/"
                   "assumed). REVIEW_REQUIRED until each assumption is confirmed "
-                  "with primary sources.",
+                  "with primary sources. This is a proposal for review — not "
+                  "investment advice.",
         "sections": {
             "opportunity": {"title": "Opportunity & Summary", "label": "verified",
                             "content": [plan["summary"],

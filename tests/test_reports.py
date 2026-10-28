@@ -113,8 +113,8 @@ class DocxTests(unittest.TestCase):
                 self.assertEqual(
                     root.tag, "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}document")
                 for section_title in ("EXECUTIVE SUMMARY", "FINANCIAL FORECAST",
-                                      "FUNDING AND INVESTMENT", "SOURCE VERIFICATION"):
-                    self.assertIn(section_title, document.upper().replace("—", " "))
+                                      "FUNDING, LOAN", "WHERE EACH FACT CAME FROM"):
+                    self.assertIn(section_title, document.upper())
                 self.assertIn("ASSUMED", document)
                 self.assertIn("EVIDENCE", document.upper())
                 rels = zf.read("word/_rels/document.xml.rels").decode("utf-8")

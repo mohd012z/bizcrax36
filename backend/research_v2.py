@@ -10,11 +10,12 @@ Evidence-first by design:
   not a profitability claim.
 """
 import hashlib
+import json
 import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
-from urllib.parse import urlencode, urlparse
+from urllib.parse import urlencode, urlparse, parse_qs
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree
 
@@ -41,7 +42,10 @@ TOPICS = {
     "aerospace": ("aviation training", "aircraft maintenance", "aerospace supply chain"),
     "manufacturing": ("industrial automation", "semiconductor suppliers", "equipment maintenance"),
     "tourism": ("tourism services", "hospitality technology", "visitor experience"),
-    "agriculture": ("agritech", "food processing", "cold chain"),
+    "food": ("food franchise", "franchise", "restaurant", "cafe", "bakery",
+            "catering", "food and beverage", "f and b", "food service"),
+    "agriculture": ("agritech", "food processing", "cold chain", "agriculture",
+                   "farming", "crop", "livestock"),
 }
 BAND_TERMS = {
     "micro": "low startup cost",
@@ -183,6 +187,94 @@ def discover_round(subqueries, fetch=None, limit=10, workers=4, when=None):
     return found, errors
 
 
+PAYWALL_MARKERS = (
+    "one membership. limitless possibilities", "subscribe to continue",
+    "subscription required", "sign in to continue", "you have 0 of 5 free",
+    "free article this month", "paywall", "content is locked",
+    "register and continue your reading", "log in to access this article",
+)
+# Hosts that are paywalled even when marker text is absent (checked via page).
+PAYWALL_HOSTS = {"forbes.com", "ft.com", "economist.com", "wsj.com",
+                 "bloomberg.com", "nytimes.com", "financialtimes.com"}
+
+
+def _paywall_check(html, host):
+    """Best-effort paywall detection on a fetched page. Never raises."""
+    low = html[:400000].lower()
+    if any(m in low for m in PAYWALL_MARKERS):
+        return True
+    return any(host == h or host.endswith("." + h) for h in PAYWALL_HOSTS)
+
+
+def resolve_link(url):
+    """Best-effort: turn an opaque news.google.com wrapper into a direct
+    publisher URL. Returns the original URL when it is already direct or
+    resolution fails (the caller then marks it google_news_link)."""
+    if not url or "news.google.com" not in url:
+        return url
+    m = re.search(r"/articles/([^?]+)", url)
+    if not m:
+        return url
+    try:
+        import base64
+        raw = base64.urlsafe_b64decode(m.group(1) + "=" * (-len(m.group(1)) % 4))
+        inner = re.findall(r"https?://[^\x00-\x1f\x7f-\x9f\"\\ ]+",
+                           raw.decode("utf-8", "ignore"))
+        if inner:
+            return inner[0]
+        au = raw[raw.index(b"AU_"):].decode("utf-8", "ignore")
+        au = au[:au.rfind("\x00")].strip()
+        payload = json.dumps([[[1, au]]], separators=(",", ":"))
+        req = Request("https://news.google.com/_/DotsSplashUi/data/batchexecute",
+                      data=("f.req=" + urlencode(payload)).encode(),
+                      headers={"User-Agent": "Mozilla/5.0",
+                               "Content-Type": "application/x-www-form-urlencoded"})
+        with urlopen(req, timeout=8) as r:
+            data = r.read(8000).decode("utf-8", "ignore")
+        urls = re.findall(r'https?://(?!news\.google\.com)[^"\\ ]+', data)
+        if urls:
+            return urls[0]
+    except Exception:
+        pass
+    return url
+
+
+def discover_bing(subquery, fetch=None, limit=5):
+    """Secondary discovery: Bing News RSS. Unwraps apiclick.aspx redirects to
+    the real publisher URL, so leads get direct (often open) links."""
+    import xml.etree.ElementTree as ET
+    params = urlencode({"q": subquery}) + "&format=rss"
+    url = "https://www.bing.com/news/search?" + params
+    getter = fetch
+
+    def default_get(target):
+        req = Request(target, headers={"User-Agent": "BizCrax36ResearchV2/1.0 (bing)"})
+        with urlopen(req, timeout=12) as response:
+            return response.read(1_000_000)
+
+    if getter is None:
+        getter = default_get
+    root = ET.fromstring(getter(url))
+    items = []
+    for item in root.findall(".//channel/item")[:limit]:
+        title = (item.findtext("title") or "").strip()
+        link = (item.findtext("link") or "").strip()
+        if "apiclick.aspx" in link:
+            qs = parse_qs(urlparse(link).query)
+            direct = (qs.get("url") or [""])[0]
+            if direct:
+                link = direct
+        link = normalize_link(link)
+        if title and link:
+            items.append({
+                "title": title[:240], "source_url": link,
+                "published_at": item.findtext("pubDate"),
+                "discovery_query": subquery, "source_type": "bing_rss",
+                "status": "review_required",
+            })
+    return items
+
+
 def _visible_words(html):
     text = re.sub(r"(?is)<(script|style|noscript|head)[^>]*>.*?</\1>", " ", html)
     text = re.sub(r"(?s)<[^>]+>", " ", text)
@@ -190,7 +282,8 @@ def _visible_words(html):
 
 
 def verify(candidate, fetch=None):
-    """Fetch the source page; verify = a meaningful share of the headline's words is present."""
+    """Fetch the source page; verify = a meaningful share of the headline's words is present.
+    Also detects paywalls so the report can say 'paid content' and offer a free route."""
     url = candidate.get("source_url")
     if not url:
         return {"verified": False, "reason": "no_source_url"}
@@ -206,16 +299,26 @@ def verify(candidate, fetch=None):
     head = re.findall(r"[a-z0-9]{4,}", candidate["title"].lower())
     if len(head) < 3:
         return {"verified": False, "reason": "title_too_short_to_verify"}
-    page = _visible_words(getter(url))
+    try:
+        page_html = getter(url)
+    except (OSError, ValueError) as exc:
+        return {"verified": False, "reason": type(exc).__name__}
+    page = _visible_words(page_html)
+    host = (urlparse(url).hostname or "").lower()
+    paywalled = _paywall_check(page_html, host)
     matched = sum(1 for w in head if w in page)
     ratio = matched / float(len(head))
-    return {
-        "verified": ratio >= 0.6,
+    verified = ratio >= 0.6 and not paywalled
+    out = {
+        "verified": verified,
         "match_ratio": round(ratio, 3),
         "retrieved_at": datetime.now(timezone.utc).isoformat(),
         "source_sha256": hashlib.sha256(url.encode()).hexdigest()[:20],
-        "reason": "title_words_present" if ratio >= 0.6 else "insufficient_title_match",
+        "paywall": paywalled,
+        "reason": ("paywalled_content" if paywalled else
+                   "title_words_present" if verified else "insufficient_title_match"),
     }
+    return out
 
 
 def _age_hours(candidate):
@@ -310,6 +413,18 @@ def research(query, country="Malaysia", capital="all", fetch=None,
     errors.extend(round1_errors)
     round2, round2_errors = discover_round(task["rounds"][1], fetch=fetch, workers=workers, when=when)
     errors.extend(round2_errors)
+    # Always contribute a few direct publisher links from Bing News RSS, so every
+    # report carries openable (often free) URLs alongside the Google News leads.
+    # Dedup by title-fingerprint below removes near-duplicates automatically.
+    bing_used = 0
+    q2 = "%s %s" % (task.get("query") or query, country if country and country != "Global" else "")
+    q2 = q2.strip()
+    try:
+        bing_extra = discover_bing(q2, fetch=fetch, limit=6)
+        bing_used = len(bing_extra)
+        round2 = list(round2) + bing_extra
+    except (OSError, ValueError, ElementTree.ParseError):
+        pass  # fail-open: Google News leads still stand; direct links are a bonus.
     gap_hits = {
         "competition": sum(1 for r in round2 if r["discovery_query"] == task["rounds"][1][0]),
         "regulation": sum(1 for r in round2 if r["discovery_query"] == task["rounds"][1][1]),
@@ -329,6 +444,17 @@ def research(query, country="Malaysia", capital="all", fetch=None,
         -sum(1 for t in terms if t in x["title"].lower()),
         x.get("published_at") or "", x["title"]))
     stage("verifying")
+    # Resolve opaque Google News wrapper URLs to direct publisher links, and
+    # record which leads carry Google-redirected (possibly paywalled) URLs.
+    for record in candidates:
+        original = record.get("source_url") or ""
+        resolved = resolve_link(original)
+        record["source_url_resolved"] = resolved
+        if resolved != original:
+            record["source_url"] = resolved
+            record["resolved_from_google"] = True
+        elif "news.google.com" in original:
+            record["google_news_link"] = True
     for record in candidates[:verify_top]:
         try:
             record["verification"] = verify(record, fetch=verify_fetch)
@@ -367,6 +493,16 @@ def research(query, country="Malaysia", capital="all", fetch=None,
         "gap_hits": gap_hits,
         "evidence": evidence,
         "evidence_errors": evidence_errors,
+        "link_stats": {
+            "total": len(candidates),
+            "resolved_from_google": sum(1 for c in candidates if c.get("resolved_from_google")),
+            "google_redirect": sum(1 for c in candidates if c.get("google_news_link")),
+            "direct_publisher": sum(1 for c in candidates
+                                     if "news.google.com" not in (c.get("source_url") or "")
+                                     and c.get("source_url")),
+            "paywalled": sum(1 for c in candidates
+                             if (c.get("verification") or {}).get("paywall")),
+        },
         "notice": "Research leads only. Headlines and heuristic scores do not prove business "
                   "viability, open tenders, or verified demand. Every lead stays review_required "
                   "until issuer and commercial evidence is independently confirmed.",

@@ -54,7 +54,10 @@ def _now():
 
 
 def _country_code(country):
-    return COUNTRY_CODES.get(str(country or "").strip().lower())
+    code = str(country or "").strip().lower()
+    if code in ("global", "world", "all"):
+        return "WLD"
+    return COUNTRY_CODES.get(code)
 
 
 def world_bank(country, fetch=None, timeout=12):
@@ -208,11 +211,18 @@ def open_corporates(query, country="malaysia", fetch=None, timeout=15):
     return out
 
 
+def _fx_scope(country):
+    """FX base/symbols per scope: global runs price from USD, country runs from local FX."""
+    if str(country or "").strip().lower() in ("global", "world", "all"):
+        return ("USD", "EUR,GBP,MYR,SGD,JPY,CNY")
+    return ("MYR", "USD,SGD,AUD")
+
+
 def fetch_all(query, country="Malaysia", fetch=None, timeout=12, workers=4):
     """Run every source in parallel. Returns (records, source_errors)."""
     jobs = (
         ("world_bank", lambda: world_bank(country, fetch=fetch, timeout=timeout)),
-        ("fx", lambda: exchange_rates("MYR", fetch=fetch, timeout=timeout)),
+        ("fx", lambda: exchange_rates(*_fx_scope(country), fetch=fetch, timeout=timeout)),
         ("crossref", lambda: research_literature(query, fetch=fetch, timeout=timeout)),
         ("open_sanctions", lambda: open_sanctions(query, fetch=fetch, timeout=timeout + 3)),
         ("open_corporates", lambda: open_corporates(query, country, fetch=fetch, timeout=timeout + 3)),

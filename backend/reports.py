@@ -7,6 +7,7 @@ financial inputs only.
 """
 import json
 import os
+import re
 import struct
 import zipfile
 import zlib
@@ -373,6 +374,17 @@ def _run(text, bold=False, italic=False, size=None, color=None):
     rpr += "</w:rPr>"
     return "<w:r>%s<w:t xml:space=\"preserve\">%s</w:t></w:r>" % (rpr, _escape(text))
 
+# ----------------------------------------------------------------- DOCX
+# Clickable links: every URL in a line becomes an OOXML hyperlink
+# (external relationship), so it opens directly in Word/LibreOffice/Google Docs.
+_DOC_URL_RE = re.compile(r"https?://[^\s<>\"')\]]+")
+
+
+def _hyperlink_run(rid, url):
+    return ('<w:hyperlink r:id="%s" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+            '<w:r><w:rPr><w:color w:val="0563C1"/><w:u w:val="single"/></w:rPr>'
+            '<w:t xml:space="preserve">%s</w:t></w:r></w:hyperlink>' % (rid, _escape(url)))
+
 def _para(runs, style=None, jc=None):
     ppr = ""
     inner = ""
@@ -404,15 +416,31 @@ def _image_para(rid, width_px, height_px):
     ) % (emu_w, emu_h, rid, emu_w, emu_h)
 
 def build_docx(dossier, result, out_path, images=()):
-    """images: list of (media_name, width_px, height_px, caption)."""
+    """images: list of (media_name, width_px, height_px, caption).
+
+    Document is titled 'Proposal for Business Plan' and de-branded. Every URL
+    in any content line becomes a clickable OOXML hyperlink (external rel).
+    """
     from pathlib import Path
     out_path = Path(out_path)
     now = datetime.now(timezone.utc)
+    title = dossier.get("title") or "Proposal for Business Plan"
     body = []
-    body.append(_para(_run("BizCrax36 — 360° Opportunity Dossier"), style="Title"))
+    body.append(_para(_run(title), style="Title"))
     body.append(_para(_run("Generated %s UTC · Evidence-first: labels describe evidence quality, not truth." % now.strftime("%Y-%m-%d %H:%M")),
                       style="Caption"))
     body.append(_para(_run(dossier["notice"], italic=True, size=18, color="64748B")))
+
+    # Collect every unique URL first so rels ids are stable.
+    url_set = []
+    def reg(url):
+        if url not in url_set:
+            url_set.append(url)
+        return url_set.index(url)
+    for meta in dossier["sections"].values():
+        for line in meta.get("content", []):
+            for m in _DOC_URL_RE.finditer(str(line)):
+                reg(m.group(0))
 
     # Place each image at its target section: sort by section order first.
     section_order = list(dossier["sections"].keys())
@@ -427,16 +455,35 @@ def build_docx(dossier, result, out_path, images=()):
         rid = "rId%d" % idx
         image_rids[name] = (rid, w, h, cap)
         rels.append('<Relationship Id="%s" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/%s"/>' % (rid, name))
+    # hyperlink rels continue after image rels
+    for uidx, url in enumerate(url_set):
+        rid = "rId%d" % (2 + len(images) + uidx)
+        rels.append('<Relationship Id="%s" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="%s" TargetMode="External"/>' % (rid, url))
+    url_rid = {url: "rId%d" % (2 + len(images) + i) for i, url in enumerate(url_set)}
+
+    def line_runs(text, size=20):
+        """Runs for one content line; URLs become clickable hyperlinks."""
+        text = str(text)
+        out = []
+        pos = 0
+        for m in _DOC_URL_RE.finditer(text):
+            if m.start() > pos:
+                out.append(_run(text[pos:m.start()], size=size))
+            out.append(_hyperlink_run(url_rid[m.group(0)], m.group(0)))
+            pos = m.end()
+        if pos < len(text):
+            out.append(_run(text[pos:], size=size))
+        return "".join(out)
 
     img_cursor = 0
     for key, meta in dossier["sections"].items():
-        body.append(_para(_run("%s — %s" % (key.upper(), meta["title"].upper())), style="Heading1"))
+        body.append(_para(_run(meta["title"].upper()), style="Heading1"))
         label = meta.get("label", "assumed")
         body.append(_para(_run("Evidence label: %s" % label.upper(), bold=True, size=20,
                                color={"verified": "16A34A", "estimated": "B45309",
                                       "assumed": "64748B", "unavailable": "DC2626"}[label])))
         for line in meta.get("content", []):
-            body.append(_para(_run(str(line), size=20)))
+            body.append(_para(line_runs(line), style=None))
         while img_cursor < len(ordered_images):
             name, w, h, cap = ordered_images[img_cursor]
             if target_of.get(cap) != key:
@@ -479,6 +526,19 @@ def _figure_caption(kind):
 
 # ----------------------------------------------------------------- pipeline
 
+def _pdf_images_for(images, charts_dir, section_of=None):
+    """Convert (name, w_px, h_px, caption) image tuples into the PDF engine's
+    (section_key, abs_png_path, w_pt, h_pt, url) tuples. 640px wide -> ~460pt."""
+    section_of = section_of or {}
+    out = []
+    for name, w_px, h_px, cap in images:
+        path = os.path.join(charts_dir, name)
+        w_pt = 460
+        h_pt = int(h_px / w_px * w_pt) if w_px else int(h_px * 0.72)
+        out.append((section_of.get(cap, cap), path, w_pt, h_pt, ""))
+    return out
+
+
 def scenario_series(financials):
     """Cumulative 12-month net cash for 0.5x/1x/1.5x volume scenarios."""
     base_model = financial_model(financials)
@@ -516,7 +576,16 @@ def generate_report(dossier, result, out_dir, financials=None):
         if series:
             render_scenario_chart(series, os.path.join(charts_dir, "scenarios.png"))
             images.append(("scenarios.png", 640, 400, "scenarios"))
-    docx_path = build_docx(dossier, result, os.path.join(out_dir, "report.docx"), images=images)
+    docx_path = build_docx(dossier, result, os.path.join(out_dir, "proposal.docx"), images=images)
+    pdf_path = None
+    try:
+        pdf_path = render_pdf(dossier, os.path.join(out_dir, "proposal.pdf"),
+                              images=_pdf_images_for(images, charts_dir,
+                                                     section_of={"scores": "opportunity_ranking",
+                                                                 "metrics": "opportunity_ranking",
+                                                                 "scenarios": "financial_forecast"}))
+    except Exception:
+        pdf_path = None
     report = {
         "schema_version": dossier.get("schema_version", 2),
         "generated_at": dossier.get("generated_at"),
@@ -524,6 +593,7 @@ def generate_report(dossier, result, out_dir, financials=None):
         "country": dossier.get("country"),
         "capital_band": dossier.get("capital_band"),
         "docx": docx_path,
+        "pdf": pdf_path,
         "charts": [os.path.join(charts_dir, name) for name, _, _, _ in images],
         "summary": {
             "candidates": len(candidates),
@@ -533,7 +603,7 @@ def generate_report(dossier, result, out_dir, financials=None):
     }
     with open(os.path.join(out_dir, "report.json"), "w", encoding="utf-8") as fh:
         json.dump(report, fh, indent=2, ensure_ascii=False)
-    return {"docx": docx_path, "report": os.path.join(out_dir, "report.json"),
+    return {"docx": docx_path, "pdf": pdf_path, "report": os.path.join(out_dir, "report.json"),
             "charts": report["charts"], "summary": report["summary"]}
 
 
@@ -550,8 +620,17 @@ def generate_news_report(dossier, plan, out_dir):
     images.append(("budget.png", 640, 90 + len((budget.get("items") or {})) * 40, "budget"))
     render_risk_chart(plan.get("risks") or [], os.path.join(charts_dir, "risk.png"))
     images.append(("risk.png", 640, 90 + min(8, len(plan.get("risks") or [])) * 44, "risk"))
-    docx_path = build_docx(dossier, {"candidates": []}, os.path.join(out_dir, "report.docx"),
+    docx_path = build_docx(dossier, {"candidates": []}, os.path.join(out_dir, "proposal.docx"),
                            images=images)
+    pdf_path = None
+    try:
+        pdf_path = render_pdf(dossier, os.path.join(out_dir, "proposal.pdf"),
+                              images=_pdf_images_for(images, charts_dir,
+                                                     section_of={"flow": "flow",
+                                                                 "budget": "financial_forecast",
+                                                                 "risk": "risk"}))
+    except Exception:
+        pdf_path = None
     sig = plan.get("signals") or {}
     report = {
         "schema_version": dossier.get("schema_version", 1),
@@ -561,6 +640,7 @@ def generate_news_report(dossier, plan, out_dir):
         "country": dossier.get("country"),
         "capital_band": dossier.get("capital_band"),
         "docx": docx_path,
+        "pdf": pdf_path,
         "charts": [os.path.join(charts_dir, name) for name, _, _, _ in images],
         "summary": {
             "source_url": plan.get("source_url"),
@@ -576,5 +656,573 @@ def generate_news_report(dossier, plan, out_dir):
     }
     with open(os.path.join(out_dir, "report.json"), "w", encoding="utf-8") as fh:
         json.dump(report, fh, indent=2, ensure_ascii=False)
-    return {"docx": docx_path, "report": os.path.join(out_dir, "report.json"),
+    return {"docx": docx_path, "pdf": pdf_path, "report": os.path.join(out_dir, "report.json"),
             "charts": report["charts"], "summary": report["summary"]}
+# ----------------------------------------------------------------- PDF (locked, RC4 R2, clickable links)
+PDF_W, PDF_H = 612, 792
+PDF_MARGIN = 54
+PDF_TOP = PDF_H - PDF_MARGIN
+PDF_BOTTOM = 66
+
+_PAD = bytes([0x28, 0xBF, 0x4E, 0x5E, 0x4E, 0x75, 0x8A, 0x41, 0x64, 0x00,
+              0x4E, 0x56, 0xFF, 0xFA, 0x01, 0x08, 0x2E, 0x2E, 0x00, 0xB6,
+              0xD0, 0x68, 0x3E, 0x80, 0x2F, 0x0C, 0xA9, 0xFE, 0x64, 0x53,
+              0x69, 0x7A])
+
+
+def _rc4(key, data):
+    S = list(range(256))
+    j = 0
+    for i in range(256):
+        j = (j + S[i] + key[i % len(key)]) & 0xFF
+        S[i], S[j] = S[j], S[i]
+    i = j = 0
+    out = bytearray()
+    for b in data:
+        i = (i + 1) & 0xFF
+        j = (j + S[i]) & 0xFF
+        S[i], S[j] = S[j], S[i]
+        out.append(b ^ S[(S[i] + S[j]) & 0xFF])
+    return bytes(out)
+
+
+def _pdf_md5(data):
+    import hashlib
+    return hashlib.md5(data).digest()
+
+
+def _pdf_pad(data):
+    return (data + _PAD)[:32]
+
+
+def _compute_file_key(password, o_entry, perms, docid):
+    """Algorithm 2 (R2): file key = MD5(pad(pw) + O + P(le32) + ID1)[:5].
+    Revision 2 has NO 50-iteration MD5 loop and NO XOR-RC4 final stage."""
+    h = _pdf_md5(_pdf_pad(password) + o_entry + perms.to_bytes(4, "little") + docid)
+    return h[:5]
+
+
+def _compute_o(o_pw, u_pw):
+    """Algorithm 3 (R2): O = RC4(first5(MD5(pad(owner_pw))), pad(user_pw))."""
+    okey = _pdf_md5(_pdf_pad(o_pw))[:5]
+    return _rc4(okey, _pdf_pad(u_pw))
+
+
+def _compute_u(key):
+    """Algorithm 4 (R2): U = RC4_5byte(32-byte padding) -> 32 bytes."""
+    return _rc4(key, _PAD)
+
+
+def _obj_key(file_key, obj_num, gen_num=0, is_stream=False):
+    """Algorithm 1: per-object RC4 key, first (n+5)=10 bytes for R2.
+    Stream objects additionally append 0xFFFFFFFF before the MD5."""
+    h = _pdf_md5(file_key + obj_num.to_bytes(3, "little")
+                 + gen_num.to_bytes(2, "little")
+                 + (b"\xff\xff\xff\xff" if is_stream else b""))
+    return h[:10]
+
+
+def _obj_perms(perms):
+    # /P: bits 1-12 = perms, bits 13-32 = 1. Return as signed 32-bit.
+    p_full = (0xFFFFF000 | (perms & 0x0FFF)) & 0xFFFFFFFF
+    return p_full - 0x100000000 if p_full >= 0x80000000 else p_full
+
+
+def _perms_full(perms):
+    return (0xFFFFF000 | (perms & 0x0FFF)) & 0xFFFFFFFF
+
+
+def _pdf_octal_str(raw):
+    """Serialize raw bytes as a PDF literal string: any non-alnum byte becomes
+    \\ooo octal, so the reader can always find the real closing ')' even after
+    RC4 encryption scrambles the value bytes."""
+    out = bytearray()
+    for byte in raw:
+        if 48 <= byte <= 57 or 65 <= byte <= 90 or 97 <= byte <= 122 or byte == 32:
+            out += bytes([byte])
+        else:
+            out += b"\\%03o" % byte
+    return bytes(out)
+
+
+def _unescape_literal(content):
+    """Recover the raw value bytes from a PDF literal-string body (escapes)."""
+    out = bytearray()
+    i, n = 0, len(content)
+    simple = {0x6E: 0x0A, 0x72: 0x0D, 0x74: 0x09, 0x62: 0x08, 0x66: 0x0C,
+              0x28: 0x28, 0x29: 0x29, 0x5C: 0x5C}
+    while i < n:
+        c = content[i]
+        if c == 0x5C and i + 1 < n:
+            nxt = content[i + 1]
+            if 48 <= nxt <= 55:  # 0-7 -> up to 3 octal digits
+                octal = b""
+                j = i + 1
+                while j < n and 48 <= content[j] <= 55 and len(octal) < 3:
+                    octal += bytes([content[j]])
+                    j += 1
+                out.append(int(octal, 8) & 0xFF)
+                i = j
+                continue
+            out.append(simple.get(nxt, nxt))
+            i += 2
+            continue
+        out.append(c)
+        i += 1
+    return bytes(out)
+
+
+def _encrypt_strings(body, key):
+    """RC4-encrypt only string VALUES in a PDF object body (structure/operators/
+    numbers stay plaintext). Literal strings are unescaped -> RC4 -> re-serialized
+    with \\ooo octal escaping (reader-safe). Hex strings are decoded -> RC4 ->
+    written as an octal literal. Non-string bytes pass through unchanged."""
+    out = bytearray()
+    i, n = 0, len(body)
+    while i < n:
+        c = body[i]
+        if c == 0x28:  # ( literal string
+            depth = 1
+            j = i + 1
+            while j < n and depth > 0:
+                cj = body[j]
+                if cj == 0x5C and j + 1 < n:
+                    j += 2
+                    continue
+                if cj == 0x28:
+                    depth += 1
+                elif cj == 0x29:
+                    depth -= 1
+                j += 1
+            value = _unescape_literal(body[i + 1:j - 1])
+            out += b"(" + _pdf_octal_str(_rc4(key, value)) + b")"
+            i = j
+        elif c == 0x3C:  # < : dict delimiter << or a hex string
+            if i + 1 < n and body[i + 1] == 0x3C:
+                out += b"<"
+                i += 1
+                continue
+            k = i + 1
+            while k < n and body[k] in b" \t\r\n":
+                k += 1
+            if k < n and (48 <= body[k] <= 57 or 65 <= body[k] <= 70 or 97 <= body[k] <= 102):
+                j = body.find(b">", i + 1)
+                if j == -1:
+                    out += b"<"
+                    i += 1
+                    continue
+                hexpart = body[i + 1:j].replace(b" ", b"")
+                if len(hexpart) % 2:
+                    hexpart += b"0"
+                value = bytes.fromhex(hexpart.decode("ascii"))
+                out += b"(" + _pdf_octal_str(_rc4(key, value)) + b")"
+                i = j + 1
+            else:
+                out += b"<"
+                i += 1
+        else:
+            out += bytes([c])
+            i += 1
+    return bytes(out)
+
+
+def _pdf_escape(text):
+    return (str(text).replace("\\", r"\\").replace("(", r"\(")
+            .replace(")", r"\)"))
+
+
+def _pdf_winansi(text):
+    """Map to WinAnsi; unknown chars become ? (Helvetica has no glyph)."""
+    out = []
+    for ch in str(text):
+        o = ord(ch)
+        if o < 0x80:
+            out.append(ch)
+        elif o in (0x2014, 0x2013):
+            out.append("-")
+        elif o in (0x2018, 0x2019):
+            out.append("'")
+        elif o in (0x201C, 0x201D):
+            out.append('"')
+        elif o == 0x2026:
+            out.append("...")
+        elif o in (0x00B7, 0x2022):
+            out.append("*")
+        elif o == 0x2122:
+            out.append("(TM)")
+        elif 0x80 <= o <= 0xFF:
+            out.append(chr(o))
+        else:
+            out.append("?")
+    return "".join(out)
+
+
+def _pdf_wrap(text, width=92):
+    words, lines, cur = str(text).split(), [], ""
+    for w in words:
+        trial = (cur + " " + w).strip()
+        if len(trial) <= width:
+            cur = trial
+        else:
+            if cur:
+                lines.append(cur)
+            while len(w) > width:
+                lines.append(w[:width])
+                w = w[width:]
+            cur = w
+    if cur:
+        lines.append(cur)
+    return lines or [""]
+
+
+def _png_decode(data):
+    """Decode an 8-bit RGB/RGBA PNG -> (width, height, raw_rgb_bytes)."""
+    if data[:8] != b"\x89PNG\r\n\x1a\n":
+        raise ValueError("not a PNG")
+    pos, idat, w, h, ctype = 8, b"", None, None, None
+    while pos < len(data):
+        ln = struct.unpack(">I", data[pos:pos + 4])[0]
+        tag = data[pos + 4:pos + 8]
+        chunk = data[pos + 8:pos + 8 + ln]
+        if tag == b"IHDR":
+            w, h, _bit, ctype = struct.unpack(">IIBB", chunk[:10])
+        elif tag == b"IDAT":
+            idat += chunk
+        elif tag == b"IEND":
+            break
+        pos += 12 + ln
+    if w is None or h is None or ctype not in (2, 6):
+        raise ValueError("unsupported PNG (need 8-bit RGB/RGBA)")
+    raw = zlib.decompress(idat)
+    bpp = 3 if ctype == 2 else 4
+    stride = w * bpp
+    out = bytearray()
+    prev = bytearray(stride)
+    rowstart = 0
+    for _ in range(h):
+        f = raw[rowstart]
+        rowstart += 1
+        cur = bytearray(raw[rowstart:rowstart + stride])
+        rowstart += stride
+        if f == 1:
+            for i in range(stride):
+                a = cur[i - bpp] if i >= bpp else 0
+                cur[i] = (cur[i] + a) & 0xFF
+        elif f == 2:
+            for i in range(stride):
+                cur[i] = (cur[i] + prev[i]) & 0xFF
+        elif f == 3:
+            for i in range(stride):
+                a = cur[i - bpp] if i >= bpp else 0
+                cur[i] = (cur[i] + ((a + prev[i]) >> 1)) & 0xFF
+        elif f == 4:
+            for i in range(stride):
+                a = cur[i - bpp] if i >= bpp else 0
+                b2 = prev[i]
+                c = prev[i - bpp] if i >= bpp else 0
+                p = a + b2 - c
+                pa, pb, pc = abs(p - a), abs(p - b2), abs(p - c)
+                pr = a if (pa <= pb and pa <= pc) else (b2 if pb <= pc and pb <= pc else c)
+                cur[i] = (cur[i] + pr) & 0xFF
+        if bpp == 4:
+            cur = bytes(cur[i] for i in range(0, len(cur), 4))
+        out += cur
+        prev = bytearray(cur)
+    return w, h, bytes(out)
+
+
+def _pdf_title(dossier):
+    t = (dossier.get("topic") or "Business Opportunity").strip()
+    return "Proposal for Business Plan - %s" % t[:70]
+
+
+def _pdf_meta_pages(dossier, title):
+    """Dossier sections -> ordered (section_key, sectitle, [lines])."""
+    scope = dossier.get("scope") or dossier.get("country") or "Global"
+    pages = []
+    pages.append(("__meta", "Executive Summary", [
+        "Topic: %s | Scope: %s | Capital band: %s" % (
+            dossier.get("topic", ""), scope, dossier.get("capital_band", "all")),
+        "Evidence-first: every line is labeled by evidence quality, not truth.",
+        "REVIEW_REQUIRED until each ASSUMED/ESTIMATED item is confirmed with a primary source.",
+        "This is a fixed, locked PDF; the editable full edition ships as DOCX.",
+    ]))
+    for key, sec in dossier.get("sections", {}).items():
+        lines = [sec.get("title", key)]
+        for ln in sec.get("content", []):
+            lines.append(str(ln))
+        pages.append((key, sec.get("title", key), lines))
+    return title, pages
+
+
+def _split_pages(pages, per_page=26):
+    """Split (key, title, lines) logical pages into physical pages honouring a
+    per-page line budget. A section that overflows continues onto the next
+    physical page with the same key (so charts still land on the right page)."""
+    out = []
+    for key, title, lines in pages:
+        if not lines:
+            continue
+        body = lines[1:]
+        header = lines[0]
+        chunks = [body[i:i + per_page] for i in range(0, len(body), per_page)] or [[""]]
+        for i, ch in enumerate(chunks):
+            if i == 0:
+                out.append((key, header, ch))
+            else:
+                out.append((key, header + " (cont.)", ch))
+    return out
+
+
+def render_pdf(dossier, out_path, title=None, pages=None, images=()):
+    """Render a locked, paginated PDF from a sectioned dossier.
+
+    `images` = list of (section_key, abs_png_path, width_pt, height_pt, url).
+    Every URL in the body becomes a clickable /URI link; each chart image is
+    clickable to its URL. RC4-encrypted (V1/R2, 40-bit) with a restrictive /P
+    (view/print allowed, edit/annotate blocked). Returns the output path.
+    """
+    import hashlib
+    title = title or dossier.get("title") or _pdf_title(dossier)
+    if pages is None:
+        title, pages = _pdf_meta_pages(dossier, title)
+    pages = _split_pages(pages, per_page=26)
+    n = len(pages)
+
+    img_of = {}
+    for entry in images:
+        key, png, wpt, hpt, url = entry
+        img_of.setdefault(key, []).append((png, wpt, hpt, url))
+
+    page_of_key = {}
+    for pidx, (key, _t, _l) in enumerate(pages):
+        page_of_key.setdefault(key, pidx)
+    page_imgs = {}
+    for key, lst in img_of.items():
+        tgt = page_of_key.get(key)
+        if tgt is None:
+            continue
+        page_imgs.setdefault(tgt, []).extend(lst)
+
+    url_re = re.compile(r"https?://[A-Za-z0-9._~:/?#@!$&'*+,;=%-]+")
+
+    page_streams = []
+    page_annots = []
+    chart_list = []  # (page_index, png_path)
+    gen = (dossier.get("generated_at") or "2026-10-28")[:10]
+    for pidx, (key, sectitle, lines) in enumerate(pages):
+        ops = []
+        annots = []
+        cy = PDF_TOP - 8
+        ops.append("BT /F2 8 Tf 0.70 0.70 0.74 rg 1 0 0 1 56 %d Tm "
+                   "(Generated %s | page %d of %d | CONFIDENTIAL - FOR REVIEW) Tj ET"
+                   % (PDF_BOTTOM - 22, gen, pidx + 1, n))
+        for tl in _pdf_wrap(sectitle, 64):
+            ops.append("BT /F1 15 Tf 0.09 0.14 0.33 rg 1 0 0 1 %d %d Tm (%s) Tj ET"
+                       % (PDF_MARGIN, cy, _pdf_escape(_pdf_winansi(tl))))
+            cy -= 20
+        cy -= 6
+        ops.append("0.70 0.74 0.84 RG 1 w %d %d m %d %d l S"
+                   % (PDF_MARGIN, cy, PDF_W - PDF_MARGIN, cy))
+        cy -= 16
+        for ln in lines:
+            if cy < PDF_BOTTOM + 8:
+                break
+            text = _pdf_winansi(ln)
+            if not text.strip():
+                cy -= 7
+                continue
+            if text.startswith("   "):
+                t = text.lstrip()
+                ops.append("BT /F4 8.5 Tf 0.22 0.24 0.30 rg 1 0 0 1 74 %d Tm (%s) Tj ET"
+                           % (cy, _pdf_escape(t)))
+                cy -= 12
+            elif text[0] in ("*", "\u2022") or url_re.match(text) or \
+                    (len(text) >= 3 and text[0].isdigit() and text[1] == "." and text[2] == " "):
+                segs = []
+                pos = 0
+                for m in url_re.finditer(text):
+                    if m.start() > pos:
+                        segs.append((text[pos:m.start()], None))
+                    segs.append((m.group(0), m.group(0)))
+                    pos = m.end()
+                if pos < len(text):
+                    segs.append((text[pos:], None))
+                if not segs:
+                    segs = [(text, None)]
+                x = PDF_MARGIN
+                parts = []
+                for s, u in segs:
+                    if u:
+                        parts.append("(%s)" % _pdf_escape(s))
+                        wpt = max(10.0, len(s) * 4.6)
+                        annots.append(b"<< /Type /Annot /Subtype /Link /Rect [%d %d %d %d] "
+                                      b"/Border [0 0 0] /A << /S /URI /URI (%s) >> >>"
+                                      % (x, cy - 1, int(x + wpt), cy + 10,
+                                         _pdf_escape(u).encode("latin-1")))
+                        x += wpt
+                    else:
+                        parts.append("(%s)" % _pdf_escape(s))
+                        x += len(s) * 4.6
+                ops.append("BT /F4 9 Tf 0.12 0.13 0.18 rg 1 0 0 1 %d %d Tm [%s] TJ ET"
+                           % (PDF_MARGIN, cy, " ".join(parts)))
+                cy -= 13
+            else:
+                ops.append("BT /F4 9 Tf 0.12 0.13 0.18 rg 1 0 0 1 %d %d Tm (%s) Tj ET"
+                           % (PDF_MARGIN, cy, _pdf_escape(text)))
+                cy -= 13
+        for png, wpt, hpt, url in page_imgs.get(pidx, []):
+            if cy - hpt < PDF_BOTTOM:
+                cy = PDF_TOP - 28
+            if not os.path.exists(png):
+                continue
+            chart_list.append((pidx, png))
+            idx = len(chart_list) - 1
+            ytop = cy
+            ybot = cy - hpt
+            if url:
+                annots.append(b"<< /Type /Annot /Subtype /Link /Rect [%d %d %d %d] "
+                              b"/Border [0 0 0] /A << /S /URI /URI (%s) >> >>"
+                              % (PDF_MARGIN, ybot, PDF_MARGIN + int(wpt), ytop,
+                                 _pdf_escape(url).encode("latin-1")))
+            ops.append("IMG%d %d %d %d %d" % (idx, wpt, hpt, PDF_MARGIN, ybot))
+            cy = ybot - 16
+        page_streams.append("\n".join(ops).encode("latin-1", "replace"))
+        page_annots.append(annots)
+    return _finalize_pdf(out_path, page_streams, page_annots, chart_list, title, dossier)
+
+
+def _finalize_pdf(out_path, page_streams, page_annots, chart_list, title, dossier):
+    """Assemble the PDF object graph with RC4 standard security (V1/R2, 40-bit)."""
+    import hashlib
+    n = len(page_streams)
+
+    docid = hashlib.sha1(
+        (title + str(dossier.get("generated_at", ""))).encode("utf-8")).digest()[:16]
+    perms = 0x04  # bit 2 (print) only; edit/annotate/form off
+    u_pw = b""
+    o = _compute_o(u_pw, u_pw)  # owner password == user password (empty)
+    key = _compute_file_key(u_pw, o, _perms_full(perms), docid)
+    uval = _compute_u(key)
+
+    objects = {}
+
+    def font(base, bold=False, italic=False):
+        fn = "/Helvetica" + ("-Bold" if bold else "") + ("-Oblique" if italic else "")
+        return ("<< /Type /Font /Subtype /Type1 /BaseFont %s "
+                "/Encoding /WinAnsiEncoding >>" % fn).encode("latin-1")
+
+    objects[1] = b"<< /Type /Catalog /Pages 7 0 R >>"
+    objects[3] = font("Helvetica", bold=True)
+    objects[4] = font("Helvetica")
+    objects[5] = font("Helvetica", italic=True)
+    objects[6] = font("Helvetica", bold=True, italic=True)
+
+    # number plan: 7=Pages, then 2 objects per page (content, page), then images
+    page_num = 7
+    cursor = 8
+    content_obj_ids = [cursor + 2 * i for i in range(n)]
+    page_obj_ids = [cursor + 2 * i + 1 for i in range(n)]
+    cursor += 2 * n
+    image_obj_ids = list(range(cursor, cursor + len(chart_list)))
+    cursor += len(chart_list)
+    info_id = cursor
+    cursor += 1
+    encrypt_id = cursor
+
+    all_kids = " ".join("%d 0 R" % p for p in page_obj_ids)
+    objects[page_num] = ("<< /Type /Pages /Kids [%s] /Count %d >>"
+                         % (all_kids, n)).encode("latin-1")
+
+    decoded = {}
+    for i, (pidx, png) in enumerate(chart_list):
+        data = open(png, "rb").read()
+        w, h, rgb = _png_decode(data)
+        decoded[i] = (w, h, zlib.compress(rgb))
+
+    for pidx in range(n):
+        ops = page_streams[pidx].decode("latin-1", "replace")
+        for i, (cpidx, png) in enumerate(chart_list):
+            if cpidx != pidx:
+                continue
+            for m in re.finditer(r"IMG%d \d+ \d+ \d+ \d+" % i, ops):
+                tok = m.group(0)
+                wpt_s, hpt_s, x_s, y_s = tok.split()[1:5]
+                do = ("q %d 0 0 %d %d %d cm /Im%d Do Q"
+                      % (int(wpt_s), int(hpt_s), int(x_s), int(y_s), i))
+                ops = ops.replace(tok, do)
+        content = ops.encode("latin-1", "replace")
+        objects[content_obj_ids[pidx]] = (
+            ("<< /Length %d >>\nstream\n" % len(content)).encode("latin-1")
+            + content + b"\nendstream")
+        res = "<< /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R >>"
+        page_imgs_here = [i for i, (cpidx, _p) in enumerate(chart_list) if cpidx == pidx]
+        if page_imgs_here:
+            res += " /XObject << %s >>" % " ".join(
+                "/Im%d %d 0 R" % (i, image_obj_ids[i]) for i in page_imgs_here)
+        res += " >>"
+        an = ""
+        if page_annots[pidx]:
+            an = " /Annots [%s]" % " ".join(
+                a.decode("latin-1") for a in page_annots[pidx])
+        objects[page_obj_ids[pidx]] = (
+            "<< /Type /Page /Parent %d 0 R /MediaBox [0 0 %d %d] "
+            "/Resources %s /Contents %d 0 R%s >>"
+            % (page_num, PDF_W, PDF_H, res, content_obj_ids[pidx], an)
+        ).encode("latin-1")
+
+    for i, (pidx, png) in enumerate(chart_list):
+        w, h, scaled = decoded[i]
+        objects[image_obj_ids[i]] = (
+            ("<< /Type /XObject /Subtype /Image /Width %d /Height %d "
+             "/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode "
+             "/Length %d >>\nstream\n" % (w, h, len(scaled))).encode("latin-1")
+            + scaled + b"\nendstream")
+
+    objects[info_id] = (
+        "<< /Title (%s) /Producer (proposal-report-engine) "
+        "/Creator (proposal-report-engine) /CreationDate (D:20261028) >>"
+        % _pdf_escape(_pdf_winansi(title))).encode("latin-1")
+    objects[encrypt_id] = (
+        "<< /Filter /Standard /V 1 /R 2 /O <%s> /U <%s> /P %d /Length 40 >>"
+        % (o.hex().upper(), uval.hex().upper(), _obj_perms(perms))).encode("latin-1")
+
+    out = bytearray()
+    out += b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n"
+    offs = {}
+    for num in sorted(objects):
+        body = objects[num]
+        offs[num] = len(out)
+        out += ("%d 0 obj\n" % num).encode("latin-1")
+        if num == encrypt_id:
+            # The /Encrypt dictionary itself is NOT encrypted (spec 3.5.2).
+            out += body + b"\nendobj\n"
+            continue
+        ok = _obj_key(key, num)                 # 10-byte per-object key (strings + streams)
+        if b"stream\n" in body:
+            # Any stream object: the dict string values AND the stream DATA are
+            # both RC4-encrypted with the same 10-byte per-object key
+            # (pypdf CryptRC4: rc4_key = MD5(file_key[:5] + obj3 + gen2)[:10]).
+            head, rest = body.split(b"stream\n", 1)
+            rest = rest[: -len(b"\nendstream")]
+            out += _encrypt_strings(head, ok) + b"stream\n" + _rc4(ok, rest) \
+                + b"\nendstream\nendobj\n"
+        else:
+            # Plain dict/object: encrypt only string values, keep structure.
+            out += _encrypt_strings(body, ok) + b"\nendobj\n"
+    xref = len(out)
+    maxn = max(offs)
+    out += ("xref\n0 %d\n" % (maxn + 1)).encode("latin-1")
+    out += b"0000000000 65535 f \n"
+    for num in range(1, maxn + 1):
+        if num in offs:
+            out += ("%010d 00000 n \n" % offs[num]).encode("latin-1")
+        else:
+            out += b"0000000000 65535 f \n"
+    out += ("trailer\n<< /Size %d /Root 1 0 R /Info %d 0 R "
+            "/ID [<%s> <%s>] /Encrypt %d 0 R >>\nstartxref\n%d\n%%%%EOF\n"
+            % (maxn + 1, info_id, docid.hex().upper(), docid.hex().upper(),
+               encrypt_id, xref)).encode("latin-1")
+    with open(out_path, "wb") as f:
+        f.write(out)
+    return str(out_path)

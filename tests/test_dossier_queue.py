@@ -33,8 +33,14 @@ def result_fixture():
 class DossierTests(unittest.TestCase):
     def test_all_sections_present_and_labeled(self):
         d = build_dossier(result_fixture())
-        self.assertEqual(len(d["sections"]), 15)
+        self.assertEqual(len(d["sections"]), 19)
         self.assertIn("market_evidence", d["sections"])
+        self.assertIn("classification", d["sections"])
+        self.assertIn("tender_project", d["sections"])
+        self.assertIn("project_overview", d["sections"])
+        self.assertIn("named_businesses", d["sections"])
+        self.assertIn("Capital range key",
+                      " ".join(d["sections"]["named_businesses"]["content"]))
         for key, meta in d["sections"].items():
             self.assertIn("title", meta)
             self.assertIn("label", meta)
