@@ -13,6 +13,41 @@ from backend.runtime_guard import polling_lock
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_hybrid_configuration_requires_a_scoped_dispatch_token(self):
+        with patch.dict('os.environ', {'HYBRID_EXECUTION': 'github'}, clear=True):
+            with self.assertRaisesRegex(ValueError, 'dispatch'):
+                runtime.configure_hybrid(threading.Event(), Path('/tmp/unused.db'))
+
+    def test_hybrid_dispatcher_is_separate_from_polling_and_uses_private_queue(self):
+        with tempfile.TemporaryDirectory() as temp, patch.dict('os.environ', {
+            'HYBRID_EXECUTION': 'github', 'GITHUB_DISPATCH_TOKEN': 'private',
+            'TELEGRAM_BOT_TOKEN': 'bot-secret',
+            'GITHUB_REPOSITORY': 'owner/repo', 'HYBRID_QUEUE_PATH': temp + '/outbox.sqlite3',
+        }, clear=True):
+            queue, worker = runtime.configure_hybrid(threading.Event(), Path(temp) / 'sessions.db')
+            self.assertFalse(worker.is_alive())
+            self.assertEqual(worker.name, 'telegram-github-dispatch')
+            self.assertEqual(queue.path, Path(temp) / 'outbox.sqlite3')
+
+    def test_dispatch_worker_stops_after_sending_one_queued_job(self):
+        stopped = threading.Event()
+        sent = []
+        def dispatch(*args, **kwargs):
+            sent.append(args[3]['request_id'])
+            stopped.set()
+        with tempfile.TemporaryDirectory() as temp, patch.dict('os.environ', {
+            'HYBRID_EXECUTION': 'github', 'GITHUB_DISPATCH_TOKEN': 'private',
+            'TELEGRAM_BOT_TOKEN': 'secret', 'GITHUB_REPOSITORY': 'owner/repo',
+            'HYBRID_QUEUE_PATH': temp + '/outbox.sqlite3',
+        }, clear=True), patch.object(runtime, 'dispatch_job', side_effect=dispatch):
+            queue, worker = runtime.configure_hybrid(stopped, Path(temp) / 'sessions.db')
+            queue.enqueue({'update_id': 1, 'message': {'chat': {'id': 123}, 'text': '/research solar'}})
+            worker.start()
+            worker.join(timeout=3)
+            self.assertFalse(worker.is_alive())
+            self.assertEqual(sent, ['tg-1'])
+            self.assertEqual(queue.stats(123), {'DISPATCHED': 1})
+
     def test_real_poller_delivers_then_acknowledges_and_stops(self):
         stopped = threading.Event()
         calls = []

@@ -1,0 +1,49 @@
+name: BizCrax36 Hybrid Telegram Job
+run-name: hybrid-${{ inputs.request_id }}
+on:
+  workflow_dispatch:
+    inputs:
+      request_id:
+        description: Stable Telegram update request ID
+        required: true
+        type: string
+      update_encrypted:
+        description: Authenticated encrypted Telegram command or callback
+        required: true
+        type: string
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: hybrid-${{ inputs.request_id }}
+  cancel-in-progress: false
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned hybrid encryption dependency
+        run: python3 -m pip install -r requirements-hybrid.txt
+      - name: Execute validated background job
+        env:
+          HYBRID_REQUEST_ID: ${{ inputs.request_id }}
+          HYBRID_UPDATE_ENCRYPTED: ${{ inputs.update_encrypted }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_ALLOWED_CHAT_IDS: ${{ secrets.TELEGRAM_ALLOWED_CHAT_IDS }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 -m backend.hybrid_cloud
+      - name: Preserve generated research outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hybrid-${{ inputs.request_id }}
+          path: data/research-jobs/
+          if-no-files-found: ignore
+          retention-days: 7
