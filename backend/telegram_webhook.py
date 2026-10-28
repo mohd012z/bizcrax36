@@ -13,7 +13,7 @@ import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from backend.telegram_bot import BASE, api
-from backend.telegram_poll_once import load_ideas, process_update
+from backend.telegram_queue import enqueue
 
 MAX_BODY = 256 * 1024
 
@@ -26,14 +26,11 @@ def validate_request(path, headers, secret):
     return 200
 
 
-def process_payload(payload, *, token, allowed_ids, send, database, ideas):
-    if not isinstance(payload, dict) or not isinstance(payload.get("update_id"), int):
-        raise ValueError("Invalid Telegram update")
-    return process_update(payload, send=send, allowed_ids=allowed_ids,
-                          database=database, ideas=ideas, token=token)
+def process_payload(payload, *, queue_path):
+    return 'queued' if enqueue(queue_path, payload) else 'duplicate'
 
 
-def make_handler(token, allowed_ids, secret, database, ideas):
+def make_handler(secret, queue_path):
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             self.send_error(404)
@@ -53,10 +50,7 @@ def make_handler(token, allowed_ids, secret, database, ideas):
                 return
             try:
                 payload = json.loads(self.rfile.read(length))
-                result = process_payload(
-                    payload, token=token, allowed_ids=allowed_ids,
-                    send=lambda method, data: api(token, method, data),
-                    database=database, ideas=ideas)
+                result = process_payload(payload, queue_path=queue_path)
             except (ValueError, UnicodeError):
                 self.send_error(400)
                 return
@@ -85,7 +79,7 @@ def main():
     port = int(os.getenv("PORT", "8080"))
     server = ThreadingHTTPServer(
         ("0.0.0.0", port),
-        make_handler(token, ids, secret, BASE / "data" / "research.sqlite3", load_ideas()))
+        make_handler(secret, queue_path))
     print("Telegram webhook receiver listening", flush=True)
     server.serve_forever()
 
