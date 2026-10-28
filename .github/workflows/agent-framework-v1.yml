@@ -1,0 +1,25 @@
+name: Agent Framework V1 Checks
+on:
+  push:
+    branches: [feature/agent-framework-v1]
+  pull_request:
+    paths:
+      - 'backend/agent_framework_v1.py'
+      - 'backend/test_agent_framework_v1.py'
+      - '.github/workflows/agent-framework-v1.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile Python
+        run: python -m py_compile backend/agent_framework_v1.py backend/test_agent_framework_v1.py
+      - name: Run framework tests
+        run: cd backend && python -m unittest -v test_agent_framework_v1
