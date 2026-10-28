@@ -23,7 +23,7 @@ on:
       - '.github/workflows/telegram-interactive.yml'
   workflow_dispatch:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '0 0 * * *'
 permissions:
   contents: write
 concurrency:
