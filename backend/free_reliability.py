@@ -21,7 +21,7 @@ def command_payload():
     return [{"command": c, "description": d} for c, d in COMMANDS]
 
 def parse_command(text):
-    match = re.match(r"^/([a-z][a-z0-9_]*)(?:@[A-Za-z0-9_]+)?(?:\\s+(.*))?$", text.strip(), re.S)
+    match = re.match(r"^/([a-z][a-z0-9_]*)(?:@[A-Za-z0-9_]+)?(?:\s+(.*))?$", text.strip(), re.S)
     return (match.group(1), (match.group(2) or "").strip()) if match else (None, "")
 
 def validate_record(row):
@@ -32,7 +32,7 @@ def validate_record(row):
         raise ValueError("invalid id")
     if not 1 <= len(record["title"]) <= 240:
         raise ValueError("invalid title")
-    if record["source_url"] and not re.fullmatch(r"https://[^\\s/]+(?:/[^\\s]*)?", record["source_url"]):
+    if record["source_url"] and not re.fullmatch(r"https://[^\s/]+(?:/[^\s]*)?", record["source_url"]):
         raise ValueError("invalid HTTPS source URL")
     if record["status"] not in ALLOWED_STATUS:
         raise ValueError("invalid status")
