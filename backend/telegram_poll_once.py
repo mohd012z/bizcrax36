@@ -584,7 +584,8 @@ def main():
     db=Path(os.environ.get("BIZCRAX_DATABASE",str(BASE/"data/research.sqlite3")))
     webhook=api(token,"getWebhookInfo",{})
     if webhook.get("url"):
-        raise SystemExit("Telegram webhook is active: getUpdates polling cannot operate until webhook is disabled on the bot owner account")
+        print("Telegram webhook active: scheduled polling skipped (webhook handles replies)",flush=True)
+        return
     print("Telegram webhook: inactive; polling enabled",flush=True)
     # Register the bottom-left ⋮ command menu (best effort, never fatal).
     try:
