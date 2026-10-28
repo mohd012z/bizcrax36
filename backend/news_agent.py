@@ -33,17 +33,70 @@ USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
               "Chrome/120 Safari/537.36 BizCrax36NewsAgent/1.0")
 
 # (name, url, region, body_readable) — only feeds verified reachable from this
-# host. Google News items are title-only (wrapper is a JS shell).
+# host on 2026-10-28. Google News items are title-only (wrapper is a JS shell).
 FEEDS = (
     ("Free Malaysia Today (biz)", "https://www.freemalaysiatoday.com/category/business/feed", "my", True),
     ("Free Malaysia Today (nation)", "https://www.freemalaysiatoday.com/feed", "my", True),
     ("Bloomberg Markets", "https://feeds.bloomberg.com/markets/news.rss", "global", True),
     ("Bloomberg Economics", "https://feeds.bloomberg.com/economics/news.rss", "global", True),
+    ("Bloomberg Tech", "https://feeds.bloomberg.com/technology/news.rss", "global", True),
     ("Tech in Asia", "https://www.techinasia.com/feed", "asia", True),
     ("Economic Times", "https://economictimes.indiatimes.com/rssfeedstopstories.cms", "asia", True),
     ("SCMP Business", "https://www.scmp.com/rss/4/feed", "asia", True),
-    ("Google News (MY biz)", "https://news.google.com/rss/search?q=business+OR+economy+OR+startup+OR+investment+when:7d&hl=en-MY&gl=MY&ceid=MY:en", "my", False),
+    ("CNBC Top News", "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=100003114", "global", True),
+    ("MarketWatch Top Stories", "https://feeds.content.dowjones.io/public/rss/mw_topstories", "global", True),
+    ("TechCrunch", "https://techcrunch.com/feed/", "global", True),
+    ("Ars Technica Business", "https://feeds.arstechnica.com/arstechnica/business", "global", True),
+    ("Al Jazeera", "https://www.aljazeera.com/xml/rss/all.xml", "global", True),
+    ("Investing.com", "https://www.investing.com/rss/news.rss", "global", True),
+    # Malaysia topic feeds (title-level; direct MY-paper RSS is mostly 404/NXDOMAIN)
+    ("MY Business (GN)", "https://news.google.com/rss/search?q=business+OR+economy+OR+startup+OR+investment+when:2d&hl=en-MY&gl=MY&ceid=MY:en", "my", False),
+    ("MY Government (GN)", "https://news.google.com/rss/search?q=Malaysia+government+budget+tender+project+when:2d&hl=en-MY&gl=MY&ceid=MY:en", "my", False),
 )
+
+# Fun topic filters: each maps to topic-scoped Google News feeds (MY + global),
+# scanned alongside the standard feeds. Titles carry direct publisher URLs.
+TOPIC_FEEDS = {
+    "ai": (
+        ("AI Malaysia (GN)", "https://news.google.com/rss/search?q=artificial+intelligence+OR+AI+Malaysia+when:2d&hl=en-MY&gl=MY&ceid=MY:en", "my", False),
+        ("AI Global (GN)", "https://news.google.com/rss/search?q=artificial+intelligence+business+OR+startup+when:1d&hl=en-US&gl=US&ceid=US:en", "global", False),
+    ),
+    "crypto": (
+        ("Crypto MY (GN)", "https://news.google.com/rss/search?q=crypto+OR+bitcoin+OR+stablecoin+Malaysia+when:2d&hl=en-MY&gl=MY&ceid=MY:en", "my", False),
+        ("Crypto Global (GN)", "https://news.google.com/rss/search?q=crypto+OR+bitcoin+OR+tokenisation+when:1d&hl=en-US&gl=US&ceid=US:en", "global", False),
+    ),
+    "startup": (
+        ("Startup MY (GN)", "https://news.google.com/rss/search?q=startup+OR+unicorn+OR+venture+Malaysia+when:2d&hl=en-MY&gl=MY&ceid=MY:en", "my", False),
+        ("Startup Global (GN)", "https://news.google.com/rss/search?q=startup+funding+OR+IPO+when:1d&hl=en-US&gl=US&ceid=US:en", "global", False),
+    ),
+    "ecommerce": (
+        ("E-commerce MY (GN)", "https://news.google.com/rss/search?q=ecommerce+OR+online+retail+OR+shopee+OR+tiktok+shop+Malaysia+when:2d&hl=en-MY&gl=MY&ceid=MY:en", "my", False),
+        ("E-commerce Global (GN)", "https://news.google.com/rss/search?q=ecommerce+OR+online+retail+growth+when:1d&hl=en-US&gl=US&ceid=US:en", "global", False),
+    ),
+    "food": (
+        ("F&B / Halal MY (GN)", "https://news.google.com/rss/search?q=franchise+OR+halal+OR+food+beverage+OR+restaurant+Malaysia+when:2d&hl=en-MY&gl=MY&ceid=MY:en", "my", False),
+        ("F&B Global (GN)", "https://news.google.com/rss/search?q=restaurant+OR+food+startup+OR+franchise+when:1d&hl=en-US&gl=US&ceid=US:en", "global", False),
+    ),
+    "realestate": (
+        ("Property MY (GN)", "https://news.google.com/rss/search?q=property+OR+real+estate+OR+development+Malaysia+when:2d&hl=en-MY&gl=MY&ceid=MY:en", "my", False),
+        ("Property Global (GN)", "https://news.google.com/rss/search?q=real+estate+OR+property+market+when:1d&hl=en-US&gl=US&ceid=US:en", "global", False),
+    ),
+    "energy": (
+        ("Energy MY (GN)", "https://news.google.com/rss/search?q=solar+OR+energy+OR+EV+charging+Malaysia+when:2d&hl=en-MY&gl=MY&ceid=MY:en", "my", False),
+        ("Energy Global (GN)", "https://news.google.com/rss/search?q=renewable+energy+OR+EV+OR+data+center+power+when:1d&hl=en-US&gl=US&ceid=US:en", "global", False),
+    ),
+    "tender": (
+        ("Tender MY (GN)", "https://news.google.com/rss/search?q=tender+OR+contract+OR+project+Malaysia+government+when:2d&hl=en-MY&gl=MY&ceid=MY:en", "my", False),
+        ("Tender Global (GN)", "https://news.google.com/rss/search?q=tender+OR+procurement+OR+contract+awarded+when:1d&hl=en-US&gl=US&ceid=US:en", "global", False),
+    ),
+}
+
+TOPIC_LABELS = {
+    "ai": "🤖 AI", "crypto": "🪙 Crypto", "startup": "🚀 Startups",
+    "ecommerce": "🛒 E-commerce", "food": "🍜 F&B / Halal",
+    "realestate": "🏢 Property", "energy": "⚡ Energy / EV",
+    "tender": "📋 Tenders",
+}
 
 ATOM = "{http://www.w3.org/2005/Atom}"
 
@@ -102,8 +155,13 @@ def fetch_feed(name, url, region, body_readable, fetch=None, limit=40):
     return items, None
 
 
-def scan(fetch=None, workers=6, limit=40, only=None):
-    """Read every feed in parallel. only = set of feed names to restrict to."""
+def scan(fetch=None, workers=6, limit=40, only=None, topic=None):
+    """Read every feed in parallel. only = set of feed names; topic = a
+    TOPIC_FEEDS key to add topic-scoped feeds (MY + global).
+
+    Returns (items, errors). Items are de-duplicated (by title) and
+    round-robin interleaved across feeds so one source never dominates the
+    top of the list."""
     results, errors = [], []
 
     def run(job):
@@ -111,7 +169,10 @@ def scan(fetch=None, workers=6, limit=40, only=None):
         items, err = fetch_feed(name, url, region, body, fetch=fetch, limit=limit)
         return items, err
 
-    jobs = [f for f in FEEDS if only is None or f[0] in only]
+    pool = FEEDS
+    if topic and topic in TOPIC_FEEDS:
+        pool = pool + tuple(TOPIC_FEEDS[topic])
+    jobs = [f for f in pool if only is None or f[0] in only]
     if len(jobs) == 1:
         outcomes = [run(jobs[0])]
     else:
@@ -121,7 +182,40 @@ def scan(fetch=None, workers=6, limit=40, only=None):
         if err:
             errors.append(err)
         results.extend(items)
-    return results, errors
+    return interleave(results), errors
+
+
+def _norm_title(t):
+    return re.sub(r"[^a-z0-9]+", " ", (t or "").lower()).strip()
+
+
+def interleave(items, per_feed=12):
+    """Dedupe by title, then round-robin across sources (bounded per feed) so
+    the top of the list is diverse instead of one source repeated. Preserves
+    recency within each feed."""
+    seen, by_feed, order = set(), {}, []
+    for it in items:
+        key = _norm_title(it.get("title"))
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        src = it.get("source", "?")
+        if src not in by_feed:
+            by_feed[src] = []
+            order.append(src)
+        by_feed[src].append(it)
+    out, round_i = [], 0
+    while round_i < per_feed:
+        added = False
+        for src in order:
+            bucket = by_feed[src]
+            if round_i < len(bucket):
+                out.append(bucket[round_i])
+                added = True
+        if not added:
+            break
+        round_i += 1
+    return out
 
 
 def _visible_text(html):

@@ -28,11 +28,48 @@ def home():
 
 def news_menu():
     return keyboard([
-        [{"text":"📰 Scan latest business news","callback_data":"bc:news:scan"}],
+        [{"text":"📰 Scan all latest news","callback_data":"bc:news:scan:all:1"}],
+        [{"text":"🤖 AI","callback_data":"bc:news:scan:ai:1"},
+         {"text":"🪙 Crypto","callback_data":"bc:news:scan:crypto:1"}],
+        [{"text":"🚀 Startups","callback_data":"bc:news:scan:startup:1"},
+         {"text":"🛒 E-commerce","callback_data":"bc:news:scan:ecommerce:1"}],
+        [{"text":"🍜 F&B / Halal","callback_data":"bc:news:scan:food:1"},
+         {"text":"🏢 Property","callback_data":"bc:news:scan:realestate:1"}],
+        [{"text":"⚡ Energy / EV","callback_data":"bc:news:scan:energy:1"},
+         {"text":"📋 Tenders","callback_data":"bc:news:scan:tender:1"}],
         [{"text":"🧩 Business plan from top research","callback_data":"bc:news:plan"}],
-        [{"text":"💬 How to use (paste a news link)","callback_data":"bc:news"}],
-        [{"text":"🏠 Main menu","callback_data":"bc:home"}]
+        [{"text":"💬 How to use (paste a news link)","callback_data":"bc:news"},
+         {"text":"🏠 Main menu","callback_data":"bc:home"}]
     ])
+
+def news_page_menu(topic, page, has_prev, has_next):
+    """Prev/Next + filter switcher for a paginated news scan."""
+    t = topic or "all"
+    rows = []
+    nav = []
+    if has_prev:
+        nav.append({"text":"⬅️ Back","callback_data":"bc:news:scan:%s:%d"%(t,page-1)})
+    if has_next:
+        nav.append({"text":"Next ➡️","callback_data":"bc:news:scan:%s:%d"%(t,page+1)})
+    if nav:
+        rows.append(nav)
+    rows.append([
+        {"text":"📰 All","callback_data":"bc:news:scan:all:%d"%page},
+        {"text":"🤖 AI","callback_data":"bc:news:scan:ai:%d"%page},
+        {"text":"🪙 Crypto","callback_data":"bc:news:scan:crypto:%d"%page},
+    ])
+    rows.append([
+        {"text":"🚀 Startups","callback_data":"bc:news:scan:startup:%d"%page},
+        {"text":"🛒 E-comm","callback_data":"bc:news:scan:ecommerce:%d"%page},
+        {"text":"🍜 F&B","callback_data":"bc:news:scan:food:%d"%page},
+    ])
+    rows.append([
+        {"text":"🏢 Property","callback_data":"bc:news:scan:realestate:%d"%page},
+        {"text":"⚡ Energy","callback_data":"bc:news:scan:energy:%d"%page},
+        {"text":"📋 Tenders","callback_data":"bc:news:scan:tender:%d"%page},
+    ])
+    rows.append([{"text":"🏠 Main menu","callback_data":"bc:home"}])
+    return keyboard(rows)
 
 def research_help():
     return keyboard([

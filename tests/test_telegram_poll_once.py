@@ -100,16 +100,17 @@ class PollOnceTests(unittest.TestCase):
   import backend.telegram_poll_once as tpo
   calls=[]
   scanned={}
-  def fake_scan(limit,workers):
+  def fake_scan(limit,workers,topic=None):
    scanned["yes"]=1
+   scanned["topic"]=topic
    return [{"source":"FMT","title":"A headline","body_readable":True}],[]
-  with self._mock(tpo,"news_agent",mock.Mock(scan=fake_scan)):
+  with self._mock(tpo,"news_agent",mock.Mock(scan=fake_scan,TOPIC_FEEDS={},FEEDS=[])):
    result=process_update({"message":{"chat":{"id":123},"text":"/news"}},
      send=lambda method,payload:calls.append((method,payload)),
      allowed_ids="123",database=self.db,ideas=[],token="tok")
   self.assertEqual(result,"sent")
   self.assertEqual(scanned.get("yes"),1)
-  self.assertTrue(any("News agent" in c[1].get("text","") for c in calls))
+  self.assertTrue(any("business feeds" in c[1].get("text","") or "sources" in c[1].get("text","") for c in calls))
  def test_news_command_with_url_builds_plan(self):
   import backend.telegram_poll_once as tpo
   calls=[]
