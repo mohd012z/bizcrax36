@@ -12,7 +12,6 @@ import json
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from backend.telegram_bot import BASE, api
 from backend.telegram_queue import enqueue
 
 MAX_BODY = 256 * 1024
@@ -70,8 +69,9 @@ def main():
     token = os.getenv("TELEGRAM_BOT_TOKEN", "")
     ids = os.getenv("TELEGRAM_ALLOWED_CHAT_IDS") or os.getenv("TELEGRAM_CHAT_ID", "")
     secret = os.getenv("TELEGRAM_WEBHOOK_SECRET", "")
-    if not token or not ids or not secret:
-        raise SystemExit("Missing Telegram token, allowed chat ID or webhook secret")
+    queue_path = os.getenv("TELEGRAM_QUEUE_DB", "")
+    if not secret or not queue_path:
+        raise SystemExit("Missing TELEGRAM_WEBHOOK_SECRET or TELEGRAM_QUEUE_DB")
     if not (1 <= len(secret) <= 256) or any(
         c not in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-" for c in secret
     ):
