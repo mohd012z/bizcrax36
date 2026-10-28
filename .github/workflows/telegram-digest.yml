@@ -1,8 +1,6 @@
 name: BizCrax36 Telegram research digest
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '20 1 * * *'
 permissions:
   contents: read
 jobs:

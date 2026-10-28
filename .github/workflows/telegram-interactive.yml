@@ -22,8 +22,6 @@ on:
       - 'tests/test_llm_endpoints.py'
       - '.github/workflows/telegram-interactive.yml'
   workflow_dispatch:
-  schedule:
-    - cron: '0 0 * * *'
 permissions:
   contents: write
 concurrency:
@@ -55,7 +53,6 @@ jobs:
           LLM_PROXY_MODEL: ${{ secrets.LLM_PROXY_MODEL }}
         run: python3 -m backend.telegram_poll_once
       - name: Regression tests after the poll (proves the run that answered is healthy)
-        continue-on-error: true
         run: python3 -m unittest discover -s tests -v
   # Code pushes: full test gate before anything runs against main.
   tests-on-push:
