@@ -239,6 +239,46 @@ def resolve_link(url):
     return url
 
 
+_SHORTEN_CACHE = {}
+
+
+def shorten_url(url, fetch=None, timeout=12):
+    """Shorten a long opaque wrapper URL (news.google.com, Bing apiclick) via
+    is.gd (tinyurl fallback). Clean/short publisher URLs pass through.
+    Fail-open: any error returns the original URL. Cached per-process."""
+    if not url:
+        return url
+    if len(url) <= 70:
+        return url
+    host = (urlparse(url).hostname or "").lower()
+    if not ("news.google.com" in host or "apiclick.aspx" in url):
+        return url
+    key = hashlib.sha1(url.encode()).hexdigest()[:16]
+    if key in _SHORTEN_CACHE:
+        return _SHORTEN_CACHE[key]
+    out = url
+    getter = fetch
+
+    def default_get(target):
+        req = Request(target, headers={"User-Agent": "BizCrax36ResearchV2/1.0"})
+        with urlopen(req, timeout=timeout) as response:
+            return response.read(2000)
+
+    if getter is None:
+        getter = default_get
+    for target in ("https://is.gd/create.php?" + urlencode({"format": "simple", "url": url}),
+                   "https://tinyurl.com/api-create.php?" + urlencode({"url": url})):
+        try:
+            short = getter(target).decode("utf-8", "ignore").strip()
+            if re.fullmatch(r"https://(is\.gd|tinyurl\.com)/[A-Za-z0-9_-]+", short):
+                out = short
+                break
+        except (OSError, ValueError):
+            continue
+    _SHORTEN_CACHE[key] = out
+    return out
+
+
 def discover_bing(subquery, fetch=None, limit=5):
     """Secondary discovery: Bing News RSS. Unwraps apiclick.aspx redirects to
     the real publisher URL, so leads get direct (often open) links."""
@@ -273,6 +313,27 @@ def discover_bing(subquery, fetch=None, limit=5):
                 "status": "review_required",
             })
     return items
+
+
+def bing_title_resolve(title, fetch=None, limit=5):
+    """Resolve an opaque Google News lead to a REAL publisher URL: search Bing
+    News for the exact headline and return the direct link of the closest
+    title match. Returns None when nothing matches well (fail-open)."""
+    words = [w for w in re.findall(r"[a-z0-9]{4,}", (title or "").lower())]
+    if len(words) < 3:
+        return None
+    try:
+        items = discover_bing(title, fetch=fetch, limit=limit)
+    except (OSError, ValueError, ElementTree.ParseError):
+        return None
+    best, best_score = None, 0
+    for it in items:
+        twords = set(w for w in re.findall(r"[a-z0-9]{4,}", it["title"].lower()))
+        overlap = len(twords & set(words))
+        score = overlap / float(len(words))
+        if overlap >= 3 and score > best_score:
+            best, best_score = it["source_url"], score
+    return best if best_score >= 0.6 else None
 
 
 def _visible_words(html):
@@ -446,7 +507,7 @@ def research(query, country="Malaysia", capital="all", fetch=None,
     stage("verifying")
     # Resolve opaque Google News wrapper URLs to direct publisher links, and
     # record which leads carry Google-redirected (possibly paywalled) URLs.
-    for record in candidates:
+    for idx, record in enumerate(candidates):
         original = record.get("source_url") or ""
         resolved = resolve_link(original)
         record["source_url_resolved"] = resolved
@@ -455,6 +516,17 @@ def research(query, country="Malaysia", capital="all", fetch=None,
             record["resolved_from_google"] = True
         elif "news.google.com" in original:
             record["google_news_link"] = True
+            # For the leads that will be verified, try Bing to swap the opaque
+            # Google wrapper for the REAL publisher URL (search by exact headline).
+            if idx < verify_top:
+                real = bing_title_resolve(record["title"], fetch=fetch)
+                if real and "news.google.com" not in real:
+                    record["source_url"] = real
+                    record["resolved_from_google"] = True
+                    record.pop("google_news_link", None)
+        # Short, openable display link: real publisher URLs stay as-is; long
+        # opaque Google News wrappers get a short link (is.gd/tinyurl).
+        record["short_url"] = shorten_url(record["source_url"], fetch=fetch)
     for record in candidates[:verify_top]:
         try:
             record["verification"] = verify(record, fetch=verify_fetch)

@@ -308,10 +308,10 @@ def _named_business_lines(result):
                 lines.append("   evidence this run: %s [%s]%s"
                              % (c["title"][:70], c.get("score", {}).get("total", "?"), paid))
                 if v.get("paywall"):
-                    lines.append("   ref: %s" % (c.get("source_url") or _free_route(c, candidates)))
+                    lines.append("   ref: %s" % (c.get("short_url") or c.get("source_url") or _free_route(c, candidates)))
                     lines.append("   free route: %s" % _free_route(c, candidates))
                 else:
-                    lines.append("   ref: %s" % (c.get("source_url") or _free_route(c, candidates)))
+                    lines.append("   ref: %s" % (c.get("short_url") or c.get("source_url") or _free_route(c, candidates)))
             else:
                 lines.append("• %s — %s (no matching lead this run; treat as assumed)"
                              % (name, one_liner))
@@ -329,8 +329,9 @@ def _candidate_lines(result, limit=8):
         mark = "source-verified" if v.get("verified") else "review-required"
         score = c.get("score") or {}
         lines.append("%d. %s — score %s/100 [%s]" % (i, c["title"], score.get("total", "?"), mark))
-        if c.get("source_url"):
-            lines.append("   %s" % c["source_url"])
+        url = c.get("short_url") or c.get("source_url")
+        if url:
+            lines.append("   %s" % url)
     return lines
 
 
@@ -621,10 +622,15 @@ def build(result, now=None):
         ret = _short_date(v.get("retrieved_at"))
         ratio = ("match %.0f%%" % (100 * v.get("match_ratio", 0))) if v.get("match_ratio") is not None else ""
         src_lines.append("%d. [%s] %s" % (i, mark, c["title"][:110]))
-        if c.get("source_url"):
-            src_lines.append("   URL: %s" % c["source_url"])
+        full = c.get("source_url") or ""
+        short = c.get("short_url") or ""
+        if "news.google.com" in full and short and short != full:
+            # long opaque wrapper -> give the short (tap-able) link
+            src_lines.append("   URL: %s" % short)
+        elif full:
+            src_lines.append("   URL: %s" % full)
         src_lines.append("   publisher/page: %s | published: %s | retrieved: %s %s"
-                         % (_host(c.get("source_url")), pub, ret, ("(%s)" % ratio if ratio else "")))
+                         % (_host(full), pub, ret, ("(%s)" % ratio if ratio else "")))
         # Access notes: paid content and Google-redirected links need a free route.
         if v.get("paywall"):
             src_lines.append("   access: PAID CONTENT — open the free route below instead")
@@ -687,8 +693,9 @@ def summary_text(dossier, result, max_chars=3900):
         lines.append("%d. %s %s" % (i, c["title"][:95], v))
         lines.append("   score %s/100 %s" % (s.get("total", "?"),
                                               "| verified" if (c.get("verification") or {}).get("verified") else "| review required"))
-        if c.get("source_url"):
-            lines.append("   %s" % c["source_url"])
+        url = c.get("short_url") or c.get("source_url")
+        if url:
+            lines.append("   %s" % url)
     gap = result.get("gap_hits", {})
     lines.append("")
     lines.append("📈 SIGNALS: competition headlines %s | licence/registration headlines %s | %s"
