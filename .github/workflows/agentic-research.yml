@@ -6,6 +6,14 @@ on:
         description: "Business topic to investigate"
         required: true
         type: string
+      chat_id:
+        description: "Telegram chat ID for queued research delivery"
+        required: false
+        type: string
+      request_id:
+        description: "Queue request identifier"
+        required: false
+        type: string
       country:
         description: "Country"
         required: false
@@ -41,3 +49,42 @@ jobs:
           name: agentic-research-result
           path: agentic-research-result.json
           retention-days: 7
+      - name: Deliver queued research to Telegram
+        if: ${{ inputs.chat_id != '' && inputs.request_id != '' }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ inputs.chat_id }}
+          REQUEST_ID: ${{ inputs.request_id }}
+        run: |
+          python3 - <<'PY'
+          import json,os,urllib.request
+          from pathlib import Path
+          result=json.loads(Path("agentic-research-result.json").read_text())
+          rows=result.get("candidates",[])[:5]
+          lines=["Research result: "+result["plan"]["query"],"Request ID: "+os.environ["REQUEST_ID"]]
+          for i,row in enumerate(rows,1):
+              lines.extend([f"{i}. {row['title']}",row["source_url"],"Status: REVIEW_REQUIRED"])
+          if not rows: lines.append("No candidates found. Source availability may be limited.")
+          lines.append("News leads only; no opportunity or profitability has been independently verified.")
+          payload=json.dumps({"chat_id":os.environ["TELEGRAM_CHAT_ID"],"text":"\\n".join(lines)[:3900]}).encode()
+          req=urllib.request.Request("https://api.telegram.org/bot"+os.environ["TELEGRAM_BOT_TOKEN"]+"/sendMessage",data=payload,headers={"Content-Type":"application/json"},method="POST")
+          with urllib.request.urlopen(req,timeout=30) as response:
+              print("Telegram delivery HTTP",response.status)
+          PY
+      - name: Mark queued research complete
+        if: ${{ success() && inputs.chat_id != '' && inputs.request_id != '' }}
+        env:
+          COMPLETION_URL: ${{ secrets.RESEARCH_COMPLETION_URL }}
+          COMPLETION_SECRET: ${{ secrets.RESEARCH_COMPLETION_SECRET }}
+          REQUEST_ID: ${{ inputs.request_id }}
+        run: |
+          python3 - <<'PY'
+          import json,os,urllib.request
+          url=os.environ.get("COMPLETION_URL","")
+          secret=os.environ.get("COMPLETION_SECRET","")
+          if not url or not secret: raise SystemExit("Research completion callback is not configured")
+          payload=json.dumps({"request_id":os.environ["REQUEST_ID"],"state":"COMPLETE"}).encode()
+          req=urllib.request.Request(url,data=payload,headers={"Authorization":"Bearer "+secret,"Content-Type":"application/json"},method="POST")
+          with urllib.request.urlopen(req,timeout=30) as response:
+              if response.status != 200: raise SystemExit("Completion callback failed")
+          PY

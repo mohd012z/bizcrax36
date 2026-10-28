@@ -1,0 +1,34 @@
+name: BizCrax36 webhook V3 tests
+on:
+  pull_request:
+    paths:
+      - 'worker/**'
+      - 'tests/research-state.test.mjs'
+      - 'tests/research-dispatch.test.mjs'
+      - 'tests/telegram-webhook.test.mjs'
+      - 'tests/test_telegram_command_registration.py'
+      - 'scripts/register_telegram_commands.py'
+      - '.github/workflows/webhook-v3-tests.yml'
+  push:
+    branches: [feat/telegram-webhook-realtime]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  worker-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test Telegram command registration
+        run: python3 -m unittest tests.test_telegram_command_registration -v
+      - name: Check worker JavaScript syntax
+        run: |
+          node --check worker/telegram.js
+          node --check worker/research-dispatch.js
+          node --check worker/research-state.js
+      - name: Run dispatch-state regression tests
+        run: node --test tests/research-state.test.mjs tests/research-dispatch.test.mjs tests/telegram-webhook.test.mjs
