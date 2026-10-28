@@ -12,6 +12,7 @@ on:
       - 'backend/telegram_queue.py'
       - 'backend/telegram_worker.py'
       - 'tests/test_telegram_webhook.py'
+      - 'tests/test_telegram_worker.py'
       - 'backend/agentic_research.py'
       - 'backend/research_v2.py'
       - 'backend/research_queue.py'
