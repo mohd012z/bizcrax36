@@ -92,15 +92,15 @@ def process_live(update, *, token, allowed_ids, database, ideas, send=None,
         except (ValueError,KeyError,UnicodeError) as exc:
             send("sendMessage",{"chat_id":chat_id,"text":f"❌ Import rejected: {str(exc)[:180]}"})
         return "sent"
-    if text.lower().startswith("/export"):
+    if text.lower().split(maxsplit=1)[0:1] == ["/export"]:
         ext=".csv" if text.lower().split()[-1:] == ["csv"] else ".json"
         rows=(store or {}).get(chat_id,[])
         upload(chat_id,"bizcrax-export"+ext,export_data(rows,ext),f"Validated records: {len(rows)}")
         return "sent"
-    if text.lower().startswith(("/import","/documents")):
+    if text.lower().split(maxsplit=1)[0:1] in (["/import"],["/documents"]):
         send("sendMessage",{"chat_id":chat_id,"text":"Send a JSON or CSV document up to 2MB. Use /export json or /export csv afterward.","reply_markup":MENU})
         return "sent"
-    if text.lower().startswith(("/start","/help")):
+    if text.lower().split(maxsplit=1)[0:1] in (["/start"],["/help"]):
         send("sendMessage",{"chat_id":chat_id,"text":"BizCrax36 • Research Control Center\nChoose a category or send /research <topic>.","reply_markup":MENU})
         return "sent"
     return process_update(update,send=send,allowed_ids=allowed_ids,database=database,ideas=ideas,token=token)
@@ -112,7 +112,7 @@ def main():
     if webhook.get("url"):
         raise SystemExit("Webhook active; stop it before starting a polling worker.")
     print("Registered commands:",register(token),flush=True)
-    ledger=UpdateLedger(Path(os.environ.get("BIZCRAX_UPDATE_DB","data/telegram_updates.sqlite3")))
+    ledger_path=Path(os.environ.get("BIZCRAX_UPDATE_DB","data/telegram_updates.sqlite3"))\n    ledger_path.parent.mkdir(parents=True,exist_ok=True)\n    ledger=UpdateLedger(ledger_path)
     records={}
     ideas=load_ideas()
     offset=None
