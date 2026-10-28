@@ -1034,8 +1034,36 @@ def render_pdf(dossier, out_path, title=None, pages=None, images=()):
                 continue
             if text.startswith("   "):
                 t = text.lstrip()
-                ops.append("BT /F4 8.5 Tf 0.22 0.24 0.30 rg 1 0 0 1 74 %d Tm (%s) Tj ET"
-                           % (cy, _pdf_escape(t)))
+                url_matches = list(url_re.finditer(t))
+                if url_matches:
+                    # indented line containing URL(s) -> clickable segments
+                    segs = []; pos = 0
+                    for m in url_matches:
+                        if m.start() > pos:
+                            segs.append((t[pos:m.start()], None))
+                        segs.append((m.group(0), m.group(0)))
+                        pos = m.end()
+                    if pos < len(t):
+                        segs.append((t[pos:], None))
+                    x = 74
+                    parts = []
+                    for s, u in segs:
+                        if u:
+                            parts.append("(%s)" % _pdf_escape(s))
+                            wpt = max(10.0, len(s) * 4.0)
+                            annots.append(b"<< /Type /Annot /Subtype /Link /Rect [%d %d %d %d] "
+                                          b"/Border [0 0 0] /A << /S /URI /URI (%s) >> >>"
+                                          % (x, cy - 1, int(x + wpt), cy + 9,
+                                             _pdf_escape(u).encode("latin-1")))
+                            x += wpt
+                        else:
+                            parts.append("(%s)" % _pdf_escape(s))
+                            x += len(s) * 4.0
+                    ops.append("BT /F4 8.5 Tf 1 0 0 1 74 %d Tm [%s] TJ ET"
+                               % (cy, " ".join(parts)))
+                else:
+                    ops.append("BT /F4 8.5 Tf 0.22 0.24 0.30 rg 1 0 0 1 74 %d Tm (%s) Tj ET"
+                               % (cy, _pdf_escape(t)))
                 cy -= 12
             elif text[0] in ("*", "\u2022") or url_re.match(text) or \
                     (len(text) >= 3 and text[0].isdigit() and text[1] == "." and text[2] == " "):
