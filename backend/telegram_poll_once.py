@@ -122,9 +122,12 @@ def _multipart_send(token, method, fields, file_field, file_path):
         body+=("--%s\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n"
                %(boundary,key,value)).encode("utf-8")
     file_name=os.path.basename(str(file_path))
+    mime={".pdf":"application/pdf",
+          ".docx":"application/vnd.openxmlformats-officedocument.wordprocessingml.document"}.get(
+              os.path.splitext(str(file_path))[1].lower(),"application/octet-stream")
     body+=("--%s\r\nContent-Disposition: form-data; name=\"%s\"; filename=\"%s\"\r\n"
-           "Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document\r\n\r\n"
-           %(boundary,file_field,file_name)).encode("utf-8")
+           "Content-Type: %s\r\n\r\n"
+           %(boundary,file_field,file_name,mime)).encode("utf-8")
     body+=Path(str(file_path)).read_bytes()
     body+=("\r\n--%s--\r\n"%boundary).encode("utf-8")
     req=Request("https://api.telegram.org/bot%s/%s"%(token,method),data=body,method="POST")
@@ -136,20 +139,39 @@ def _multipart_send(token, method, fields, file_field, file_path):
     return data["result"]
 
 def deliver_report(token,chat_id,job):
-    """Send the stored DOCX report for a completed job. Returns True on success."""
-    docx=job_dir(job["id"])/"report.docx"
+    """Send the stored proposal (DOCX + locked PDF) for a completed job.
+    Falls back to the legacy report.docx name for pre-rename jobs.
+    Returns True if at least one file was sent."""
+    jd=job_dir(job["id"])
+    docx=jd/"proposal.docx" if (jd/"proposal.docx").exists() else jd/"report.docx"
+    pdf=jd/"proposal.pdf"
     if not docx.exists():
         return False
     d=job.get("diagnostics") or {}
-    caption=("360° Report — %s\n%s | %d leads | %d source-verified | top score %s/100\n"
+    caption=("Business Plan Proposal — %s\n%s | %d leads | %d source-verified | top score %s/100\n"
              "All leads review_required until independently verified.")% (
         job.get("query"),job.get("country"),d.get("candidates",0),
         d.get("source_verified",0),d.get("top_score","?"))[:1000]
-    _multipart_send(token,"sendDocument",
-                    {"chat_id":str(chat_id),"caption":caption,
-                     "disable_web_page_preview":"true"},
-                    "document",docx)
-    return True
+    sent=False
+    try:
+        _multipart_send(token,"sendDocument",
+                        {"chat_id":str(chat_id),"caption":caption,
+                         "disable_web_page_preview":"true"},
+                        "document",docx)
+        sent=True
+    except Exception:
+        sent=False
+    if pdf.exists():
+        try:
+            _multipart_send(token,"sendDocument",
+                            {"chat_id":str(chat_id),
+                             "caption":"Locked print-only version. Full editable version above.",
+                             "disable_web_page_preview":"true"},
+                            "document",pdf)
+            sent=True
+        except Exception:
+            pass
+    return sent
 
 # ----------------------------------------------------------------- research flow
 
@@ -286,7 +308,10 @@ def news_scan_text(items, errors):
     if errors:
         lines.append("Feed errors (fail-open): %d" % len(errors))
     for it in items[:18]:
+        link = (it.get("link") or it.get("url") or "").strip()
         lines.append("• [%s] %s" % (it.get("source", "?")[:24], it.get("title", "")[:110]))
+        if link and link.startswith("http"):
+            lines.append("   %s" % link)
     lines.append("")
     lines.append("👉 To build a full business plan + DOCX from one of these, "
                  "send the article link to me, or use /newsplan on your last research.")

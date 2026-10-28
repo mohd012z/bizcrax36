@@ -26,11 +26,11 @@ def search_text(message, database, ideas):
     parts=message.strip().split(maxsplit=1)
     command=parts[0].split("@",1)[0].lower() if parts else ""
     if command in ("/start","/help"):
-        return "BizCrax36 research bot. Choose a menu button or send /research topic for fresh discovery, /search keyword for saved records, /ideas keyword, /live keyword, /status. Research leads require independent verification."
+        return "Business opportunity research bot. Choose a menu button or send /research topic for fresh discovery, /search keyword for saved records, /ideas keyword, /live keyword, /status. Research leads require independent verification."
     if command in ("/sector","/sectors"):
         return "Choose Sector ▾ from the buttons below to select a business sector."
     if command=="/status":
-        return "BizCrax36 read-only search active. Live tender status requires current issuer verification."
+        return "Research search active. Live tender status requires current issuer verification."
     if command not in ("/search","/ideas","/live"):
         return "Unknown command. Send /help."
     query=parts[1].strip() if len(parts)>1 else ""
@@ -40,7 +40,7 @@ def search_text(message, database, ideas):
     results=one_search(load_records(database),ideas,query=query,mode=mode)["results"]
     if not results:
         return "No matching audited results. Try another keyword. No live status is inferred."
-    lines=[f"BizCrax36: {len(results)} matching results (showing up to {MAX_RESULTS})"]
+    lines=[f"{len(results)} matching results (showing up to {MAX_RESULTS})"]
     for i,r in enumerate(results[:MAX_RESULTS],1):
         title=str(r.get("title") or "Untitled").replace("\n"," ")[:110]
         state=r.get("status","review_required")
@@ -54,7 +54,7 @@ def handle_callback(data, database, ideas):
     if not action:
         return "Invalid or outdated menu selection.",home()
     if action=="bc:home":
-        return "BizCrax36 — choose an option:",home()
+        return "Choose an option:",home()
     if action=="bc:help":
         return search_text("/help",database,ideas),home()
     if action=="bc:search":

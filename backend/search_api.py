@@ -19,10 +19,25 @@ from backend.unified_search import one_search
 def load_records(dbpath):
     if not dbpath.exists():
         return []
+    # Self-heal: a fresh/empty db may not have the table yet (it is normally
+    # created on first save). Creating it here (rw) means button callbacks
+    # never crash with "no such table: research_records".
+    try:
+        with sqlite3.connect(str(dbpath)) as conn:
+            conn.execute("""CREATE TABLE IF NOT EXISTS research_records (
+                source_url TEXT NOT NULL, reference TEXT NOT NULL,
+                checked_at TEXT NOT NULL, verification_status TEXT NOT NULL,
+                record_json TEXT NOT NULL,
+                PRIMARY KEY (source_url, reference, checked_at))""")
+    except sqlite3.Error:
+        pass
     with sqlite3.connect(f"file:{dbpath}?mode=ro", uri=True) as conn:
-        rows = conn.execute(
-            "SELECT record_json FROM research_records ORDER BY checked_at DESC LIMIT 10000"
-        ).fetchall()
+        try:
+            rows = conn.execute(
+                "SELECT record_json FROM research_records ORDER BY checked_at DESC LIMIT 10000"
+            ).fetchall()
+        except sqlite3.OperationalError:
+            return []
     unique = {}
     for (payload,) in rows:
         try:
