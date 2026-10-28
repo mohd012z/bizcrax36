@@ -237,7 +237,6 @@ def ai_shortcut(key):
 def handle_ai_command(token,send,chat_id,body):
     """AI bizcollector: Minda intent parsing (fail-open) → V2 research → AI synthesis."""
     if not body:
-        intent=ai_bizcollector.ask_intent("show the business research menu")
         send("sendMessage",{"chat_id":chat_id,
             "text":("🤖 BizCrax AI — ask me ANYTHING about business opportunities, or tap a shortcut.\n"
                     "Example: /ai find a small capital food business in Malaysia\n"
@@ -404,7 +403,11 @@ def safe_callback_answer(send, callback_id, **extra):
         # Scheduled GitHub polling often receives callbacks after Telegram expiry.
 
 def process_update(update, *, send, allowed_ids, database, ideas,
-                   token=None, repository="", job_token=""):
+                   token=None, repository="", job_token="", hybrid_queue=None):
+    if hybrid_queue is not None:
+        outcome=hybrid_queue(update,send,allowed_ids)
+        if outcome is not None:
+            return outcome
     callback=update.get("callback_query")
     if isinstance(callback,dict):
         callback_id=callback.get("id")
@@ -536,13 +539,15 @@ def process_update(update, *, send, allowed_ids, database, ideas,
     return "sent"
 
 def poll_once(token,allowed_ids,database,ideas,telegram_api=api,max_updates=50,
-             repository="",job_token=""):
+             repository="",job_token="",poll_timeout=0,hybrid_queue=None):
     if not token or not allowed_ids:
         raise ValueError("Telegram credentials missing")
+    if not isinstance(poll_timeout,int) or not 0 <= poll_timeout <= 25:
+        raise ValueError("poll_timeout must be an integer from 0 to 25 seconds")
     def call(method,payload):
         return telegram_api(token,method,payload)
-    # Use zero timeout: GitHub Actions is not a permanent bot host.
-    updates=call("getUpdates",{"timeout":0,"limit":max_updates,
+    # Actions keeps timeout zero; the persistent host opts into long polling.
+    updates=call("getUpdates",{"timeout":poll_timeout,"limit":max_updates,
         "allowed_updates":json.dumps(["message","callback_query"])})
     processed=0
     outcomes={"sent":0,"denied":0,"ignored":0,"suppressed":0}
@@ -566,7 +571,8 @@ def poll_once(token,allowed_ids,database,ideas,telegram_api=api,max_updates=50,
             outcomes["suppressed"]=outcomes.get("suppressed",0)+1
         else:
             outcome=process_update(update,send=call,allowed_ids=allowed_ids,database=database,
-                                   ideas=ideas,token=token,repository=repository,job_token=job_token)
+                                   ideas=ideas,token=token,repository=repository,job_token=job_token,
+                                   hybrid_queue=hybrid_queue)
             outcomes[outcome]=outcomes.get(outcome,0)+1
         # Telegram confirms updates strictly below offset. This avoids replay
         # across ephemeral GitHub runners. A failed send stops before ack.
@@ -577,6 +583,9 @@ def poll_once(token,allowed_ids,database,ideas,telegram_api=api,max_updates=50,
     return processed
 
 def main():
+    if os.environ.get("TELEGRAM_RUNTIME", "actions") != "actions":
+        print("Telegram Actions polling disabled: another runtime owns updates",flush=True)
+        return
     token=os.environ.get("TELEGRAM_BOT_TOKEN","")
     allowed_ids=os.environ.get("TELEGRAM_ALLOWED_CHAT_IDS") or os.environ.get("TELEGRAM_CHAT_ID","")
     if not token or not allowed_ids:

@@ -1,6 +1,7 @@
 """Offline tests for report generation: PNG charts and strict-OOXML DOCX."""
 import struct
 import unittest
+from pathlib import Path
 import zipfile
 from xml.etree import ElementTree
 
@@ -64,14 +65,14 @@ class PngTests(unittest.TestCase):
 
     def test_score_chart_renders(self):
         out = render_score_chart(result_fixture()["candidates"], "/tmp/bc36_scores.png", max_items=2)
-        data = open(out, "rb").read()
+        data = Path(out).read_bytes()
         ok, why = _png_ok(data, 640, 90 + 2 * 44)
         self.assertTrue(ok, why)
         self.assertGreater(len(data), 100)
 
     def test_metric_chart_renders(self):
         out = render_metric_chart(result_fixture()["candidates"][0], "/tmp/bc36_metrics.png")
-        data = open(out, "rb").read()
+        data = Path(out).read_bytes()
         ok, why = _png_ok(data, 640, 90 + 6 * 40)
         self.assertTrue(ok, why)
 
@@ -80,7 +81,7 @@ class PngTests(unittest.TestCase):
         self.assertIsNotNone(series)
         self.assertEqual(len(series), 3)
         out = render_scenario_chart(series, "/tmp/bc36_scenarios.png")
-        data = open(out, "rb").read()
+        data = Path(out).read_bytes()
         ok, why = _png_ok(data, 640, 400)
         self.assertTrue(ok, why)
 

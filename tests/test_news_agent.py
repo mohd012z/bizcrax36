@@ -84,7 +84,7 @@ class ClassifyTest(unittest.TestCase):
 class PlanTest(unittest.TestCase):
     def _plan(self, **kw):
         art = news_agent.fetch_article("https://test.com/a", fetch=route_fetch)
-        return news_agent.implementation_plan(art, topic="data centre hub", **kw)
+        return news_agent.implementation_plan(art, topic="data centre hub", fetch=route_fetch, **kw)
 
     def test_all_sections_present(self):
         plan = self._plan(band="medium")
@@ -131,7 +131,7 @@ class PlanTest(unittest.TestCase):
 class DossierTest(unittest.TestCase):
     def test_sections_order_and_new_blocks(self):
         art = news_agent.fetch_article("https://test.com/a", fetch=route_fetch)
-        plan = news_agent.implementation_plan(art, topic="data centre hub", band="medium")
+        plan = news_agent.implementation_plan(art, topic="data centre hub", band="medium", fetch=route_fetch)
         dossier = news_agent.news_dossier(plan, [])
         keys = list(dossier["sections"].keys())
         for required in ("opportunity", "signals", "market_evidence", "flow",
@@ -148,7 +148,7 @@ class DossierTest(unittest.TestCase):
 
     def test_news_items_rendered(self):
         art = news_agent.fetch_article("https://test.com/a", fetch=route_fetch)
-        plan = news_agent.implementation_plan(art, topic="x", band="small")
+        plan = news_agent.implementation_plan(art, topic="x", band="small", fetch=route_fetch)
         items = [{"source": "FMT", "title": "Some headline", "body_readable": True}]
         dossier = news_agent.news_dossier(plan, items)
         self.assertIn("Headlines scanned", dossier["sections"]["news_scan"]["content"][0])
@@ -169,7 +169,7 @@ class PlanFromResultTest(unittest.TestCase):
         }
 
     def test_builds_plan(self):
-        plan = news_agent.plan_from_result(self._result())
+        plan = news_agent.plan_from_result(self._result(), fetch=route_fetch)
         self.assertEqual(plan["country"], "Malaysia")
         self.assertEqual(plan["budget"]["band"], "small")
         self.assertIn("solar", plan["topic"].lower())
@@ -183,7 +183,7 @@ class PlanFromResultTest(unittest.TestCase):
 class ReportTest(unittest.TestCase):
     def test_generate_news_report_writes_docx_and_charts(self):
         art = news_agent.fetch_article("https://test.com/a", fetch=route_fetch)
-        plan = news_agent.implementation_plan(art, topic="data centre hub", band="medium")
+        plan = news_agent.implementation_plan(art, topic="data centre hub", band="medium", fetch=route_fetch)
         dossier = news_agent.news_dossier(plan, [])
         with tempfile.TemporaryDirectory() as d:
             res = reports.generate_news_report(dossier, plan, d)
