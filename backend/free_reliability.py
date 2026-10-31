@@ -61,9 +61,17 @@ def import_data(content, extension):
         return validate_rows(payload.get("records"))
     if extension == ".csv":
         reader = csv.DictReader(io.StringIO(text))
-        if not reader.fieldnames or set(reader.fieldnames) != set(FIELDS):
-            raise ValueError("CSV columns must match schema")
-        return validate_rows(list(reader))
+        if (not reader.fieldnames or len(reader.fieldnames) != len(FIELDS)
+                or set(reader.fieldnames) != set(FIELDS)):
+            raise ValueError("CSV columns must match schema without duplicates")
+        rows = []
+        for row in reader:
+            if None in row or any(value is None for value in row.values()):
+                raise ValueError("CSV row has missing or extra fields")
+            rows.append(row)
+            if len(rows) > 1000:
+                raise ValueError("expected at most 1000 records")
+        return validate_rows(rows)
     raise ValueError("supported imports: .json and .csv")
 
 def export_data(rows, extension):
