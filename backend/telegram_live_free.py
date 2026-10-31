@@ -11,7 +11,7 @@ from pathlib import Path
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
-from backend.free_reliability import UpdateLedger, command_payload, export_data, import_data
+from backend.free_reliability import DurableRecords, UpdateLedger, command_payload, export_data, import_data
 from backend.telegram_bot import BASE, allowed, api
 from backend.telegram_poll_once import load_ideas, process_update
 from backend.telegram_menu import home
@@ -115,7 +115,7 @@ def main():
     ledger_path=Path(os.environ.get("BIZCRAX_UPDATE_DB","data/telegram_updates.sqlite3"))
     ledger_path.parent.mkdir(parents=True,exist_ok=True)
     ledger=UpdateLedger(ledger_path)
-    records={}
+    records=DurableRecords(ledger_path.with_name('telegram_records.sqlite3'))
     ideas=load_ideas()
     offset=None
     while True:
