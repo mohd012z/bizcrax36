@@ -2,7 +2,6 @@
 
 Run only with all Telegram consumers stopped. No live deployment is performed.
 """
-import shutil
 import sqlite3
 from pathlib import Path
 
@@ -31,13 +30,17 @@ def migrate_legacy_queues(directory, *, dry_run=True):
         return {"dry_run": True, "sources": plan, "migrated": 0}
     if target.exists():
         raise RuntimeError("Unified queue already exists; refusing to overwrite or merge")
-    backups = []
-    for path, _, _ in sources:
-        if path.name not in plan:
-            continue
-        backup = path.with_suffix(path.suffix + ".pre-migration.bak")
+    # Validate every destination before creating even the first backup.
+    # Otherwise a collision on the second source strands a partial migration.
+    snapshots = [
+        (path, path.with_suffix(path.suffix + ".pre-migration.bak"))
+        for path, _, _ in sources if path.name in plan
+    ]
+    for _, backup in snapshots:
         if backup.exists():
             raise RuntimeError(f"Backup already exists: {backup.name}")
+    backups = []
+    for path, backup in snapshots:
         src = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
         dst = sqlite3.connect(backup)
         try:
@@ -58,7 +61,11 @@ def migrate_legacy_queues(directory, *, dry_run=True):
         for path, table, columns in sources:
             if path.name not in plan:
                 continue
-            source = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
+            # Import from the immutable snapshot, not a live source that could
+            # change after its backup. The startup guard independently checks
+            # that the legacy database still matches this snapshot.
+            snapshot = path.with_suffix(path.suffix + ".pre-migration.bak")
+            source = sqlite3.connect(snapshot.resolve().as_uri() + "?mode=ro", uri=True)
             try:
                 rows = source.execute(f"SELECT {columns} FROM {table}").fetchall()
             finally:
