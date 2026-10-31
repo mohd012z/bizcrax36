@@ -43,6 +43,32 @@ class FreeReliabilityTests(unittest.TestCase):
             import_data(data, ".csv")
 
 
+
+    def test_atomic_claim_deduplicates_across_connections(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "updates.sqlite3"
+            first, second = UpdateLedger(path), UpdateLedger(path)
+            try:
+                self.assertTrue(first.claim(700))
+                self.assertFalse(second.claim(700))
+                self.assertTrue(second.claim(701))
+                self.assertFalse(first.claim(701))
+            finally:
+                first.close()
+                second.close()
+
+    def test_atomic_claim_persists_after_restart(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "updates.sqlite3"
+            first = UpdateLedger(path)
+            self.assertTrue(first.claim(702))
+            first.close()
+            second = UpdateLedger(path)
+            try:
+                self.assertFalse(second.claim(702))
+            finally:
+                second.close()
+
     def test_ledger_survives_restart(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "updates.sqlite3"
