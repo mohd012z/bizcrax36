@@ -109,7 +109,7 @@ def process_live(update, *, token, allowed_ids, database, ideas, send=None,
         return "sent"
     return process_update(update,send=send,allowed_ids=allowed_ids,database=database,ideas=ideas,token=token)
 
-def deliver_pending(outbox, token, transport=api, *, now=None, max_items=25):
+def deliver_pending(outbox, token, transport=api, *, now=None, max_items=25, before_send=None):
     """Drain bounded queued Telegram API requests with retry on transport errors.
 
     Only sendMessage and answerCallbackQuery are queued. Document sends remain
@@ -117,9 +117,16 @@ def deliver_pending(outbox, token, transport=api, *, now=None, max_items=25):
     """
     delivered = 0
     for _ in range(max_items):
+        # A batch may outlast the consumer lease. Renew before each claim and
+        # immediately before every outbound request, outside the retry handler.
+        # Ownership loss must abort delivery, not become a retryable API error.
+        if before_send is not None:
+            before_send()
         item = outbox.claim(now=now)
         if item is None:
             break
+        if before_send is not None:
+            before_send()
         try:
             if item["method"] not in ("sendMessage", "answerCallbackQuery"):
                 raise ValueError("unsupported queued method")
@@ -161,7 +168,7 @@ def main():
             payload={"timeout":25,"limit":25,"allowed_updates":json.dumps(["message","callback_query"])}
             if offset is not None:
                 payload["offset"]=offset
-            deliver_pending(outbox, token)
+            deliver_pending(outbox, token, before_send=consumer.acquire)
             updates=api(token,"getUpdates",payload)
             consumer.acquire(seconds=90)
             for update in updates:
@@ -184,13 +191,15 @@ def main():
                     process_live(update,token=token,allowed_ids=allowed_ids,
                                  database=BASE/"data"/"research.sqlite3",ideas=ideas,
                                  store=records,send=queue_send)
+                    # Reject a stale worker before atomically publishing replies.
+                    consumer.acquire(seconds=90)
                     if not inbox.complete_with_replies(item, replies):
                         raise RuntimeError("inbox claim expired before atomic commit")
                 except Exception:
                     inbox.finish(item,False)
                     raise
             consumer.acquire(seconds=90)
-            deliver_pending(outbox, token)
+            deliver_pending(outbox, token, before_send=consumer.acquire)
         except ConsumerBusy:
             raise SystemExit("Telegram consumer lease lost; stopping worker to prevent competing pollers")
         except Exception as exc:
