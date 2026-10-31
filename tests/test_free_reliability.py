@@ -24,6 +24,25 @@ class FreeReliabilityTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_rows(ROWS + ROWS)
 
+    def test_csv_duplicate_header_rejected_before_silent_overwrite(self):
+        data = (b"id,title,title,source_url,status\\n"
+                b"lead_1,Original,Overwritten,https://example.org,review_required\\n")
+        with self.assertRaisesRegex(ValueError, "duplicates"):
+            import_data(data.replace(b"\\n", b"\n"), ".csv")
+
+    def test_csv_extra_column_value_rejected(self):
+        data = (b"id,title,source_url,status\n"
+                b"lead_1,Example,https://example.org,review_required,unexpected\n")
+        with self.assertRaisesRegex(ValueError, "missing or extra"):
+            import_data(data, ".csv")
+
+    def test_csv_missing_column_value_rejected(self):
+        data = (b"id,title,source_url,status\n"
+                b"lead_1,Example,https://example.org\n")
+        with self.assertRaisesRegex(ValueError, "missing or extra"):
+            import_data(data, ".csv")
+
+
     def test_ledger_survives_restart(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "updates.sqlite3"
