@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from backend.free_reliability import (
-    UpdateLedger, command_payload, export_data, import_data, parse_command, validate_rows
+    DurableRecords, UpdateLedger, command_payload, export_data, import_data, parse_command, validate_rows
 )
 
 ROWS = [{"id": "lead_1", "title": "SME document automation",
@@ -68,6 +68,32 @@ class FreeReliabilityTests(unittest.TestCase):
                 self.assertFalse(second.claim(702))
             finally:
                 second.close()
+
+
+    def test_documents_survive_restart_and_isolate_chats(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "records.sqlite3"
+            first = DurableRecords(path)
+            first[101] = ROWS
+            self.assertEqual(first.get(102, []), [])
+            first.close()
+            second = DurableRecords(path)
+            try:
+                self.assertEqual(second.get(101, []), ROWS)
+                self.assertEqual(second.get(102, []), [])
+            finally:
+                second.close()
+
+    def test_documents_reject_invalid_records_without_overwriting(self):
+        with tempfile.TemporaryDirectory() as folder:
+            store = DurableRecords(Path(folder) / "records.sqlite3")
+            try:
+                store[101] = ROWS
+                with self.assertRaises(ValueError):
+                    store[101] = ROWS + ROWS
+                self.assertEqual(store.get(101, []), ROWS)
+            finally:
+                store.close()
 
     def test_ledger_survives_restart(self):
         with tempfile.TemporaryDirectory() as folder:
