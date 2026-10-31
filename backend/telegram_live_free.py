@@ -153,7 +153,7 @@ def main():
             deliver_pending(outbox, token)
             for update in api(token,"getUpdates",payload):
                 uid=update["update_id"]
-                if not ledger.seen(uid):
+                if ledger.claim(uid):
                     sequence=[0]
                     def queue_send(method, payload):
                         if method not in ("sendMessage", "answerCallbackQuery"):
@@ -164,7 +164,6 @@ def main():
                     process_live(update,token=token,allowed_ids=allowed_ids,
                                  database=BASE/"data"/"research.sqlite3",ideas=ideas,
                                  store=records,send=queue_send)
-                    ledger.mark(uid)
                 offset=uid+1
             deliver_pending(outbox, token)
         except Exception as exc:
