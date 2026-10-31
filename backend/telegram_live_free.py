@@ -14,6 +14,7 @@ from urllib.request import Request, urlopen
 from backend.free_reliability import DurableRecords, UpdateLedger, command_payload, export_data, import_data
 from backend.delivery_outbox import DeliveryOutbox
 from backend.update_inbox import UpdateInbox
+from backend.consumer_lease import ConsumerLease, ConsumerBusy
 from backend.legacy_queue_guard import check_legacy_queues
 from backend.telegram_bot import BASE, allowed, api
 from backend.telegram_poll_once import load_ideas, process_update
@@ -139,7 +140,6 @@ def main():
     webhook=api(token,"getWebhookInfo",{})
     if webhook.get("url"):
         raise SystemExit("Webhook active; stop it before starting a polling worker.")
-    print("Registered commands:",register(token),flush=True)
     ledger_path=Path(os.environ.get("BIZCRAX_UPDATE_DB","data/telegram_updates.sqlite3"))
     ledger_path.parent.mkdir(parents=True,exist_ok=True)
     ledger=UpdateLedger(ledger_path)
@@ -148,20 +148,27 @@ def main():
     queue_path=ledger_path.with_name('telegram_queue.sqlite3')
     outbox=DeliveryOutbox(queue_path)
     inbox=UpdateInbox(queue_path)
+    consumer=ConsumerLease(queue_path)
+    consumer.acquire(seconds=90)
+    print("Registered commands:",register(token),flush=True)
     ideas=load_ideas()
     # Persisted update IDs are replayed from the inbox after restart.
     # Telegram will also replay its unacknowledged updates when offset is omitted.
     offset=None
     while True:
         try:
+            consumer.acquire(seconds=90)
             payload={"timeout":25,"limit":25,"allowed_updates":json.dumps(["message","callback_query"])}
             if offset is not None:
                 payload["offset"]=offset
             deliver_pending(outbox, token)
-            for update in api(token,"getUpdates",payload):
+            updates=api(token,"getUpdates",payload)
+            consumer.acquire(seconds=90)
+            for update in updates:
                 inbox.receive(update)
                 offset=update["update_id"]+1
             for _ in range(25):
+                consumer.acquire(seconds=90)
                 item=inbox.claim()
                 if item is None:
                     break
@@ -182,7 +189,10 @@ def main():
                 except Exception:
                     inbox.finish(item,False)
                     raise
+            consumer.acquire(seconds=90)
             deliver_pending(outbox, token)
+        except ConsumerBusy:
+            raise SystemExit("Telegram consumer lease lost; stopping worker to prevent competing pollers")
         except Exception as exc:
             print("polling error:",type(exc).__name__,str(exc)[:150],flush=True)
             time.sleep(3)
