@@ -143,8 +143,9 @@ def main():
     ledger_path.parent.mkdir(parents=True,exist_ok=True)
     ledger=UpdateLedger(ledger_path)
     records=DurableRecords(ledger_path.with_name('telegram_records.sqlite3'))
-    outbox=DeliveryOutbox(ledger_path.with_name('telegram_outbox.sqlite3'))
-    inbox=UpdateInbox(ledger_path.with_name('telegram_inbox.sqlite3'))
+    queue_path=ledger_path.with_name('telegram_queue.sqlite3')
+    outbox=DeliveryOutbox(queue_path)
+    inbox=UpdateInbox(queue_path)
     ideas=load_ideas()
     # Persisted update IDs are replayed from the inbox after restart.
     # Telegram will also replay its unacknowledged updates when offset is omitted.
@@ -164,22 +165,21 @@ def main():
                     break
                 uid=item["update_id"]
                 update=item["update"]
-                sequence=[0]
+                replies=[]
                 def queue_send(method, payload):
                     if method not in ("sendMessage", "answerCallbackQuery"):
-                        return api(token, method, payload)
-                    sequence[0] += 1
-                    outbox.enqueue(f"{uid}:{sequence[0]}", method, payload)
+                        raise ValueError("unsupported transactional reply method")
+                    replies.append((method, payload))
                     return {"ok": True}
                 try:
                     process_live(update,token=token,allowed_ids=allowed_ids,
                                  database=BASE/"data"/"research.sqlite3",ideas=ideas,
                                  store=records,send=queue_send)
+                    if not inbox.complete_with_replies(item, replies):
+                        raise RuntimeError("inbox claim expired before atomic commit")
                 except Exception:
                     inbox.finish(item,False)
                     raise
-                else:
-                    inbox.finish(item,True)
             deliver_pending(outbox, token)
         except Exception as exc:
             print("polling error:",type(exc).__name__,str(exc)[:150],flush=True)
