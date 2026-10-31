@@ -64,6 +64,43 @@ class MigrationTests(unittest.TestCase):
             self.assertFalse((folder / "telegram_queue.sqlite3").exists())
             self.assertEqual(second_backup.read_bytes(), b"preexisting-backup")
 
+    def test_second_backup_io_failure_cleans_all_new_snapshots(self):
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            inbox_path = folder / "telegram_inbox.sqlite3"
+            outbox_path = folder / "telegram_outbox.sqlite3"
+            inbox = UpdateInbox(inbox_path)
+            inbox.receive({"update_id": 61, "message": {"text": "keep"}})
+            inbox.close()
+            outbox = DeliveryOutbox(outbox_path)
+            outbox.enqueue("61:1", "sendMessage", {"chat_id": 9, "text": "keep"})
+            outbox.close()
+            original_connect = sqlite3.connect
+            failed_backup = folder / "telegram_outbox.sqlite3.pre-migration.bak"
+
+            def fail_second_backup(database, *args, **kwargs):
+                if str(database) == str(failed_backup):
+                    raise sqlite3.OperationalError("injected second backup failure")
+                return original_connect(database, *args, **kwargs)
+
+            with patch.object(migration_module.sqlite3, "connect",
+                              side_effect=fail_second_backup):
+                with self.assertRaisesRegex(sqlite3.OperationalError,
+                                            "injected second backup failure"):
+                    migrate_legacy_queues(folder, dry_run=False)
+
+            self.assertFalse((folder / "telegram_inbox.sqlite3.pre-migration.bak").exists())
+            self.assertFalse(failed_backup.exists())
+            self.assertFalse((folder / "telegram_queue.sqlite3").exists())
+            with original_connect(inbox_path) as db:
+                self.assertEqual(db.execute(
+                    "SELECT COUNT(*) FROM incoming_updates WHERE update_id=61"
+                ).fetchone()[0], 1)
+            with original_connect(outbox_path) as db:
+                self.assertEqual(db.execute(
+                    "SELECT COUNT(*) FROM deliveries WHERE delivery_key='61:1'"
+                ).fetchone()[0], 1)
+
     def test_snapshot_is_authoritative_when_legacy_changes_during_migration(self):
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
