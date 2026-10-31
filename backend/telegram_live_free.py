@@ -13,6 +13,7 @@ from urllib.request import Request, urlopen
 
 from backend.free_reliability import DurableRecords, UpdateLedger, command_payload, export_data, import_data
 from backend.delivery_outbox import DeliveryOutbox
+from backend.update_inbox import UpdateInbox
 from backend.telegram_bot import BASE, allowed, api
 from backend.telegram_poll_once import load_ideas, process_update
 from backend.telegram_menu import home
@@ -143,6 +144,7 @@ def main():
     ledger=UpdateLedger(ledger_path)
     records=DurableRecords(ledger_path.with_name('telegram_records.sqlite3'))
     outbox=DeliveryOutbox(ledger_path.with_name('telegram_outbox.sqlite3'))
+    inbox=UpdateInbox(ledger_path.with_name('telegram_inbox.sqlite3'))
     ideas=load_ideas()
     offset=None
     while True:
@@ -152,20 +154,30 @@ def main():
                 payload["offset"]=offset
             deliver_pending(outbox, token)
             for update in api(token,"getUpdates",payload):
-                uid=update["update_id"]
-                if not ledger.seen(uid):
-                    sequence=[0]
-                    def queue_send(method, payload):
-                        if method not in ("sendMessage", "answerCallbackQuery"):
-                            return api(token, method, payload)
-                        sequence[0] += 1
-                        outbox.enqueue(f"{uid}:{sequence[0]}", method, payload)
-                        return {"ok": True}
+                inbox.receive(update)
+                offset=update["update_id"]+1
+            for _ in range(25):
+                item=inbox.claim()
+                if item is None:
+                    break
+                uid=item["update_id"]
+                update=item["update"]
+                sequence=[0]
+                def queue_send(method, payload):
+                    if method not in ("sendMessage", "answerCallbackQuery"):
+                        return api(token, method, payload)
+                    sequence[0] += 1
+                    outbox.enqueue(f"{uid}:{sequence[0]}", method, payload)
+                    return {"ok": True}
+                try:
                     process_live(update,token=token,allowed_ids=allowed_ids,
                                  database=BASE/"data"/"research.sqlite3",ideas=ideas,
                                  store=records,send=queue_send)
-                    ledger.mark(uid)
-                offset=uid+1
+                except Exception:
+                    inbox.finish(item,False)
+                    raise
+                else:
+                    inbox.finish(item,True)
             deliver_pending(outbox, token)
         except Exception as exc:
             print("polling error:",type(exc).__name__,str(exc)[:150],flush=True)
