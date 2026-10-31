@@ -7,6 +7,7 @@ Unified processing state may advance after migration, so compare immutable
 message identity and payload rather than mutable lease/status columns.
 """
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 
@@ -33,7 +34,7 @@ def _readonly(path):
 
 def _verify_migration(source, backup, unified, table, key, identity):
     """Check complete legacy backup and identity-preserving unified copy."""
-    with _readonly(backup) as saved, _readonly(unified) as target:
+    with closing(_readonly(backup)) as saved, closing(_readonly(unified)) as target:
         old_rows = source.execute(f"SELECT * FROM {table} ORDER BY {key}")
         backup_rows = saved.execute(f"SELECT * FROM {table} ORDER BY {key}")
         old_columns = tuple(column[0] for column in old_rows.description)
@@ -66,7 +67,7 @@ def check_legacy_queues(directory, *, unified_name="telegram_queue.sqlite3"):
         if not path.exists():
             continue
         try:
-            with _readonly(path) as source:
+            with closing(_readonly(path)) as source:
                 count = source.execute(
                     f"SELECT COUNT(*) FROM {table} "
                     "WHERE state NOT IN ('done','sent')"
