@@ -1,4 +1,8 @@
 import unittest
+import os
+import tempfile
+from pathlib import Path
+from unittest.mock import patch
 from backend.telegram_live_free import process_live
 
 class LiveMenuTests(unittest.TestCase):
@@ -14,6 +18,27 @@ class LiveMenuTests(unittest.TestCase):
             database="unused.sqlite3",ideas=[],send=self.send,
             download=lambda file_id: b'{"schema_version":1,"records":[{"id":"a","title":"Test","source_url":"https://example.org","status":"review_required"}]}',
             upload=self.upload,store=self.records)
+
+    def test_worker_initializes_nested_update_ledger(self):
+        from backend.telegram_live_free import main
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = Path(temp) / "nested" / "updates.sqlite3"
+            env = {"TELEGRAM_BOT_TOKEN": "test-token",
+                   "TELEGRAM_ALLOWED_CHAT_IDS": "42",
+                   "BIZCRAX_UPDATE_DB": str(ledger)}
+            def fake_api(token, method, payload):
+                if method == "getWebhookInfo":
+                    return {}
+                if method == "getUpdates":
+                    raise KeyboardInterrupt
+                raise AssertionError(method)
+            with patch.dict(os.environ, env), \
+                 patch("backend.telegram_live_free.api", side_effect=fake_api), \
+                 patch("backend.telegram_live_free.register", return_value=[]), \
+                 patch("backend.telegram_live_free.load_ideas", return_value=[]):
+                with self.assertRaises(KeyboardInterrupt):
+                    main()
+            self.assertTrue(ledger.is_file())
 
     def test_start_shows_aligned_menu(self):
         self.run_update({"message":{"chat":{"id":42},"text":"/start"}})
