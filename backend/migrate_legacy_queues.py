@@ -40,15 +40,29 @@ def migrate_legacy_queues(directory, *, dry_run=True):
         if backup.exists():
             raise RuntimeError(f"Backup already exists: {backup.name}")
     backups = []
-    for path, backup in snapshots:
-        src = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
-        dst = sqlite3.connect(backup)
-        try:
-            src.backup(dst)
-        finally:
-            dst.close()
-            src.close()
-        backups.append(backup)
+    try:
+        for path, backup in snapshots:
+            # Exclusive creation closes the preflight-to-open race: never
+            # overwrite a backup another process created after inspection.
+            with backup.open("xb"):
+                pass
+            backups.append(backup)
+            src = dst = None
+            try:
+                src = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
+                dst = sqlite3.connect(backup)
+                src.backup(dst)
+            finally:
+                if dst is not None:
+                    dst.close()
+                if src is not None:
+                    src.close()
+    except BaseException:
+        # A failed later backup must not strand earlier snapshots or a
+        # partially created SQLite file that would block a safe retry.
+        for backup in reversed(backups):
+            backup.unlink(missing_ok=True)
+        raise
     from backend.delivery_outbox import DeliveryOutbox
     from backend.update_inbox import UpdateInbox
     outbox = DeliveryOutbox(target)
