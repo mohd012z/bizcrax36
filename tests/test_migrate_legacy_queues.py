@@ -101,6 +101,33 @@ class MigrationTests(unittest.TestCase):
                     "SELECT COUNT(*) FROM deliveries WHERE delivery_key='61:1'"
                 ).fetchone()[0], 1)
 
+    def test_backup_created_after_preflight_is_never_overwritten(self):
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            inbox = UpdateInbox(folder / "telegram_inbox.sqlite3")
+            inbox.receive({"update_id": 62})
+            inbox.close()
+            outbox = DeliveryOutbox(folder / "telegram_outbox.sqlite3")
+            outbox.enqueue("62:1", "sendMessage", {"chat_id": 9})
+            outbox.close()
+            raced_backup = folder / "telegram_outbox.sqlite3.pre-migration.bak"
+            original_open = Path.open
+
+            def create_concurrent_backup(path, mode="r", *args, **kwargs):
+                if path == raced_backup and mode == "xb":
+                    with original_open(path, "wb") as stream:
+                        stream.write(b"another process owns this backup")
+                return original_open(path, mode, *args, **kwargs)
+
+            with patch.object(Path, "open", new=create_concurrent_backup):
+                with self.assertRaises(FileExistsError):
+                    migrate_legacy_queues(folder, dry_run=False)
+
+            self.assertEqual(raced_backup.read_bytes(),
+                             b"another process owns this backup")
+            self.assertFalse((folder / "telegram_inbox.sqlite3.pre-migration.bak").exists())
+            self.assertFalse((folder / "telegram_queue.sqlite3").exists())
+
     def test_snapshot_is_authoritative_when_legacy_changes_during_migration(self):
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
