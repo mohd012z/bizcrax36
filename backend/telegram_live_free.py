@@ -12,6 +12,7 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 from backend.free_reliability import DurableRecords, UpdateLedger, command_payload, export_data, import_data
+from backend.delivery_outbox import DeliveryOutbox
 from backend.telegram_bot import BASE, allowed, api
 from backend.telegram_poll_once import load_ideas, process_update
 from backend.telegram_menu import home
@@ -105,6 +106,31 @@ def process_live(update, *, token, allowed_ids, database, ideas, send=None,
         return "sent"
     return process_update(update,send=send,allowed_ids=allowed_ids,database=database,ideas=ideas,token=token)
 
+def deliver_pending(outbox, token, transport=api, *, now=None, max_items=25):
+    """Drain bounded queued Telegram API requests with retry on transport errors.
+
+    Only sendMessage and answerCallbackQuery are queued. Document sends remain
+    synchronous because they require multipart upload and separate recovery.
+    """
+    delivered = 0
+    for _ in range(max_items):
+        item = outbox.claim(now=now)
+        if item is None:
+            break
+        try:
+            if item["method"] not in ("sendMessage", "answerCallbackQuery"):
+                raise ValueError("unsupported queued method")
+            response = transport(token, item["method"], item["payload"])
+            if response is False or (isinstance(response, dict) and response.get("ok") is False):
+                raise RuntimeError("Telegram rejected delivery")
+        except Exception:
+            outbox.finish(item, False, now=now)
+        else:
+            outbox.finish(item, True, now=now)
+            delivered += 1
+    return delivered
+
+
 def main():
     token=os.environ["TELEGRAM_BOT_TOKEN"]
     allowed_ids=os.environ.get("TELEGRAM_ALLOWED_CHAT_IDS") or os.environ["TELEGRAM_CHAT_ID"]
@@ -116,6 +142,7 @@ def main():
     ledger_path.parent.mkdir(parents=True,exist_ok=True)
     ledger=UpdateLedger(ledger_path)
     records=DurableRecords(ledger_path.with_name('telegram_records.sqlite3'))
+    outbox=DeliveryOutbox(ledger_path.with_name('telegram_outbox.sqlite3'))
     ideas=load_ideas()
     offset=None
     while True:
@@ -123,13 +150,23 @@ def main():
             payload={"timeout":25,"limit":25,"allowed_updates":json.dumps(["message","callback_query"])}
             if offset is not None:
                 payload["offset"]=offset
+            deliver_pending(outbox, token)
             for update in api(token,"getUpdates",payload):
                 uid=update["update_id"]
                 if not ledger.seen(uid):
+                    sequence=[0]
+                    def queue_send(method, payload):
+                        if method not in ("sendMessage", "answerCallbackQuery"):
+                            return api(token, method, payload)
+                        sequence[0] += 1
+                        outbox.enqueue(f"{uid}:{sequence[0]}", method, payload)
+                        return {"ok": True}
                     process_live(update,token=token,allowed_ids=allowed_ids,
-                                 database=BASE/"data"/"research.sqlite3",ideas=ideas,store=records)
+                                 database=BASE/"data"/"research.sqlite3",ideas=ideas,
+                                 store=records,send=queue_send)
                     ledger.mark(uid)
                 offset=uid+1
+            deliver_pending(outbox, token)
         except Exception as exc:
             print("polling error:",type(exc).__name__,str(exc)[:150],flush=True)
             time.sleep(3)
