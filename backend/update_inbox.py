@@ -69,5 +69,42 @@ class UpdateInbox:
             )
             return result.rowcount == 1
 
+    def complete_with_replies(self, item, replies, now=None):
+        """Atomically persist queued replies and complete a fenced inbox claim.
+
+        Requires DeliveryOutbox to use the same SQLite database file.
+        Returns False for a stale claim without enqueuing any reply.
+        """
+        now = time.time() if now is None else float(now)
+        self.db.execute("BEGIN IMMEDIATE")
+        try:
+            owned = self.db.execute(
+                """SELECT 1 FROM incoming_updates WHERE update_id=? AND
+                   owner=? AND state='leased' AND lease_until>?""",
+                (item["update_id"], item["owner"], now),
+            ).fetchone()
+            if not owned:
+                self.db.execute("ROLLBACK")
+                return False
+            for index, (method, payload) in enumerate(replies, 1):
+                if method not in ("sendMessage", "answerCallbackQuery"):
+                    raise ValueError("unsupported transactional reply method")
+                self.db.execute(
+                    """INSERT OR IGNORE INTO deliveries(delivery_key,method,payload)
+                       VALUES (?,?,?)""",
+                    (f'{item["update_id"]}:{index}', method,
+                     json.dumps(payload, ensure_ascii=False)),
+                )
+            self.db.execute(
+                """UPDATE incoming_updates SET state='done',owner=NULL,
+                   lease_until=0,due=? WHERE update_id=? AND owner=?""",
+                (now, item["update_id"], item["owner"]),
+            )
+            self.db.execute("COMMIT")
+            return True
+        except BaseException:
+            self.db.execute("ROLLBACK")
+            raise
+
     def close(self):
         self.db.close()
