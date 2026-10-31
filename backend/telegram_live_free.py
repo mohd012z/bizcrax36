@@ -112,7 +112,9 @@ def main():
     if webhook.get("url"):
         raise SystemExit("Webhook active; stop it before starting a polling worker.")
     print("Registered commands:",register(token),flush=True)
-    ledger_path=Path(os.environ.get("BIZCRAX_UPDATE_DB","data/telegram_updates.sqlite3"))\n    ledger_path.parent.mkdir(parents=True,exist_ok=True)\n    ledger=UpdateLedger(ledger_path)
+    ledger_path=Path(os.environ.get("BIZCRAX_UPDATE_DB","data/telegram_updates.sqlite3"))
+    ledger_path.parent.mkdir(parents=True,exist_ok=True)
+    ledger=UpdateLedger(ledger_path)
     records={}
     ideas=load_ideas()
     offset=None
