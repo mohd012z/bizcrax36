@@ -14,6 +14,7 @@ from urllib.request import Request, urlopen
 from backend.free_reliability import DurableRecords, UpdateLedger, command_payload, export_data, import_data
 from backend.delivery_outbox import DeliveryOutbox
 from backend.update_inbox import UpdateInbox
+from backend.legacy_queue_guard import check_legacy_queues
 from backend.telegram_bot import BASE, allowed, api
 from backend.telegram_poll_once import load_ideas, process_update
 from backend.telegram_menu import home
@@ -143,6 +144,7 @@ def main():
     ledger_path.parent.mkdir(parents=True,exist_ok=True)
     ledger=UpdateLedger(ledger_path)
     records=DurableRecords(ledger_path.with_name('telegram_records.sqlite3'))
+    check_legacy_queues(ledger_path.parent)
     queue_path=ledger_path.with_name('telegram_queue.sqlite3')
     outbox=DeliveryOutbox(queue_path)
     inbox=UpdateInbox(queue_path)
