@@ -89,6 +89,33 @@ def export_data(rows, extension):
         return out.getvalue().encode()
     raise ValueError("supported exports: .json and .csv")
 
+
+class DurableRecords:
+    """SQLite-backed mapping of validated records, keyed by Telegram chat ID."""
+    def __init__(self, filename):
+        self.db = sqlite3.connect(str(filename), timeout=10)
+        self.db.execute("CREATE TABLE IF NOT EXISTS chat_records (chat_id TEXT PRIMARY KEY, payload TEXT NOT NULL)")
+        self.db.commit()
+
+    def __setitem__(self, chat_id, rows):
+        validated = validate_rows(rows)
+        payload = json.dumps(validated, ensure_ascii=False)
+        with self.db:
+            self.db.execute(
+                "INSERT INTO chat_records(chat_id,payload) VALUES (?,?) "
+                "ON CONFLICT(chat_id) DO UPDATE SET payload=excluded.payload",
+                (str(chat_id), payload),
+            )
+
+    def get(self, chat_id, default=None):
+        row = self.db.execute(
+            "SELECT payload FROM chat_records WHERE chat_id=?", (str(chat_id),)
+        ).fetchone()
+        return json.loads(row[0]) if row else default
+
+    def close(self):
+        self.db.close()
+
 class UpdateLedger:
     """Durable update deduplication for a single polling/webhook consumer."""
     def __init__(self, filename):
