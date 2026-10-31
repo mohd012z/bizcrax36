@@ -146,6 +146,8 @@ def main():
     outbox=DeliveryOutbox(ledger_path.with_name('telegram_outbox.sqlite3'))
     inbox=UpdateInbox(ledger_path.with_name('telegram_inbox.sqlite3'))
     ideas=load_ideas()
+    # Persisted update IDs are replayed from the inbox after restart.
+    # Telegram will also replay its unacknowledged updates when offset is omitted.
     offset=None
     while True:
         try:
