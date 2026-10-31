@@ -103,5 +103,18 @@ class UpdateLedger:
         with self.db:
             self.db.execute("INSERT OR IGNORE INTO processed_updates VALUES (?)", (int(update_id),))
 
+
+    def claim(self, update_id):
+        """Atomically claim an update. False means already claimed or completed.
+
+        A claim alone cannot guarantee exactly-once external Telegram sends.
+        """
+        with self.db:
+            cursor = self.db.execute(
+                "INSERT OR IGNORE INTO processed_updates(update_id) VALUES (?)",
+                (int(update_id),),
+            )
+            return cursor.rowcount == 1
+
     def close(self):
         self.db.close()
