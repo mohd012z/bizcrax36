@@ -1,0 +1,228 @@
+"""Single-consumer Telegram long-poll worker with menu, uploads and exports.
+
+Run only on an always-on host: python -m backend.telegram_live_free
+Do not run concurrently with telegram_poll_once or another webhook.
+"""
+import io
+import json
+import os
+import time
+from pathlib import Path
+from urllib.parse import quote
+from urllib.request import Request, urlopen
+
+from backend.free_reliability import DurableRecords, UpdateLedger, command_payload, export_data, import_data
+from backend.delivery_outbox import DeliveryOutbox
+from backend.update_inbox import UpdateInbox
+from backend.consumer_lease import ConsumerLease, ConsumerBusy
+from backend.legacy_queue_guard import check_legacy_queues
+from backend.telegram_bot import BASE, allowed, api
+from backend.telegram_poll_once import load_ideas, process_update
+from backend.telegram_menu import home
+
+MAX_FILE = 2_000_000
+MENU = json.dumps({"inline_keyboard": [
+    [{"text":"🔎 Research", "callback_data":"bc:research"}, {"text":"🤖 AI", "callback_data":"bc:aimenu"}],
+    [{"text":"📰 News", "callback_data":"bc:news"}, {"text":"🧠 Agent", "callback_data":"bc:study"}],
+    [{"text":"📚 Records", "callback_data":"bc:mode:all"}, {"text":"🏷 Sectors", "callback_data":"bc:sectors"}],
+    [{"text":"📤 Upload help", "callback_data":"bc:uploadhelp"}, {"text":"📥 Export help", "callback_data":"bc:exporthelp"}],
+    [{"text":"🏠 Home", "callback_data":"bc:home"}]
+]})
+
+def register(token, transport=api):
+    transport(token, "setMyCommands", {"commands":json.dumps(command_payload())})
+    return transport(token, "getMyCommands", {})
+
+def _multipart(token, chat_id, filename, data, caption="", opener=urlopen):
+    boundary="BizCraxBoundary"
+    def field(name, value):
+        return (f"--{boundary}\r\nContent-Disposition: form-data; name=\"{name}\"\r\n\r\n{value}\r\n").encode()
+    head=(f"--{boundary}\r\nContent-Disposition: form-data; name=\"document\"; filename=\"{filename}\"\r\nContent-Type: application/octet-stream\r\n\r\n").encode()
+    payload=field("chat_id",chat_id)+field("caption",caption)+head+data+b"\r\n"+f"--{boundary}--\r\n".encode()
+    req=Request(f"https://api.telegram.org/bot{token}/sendDocument",data=payload,
+                headers={"Content-Type":f"multipart/form-data; boundary={boundary}"},method="POST")
+    with opener(req,timeout=35) as response:
+        result=json.load(response)
+    if not result.get("ok"):
+        raise RuntimeError("Telegram document delivery failed")
+    return result
+
+def _download(token, file_id, transport=api, opener=urlopen):
+    info=transport(token,"getFile",{"file_id":file_id})
+    if int(info.get("file_size",0))>MAX_FILE:
+        raise ValueError("file exceeds 2MB limit")
+    path=info.get("file_path","")
+    if not path or path.startswith("/") or ".." in path.split("/"):
+        raise ValueError("invalid Telegram file path")
+    req=Request(f"https://api.telegram.org/file/bot{token}/{quote(path,safe='/')}")
+    with opener(req,timeout=30) as response:
+        data=response.read(MAX_FILE+1)
+    if len(data)>MAX_FILE:
+        raise ValueError("file exceeds 2MB limit")
+    return data
+
+def process_live(update, *, token, allowed_ids, database, ideas, send=None,
+                 download=None, upload=None, store=None):
+    send=send or (lambda method,payload: api(token,method,payload))
+    download=download or (lambda file_id: _download(token,file_id))
+    upload=upload or (lambda chat_id,name,data,caption: _multipart(token,chat_id,name,data,caption))
+    message=update.get("message") or {}
+    callback=update.get("callback_query") or {}
+    chat_id=(message.get("chat") or callback.get("message",{}).get("chat") or {}).get("id")
+    if not allowed(chat_id,allowed_ids):
+        return "denied"
+    if callback.get("data") in ("bc:uploadhelp","bc:exporthelp"):
+        send("answerCallbackQuery",{"callback_query_id":callback["id"]})
+        instruction=("📤 Send a JSON or CSV document (max 2MB). Records are validated and returned as a receipt."
+                     if callback["data"]=="bc:uploadhelp" else
+                     "📥 Send /export json or /export csv to download your last imported records.")
+        send("sendMessage",{"chat_id":chat_id,"text":instruction,"reply_markup":MENU})
+        return "sent"
+    document=message.get("document")
+    text=(message.get("text") or "").strip()
+    if document:
+        filename=Path(document.get("file_name","")).name
+        extension=Path(filename).suffix.lower()
+        if extension not in (".json",".csv"):
+            send("sendMessage",{"chat_id":chat_id,"text":"Supported uploads: JSON and CSV only."})
+            return "sent"
+        try:
+            if int(document.get("file_size",0))>MAX_FILE:
+                raise ValueError("file exceeds 2MB")
+            rows=import_data(download(document["file_id"]),extension)
+            if store is not None:
+                store[chat_id]=rows
+            send("sendMessage",{"chat_id":chat_id,"text":f"✅ Validated {len(rows)} records from {filename}. No existing research overwritten.","reply_markup":MENU})
+        except (ValueError,KeyError,UnicodeError) as exc:
+            send("sendMessage",{"chat_id":chat_id,"text":f"❌ Import rejected: {str(exc)[:180]}"})
+        return "sent"
+    if text.lower().split(maxsplit=1)[0:1] == ["/export"]:
+        ext=".csv" if text.lower().split()[-1:] == ["csv"] else ".json"
+        rows=(store or {}).get(chat_id,[])
+        upload(chat_id,"bizcrax-export"+ext,export_data(rows,ext),f"Validated records: {len(rows)}")
+        return "sent"
+    if text.lower().split(maxsplit=1)[0:1] in (["/import"],["/documents"]):
+        send("sendMessage",{"chat_id":chat_id,"text":"Send a JSON or CSV document up to 2MB. Use /export json or /export csv afterward.","reply_markup":MENU})
+        return "sent"
+    if text.lower().split(maxsplit=1)[0:1] in (["/start"],["/help"]):
+        send("sendMessage",{"chat_id":chat_id,"text":"BizCrax36 • Research Control Center\nChoose a category or send /research <topic>.","reply_markup":MENU})
+        return "sent"
+    return process_update(update,send=send,allowed_ids=allowed_ids,database=database,ideas=ideas,token=token)
+
+def _confirmed_telegram_result(method, payload, result):
+    """telegram_bot.api returns Telegram result, not the {ok, result} envelope."""
+    if method == "answerCallbackQuery":
+        return result is True
+    if method != "sendMessage" or not isinstance(result, dict):
+        return False
+    chat = result.get("chat")
+    return (type(result.get("message_id")) is int and result["message_id"] > 0
+            and isinstance(chat, dict) and type(chat.get("id")) is int
+            and type(payload.get("chat_id")) is int
+            and chat["id"] == payload["chat_id"])
+
+
+def deliver_pending(outbox, token, transport=api, *, now=None, max_items=25, before_send=None):
+    """Drain bounded queued Telegram API requests with retry on transport errors.
+
+    Only sendMessage and answerCallbackQuery are queued. Document sends remain
+    synchronous because they require multipart upload and separate recovery.
+    """
+    delivered = 0
+    for _ in range(max_items):
+        # A batch may outlast the consumer lease. Renew before each claim and
+        # immediately before every outbound request, outside the retry handler.
+        # Ownership loss must abort delivery, not become a retryable API error.
+        if before_send is not None:
+            before_send()
+        item = outbox.claim(now=now)
+        if item is None:
+            break
+        if before_send is not None:
+            before_send()
+        try:
+            if item["method"] not in ("sendMessage", "answerCallbackQuery"):
+                raise ValueError("unsupported queued method")
+            response = transport(token, item["method"], item["payload"])
+            if response is False or (isinstance(response, dict) and response.get("ok") is False):
+                raise RuntimeError("Telegram rejected delivery")
+            if not _confirmed_telegram_result(item["method"], item["payload"], response):
+                # A missing or mismatched receipt is not proof of non-delivery.
+                # Quarantine for operator reconciliation; never auto-resend.
+                outbox.finish(item, None, now=now)
+                continue
+        except Exception:
+            outbox.finish(item, False, now=now)
+        else:
+            if outbox.finish(item, True, now=now):
+                delivered += 1
+    return delivered
+
+
+def main():
+    token=os.environ["TELEGRAM_BOT_TOKEN"]
+    allowed_ids=os.environ.get("TELEGRAM_ALLOWED_CHAT_IDS") or os.environ["TELEGRAM_CHAT_ID"]
+    webhook=api(token,"getWebhookInfo",{})
+    if webhook.get("url"):
+        raise SystemExit("Webhook active; stop it before starting a polling worker.")
+    ledger_path=Path(os.environ.get("BIZCRAX_UPDATE_DB","data/telegram_updates.sqlite3"))
+    ledger_path.parent.mkdir(parents=True,exist_ok=True)
+    ledger=UpdateLedger(ledger_path)
+    records=DurableRecords(ledger_path.with_name('telegram_records.sqlite3'))
+    check_legacy_queues(ledger_path.parent)
+    queue_path=ledger_path.with_name('telegram_queue.sqlite3')
+    outbox=DeliveryOutbox(queue_path)
+    inbox=UpdateInbox(queue_path)
+    consumer=ConsumerLease(queue_path)
+    consumer.acquire(seconds=90)
+    print("Registered commands:",register(token),flush=True)
+    ideas=load_ideas()
+    # Persisted update IDs are replayed from the inbox after restart.
+    # Telegram will also replay its unacknowledged updates when offset is omitted.
+    offset=None
+    while True:
+        try:
+            consumer.acquire(seconds=90)
+            payload={"timeout":25,"limit":25,"allowed_updates":json.dumps(["message","callback_query"])}
+            if offset is not None:
+                payload["offset"]=offset
+            deliver_pending(outbox, token, before_send=consumer.acquire)
+            updates=api(token,"getUpdates",payload)
+            consumer.acquire(seconds=90)
+            for update in updates:
+                inbox.receive(update)
+                offset=update["update_id"]+1
+            for _ in range(25):
+                consumer.acquire(seconds=90)
+                item=inbox.claim()
+                if item is None:
+                    break
+                uid=item["update_id"]
+                update=item["update"]
+                replies=[]
+                def queue_send(method, payload):
+                    if method not in ("sendMessage", "answerCallbackQuery"):
+                        raise ValueError("unsupported transactional reply method")
+                    replies.append((method, payload))
+                    return {"ok": True}
+                try:
+                    process_live(update,token=token,allowed_ids=allowed_ids,
+                                 database=BASE/"data"/"research.sqlite3",ideas=ideas,
+                                 store=records,send=queue_send)
+                    # Reject a stale worker before atomically publishing replies.
+                    consumer.acquire(seconds=90)
+                    if not inbox.complete_with_replies(item, replies):
+                        raise RuntimeError("inbox claim expired before atomic commit")
+                except Exception:
+                    inbox.finish(item,False)
+                    raise
+            consumer.acquire(seconds=90)
+            deliver_pending(outbox, token, before_send=consumer.acquire)
+        except ConsumerBusy:
+            raise SystemExit("Telegram consumer lease lost; stopping worker to prevent competing pollers")
+        except Exception as exc:
+            print("polling error:",type(exc).__name__,str(exc)[:150],flush=True)
+            time.sleep(3)
+
+if __name__=="__main__":
+    main()

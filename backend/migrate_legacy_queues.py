@@ -1,0 +1,107 @@
+"""Offline, backup-first migration of legacy Telegram SQLite queues.
+
+Run only with all Telegram consumers stopped. No live deployment is performed.
+"""
+import sqlite3
+from pathlib import Path
+
+
+def migrate_legacy_queues(directory, *, dry_run=True):
+    directory = Path(directory)
+    target = directory / "telegram_queue.sqlite3"
+    sources = [
+        (directory / "telegram_inbox.sqlite3", "incoming_updates",
+         "update_id,payload,state,attempts,owner,lease_until,due"),
+        (directory / "telegram_outbox.sqlite3", "deliveries",
+         "id,delivery_key,method,payload,state,attempts,due,owner,lease_until"),
+    ]
+    plan = {}
+    for path, table, columns in sources:
+        if not path.exists():
+            continue
+        db = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
+        try:
+            count = db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            db.execute(f"SELECT {columns} FROM {table} LIMIT 0")
+            plan[path.name] = count
+        finally:
+            db.close()
+    if dry_run or not plan:
+        return {"dry_run": True, "sources": plan, "migrated": 0}
+    if target.exists():
+        raise RuntimeError("Unified queue already exists; refusing to overwrite or merge")
+    # Validate every destination before creating even the first backup.
+    # Otherwise a collision on the second source strands a partial migration.
+    snapshots = [
+        (path, path.with_suffix(path.suffix + ".pre-migration.bak"))
+        for path, _, _ in sources if path.name in plan
+    ]
+    for _, backup in snapshots:
+        if backup.exists():
+            raise RuntimeError(f"Backup already exists: {backup.name}")
+    backups = []
+    try:
+        for path, backup in snapshots:
+            # Exclusive creation closes the preflight-to-open race: never
+            # overwrite a backup another process created after inspection.
+            with backup.open("xb"):
+                pass
+            backups.append(backup)
+            src = dst = None
+            try:
+                src = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
+                dst = sqlite3.connect(backup)
+                src.backup(dst)
+            finally:
+                if dst is not None:
+                    dst.close()
+                if src is not None:
+                    src.close()
+    except BaseException:
+        # A failed later backup must not strand earlier snapshots or a
+        # partially created SQLite file that would block a safe retry.
+        for backup in reversed(backups):
+            backup.unlink(missing_ok=True)
+        raise
+    from backend.delivery_outbox import DeliveryOutbox
+    from backend.update_inbox import UpdateInbox
+    outbox = DeliveryOutbox(target)
+    inbox = UpdateInbox(target)
+    outbox.close()
+    inbox.close()
+    dest = sqlite3.connect(target)
+    try:
+        dest.execute("BEGIN IMMEDIATE")
+        for path, table, columns in sources:
+            if path.name not in plan:
+                continue
+            # Import from the immutable snapshot, not a live source that could
+            # change after its backup. The startup guard independently checks
+            # that the legacy database still matches this snapshot.
+            snapshot = path.with_suffix(path.suffix + ".pre-migration.bak")
+            source = sqlite3.connect(snapshot.resolve().as_uri() + "?mode=ro", uri=True)
+            try:
+                rows = source.execute(f"SELECT {columns} FROM {table}").fetchall()
+            finally:
+                source.close()
+            names = columns.split(",")
+            placeholders = ",".join("?" for _ in names)
+            dest.executemany(
+                f"INSERT INTO {table} ({columns}) VALUES ({placeholders})", rows
+            )
+            copied = dest.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            if copied != len(rows):
+                raise RuntimeError(f"Count mismatch in {table}")
+        dest.commit()
+    except BaseException:
+        dest.rollback()
+        dest.close()
+        target.unlink(missing_ok=True)
+        raise
+    finally:
+        try:
+            dest.close()
+        except Exception:
+            pass
+    return {"dry_run": False, "sources": plan,
+            "migrated": sum(plan.values()), "backups": [str(p) for p in backups]}
