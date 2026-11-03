@@ -40,6 +40,23 @@ class DeliveryOutboxTests(unittest.TestCase):
                 first.close()
                 second.close()
 
+    def test_uncertain_receipt_persists_across_restart_without_resend(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "outbox.sqlite3"
+            first = DeliveryOutbox(path)
+            first.enqueue("ambiguous", "sendMessage", {"chat_id": 7})
+            item = first.claim(now=10)
+            self.assertTrue(first.finish(item, None, now=10))
+            first.close()
+            second = DeliveryOutbox(path)
+            try:
+                self.assertEqual(second.db.execute(
+                    "SELECT state FROM deliveries WHERE delivery_key='ambiguous'"
+                ).fetchone()[0], "uncertain")
+                self.assertIsNone(second.claim(now=10000))
+            finally:
+                second.close()
+
     def test_retry_budget(self):
         with tempfile.TemporaryDirectory() as directory:
             outbox = DeliveryOutbox(Path(directory) / "outbox.sqlite3")

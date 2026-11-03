@@ -109,6 +109,19 @@ def process_live(update, *, token, allowed_ids, database, ideas, send=None,
         return "sent"
     return process_update(update,send=send,allowed_ids=allowed_ids,database=database,ideas=ideas,token=token)
 
+def _confirmed_telegram_result(method, payload, result):
+    """telegram_bot.api returns Telegram result, not the {ok, result} envelope."""
+    if method == "answerCallbackQuery":
+        return result is True
+    if method != "sendMessage" or not isinstance(result, dict):
+        return False
+    chat = result.get("chat")
+    return (type(result.get("message_id")) is int and result["message_id"] > 0
+            and isinstance(chat, dict) and type(chat.get("id")) is int
+            and type(payload.get("chat_id")) is int
+            and chat["id"] == payload["chat_id"])
+
+
 def deliver_pending(outbox, token, transport=api, *, now=None, max_items=25, before_send=None):
     """Drain bounded queued Telegram API requests with retry on transport errors.
 
@@ -133,11 +146,16 @@ def deliver_pending(outbox, token, transport=api, *, now=None, max_items=25, bef
             response = transport(token, item["method"], item["payload"])
             if response is False or (isinstance(response, dict) and response.get("ok") is False):
                 raise RuntimeError("Telegram rejected delivery")
+            if not _confirmed_telegram_result(item["method"], item["payload"], response):
+                # A missing or mismatched receipt is not proof of non-delivery.
+                # Quarantine for operator reconciliation; never auto-resend.
+                outbox.finish(item, None, now=now)
+                continue
         except Exception:
             outbox.finish(item, False, now=now)
         else:
-            outbox.finish(item, True, now=now)
-            delivered += 1
+            if outbox.finish(item, True, now=now):
+                delivered += 1
     return delivered
 
 

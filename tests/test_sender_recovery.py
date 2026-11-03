@@ -17,7 +17,7 @@ class SenderRecoveryTests(unittest.TestCase):
                     calls.append(method)
                     if len(calls) == 1:
                         raise ConnectionError("temporary failure")
-                    return {"ok": True}
+                    return {"message_id": 100, "chat": {"id": 1}}
                 self.assertEqual(deliver_pending(outbox, "test", transport, now=10), 0)
                 self.assertEqual(deliver_pending(outbox, "test", transport, now=11), 0)
                 self.assertEqual(deliver_pending(outbox, "test", transport, now=12), 1)
@@ -34,10 +34,58 @@ class SenderRecoveryTests(unittest.TestCase):
                 self.assertEqual(deliver_pending(outbox, "test",
                     lambda *args: {"ok": False}, now=10), 0)
                 self.assertEqual(deliver_pending(outbox, "test",
-                    lambda *args: {"ok": True}, now=12), 1)
+                    lambda *args: True, now=12), 1)
             finally:
                 outbox.close()
 
+
+    def test_invalid_message_receipts_are_quarantined_without_retry(self):
+        invalid = (
+            None, {}, {"message_id": 0, "chat": {"id": 1}},
+            {"message_id": 10, "chat": {"id": 2}},
+            {"message_id": True, "chat": {"id": 1}},
+            {"message_id": 10, "chat": {"id": True}},
+            {"ok": True},
+        )
+        for result in invalid:
+            with self.subTest(result=result), tempfile.TemporaryDirectory() as directory:
+                outbox = DeliveryOutbox(Path(directory) / "queue.sqlite3")
+                try:
+                    outbox.enqueue("receipt", "sendMessage", {"chat_id": 1, "text": "hello"})
+                    self.assertEqual(deliver_pending(outbox, "test",
+                        lambda *_: result, now=10), 0)
+                    self.assertEqual(outbox.db.execute(
+                        "SELECT state FROM deliveries").fetchone()[0], "uncertain")
+                    self.assertIsNone(outbox.claim(now=10000))
+                finally:
+                    outbox.close()
+
+    def test_valid_message_receipt_confirms_delivery(self):
+        with tempfile.TemporaryDirectory() as directory:
+            outbox = DeliveryOutbox(Path(directory) / "queue.sqlite3")
+            try:
+                outbox.enqueue("valid", "sendMessage", {"chat_id": 1, "text": "hello"})
+                receipt = {"message_id": 12, "chat": {"id": 1}}
+                self.assertEqual(deliver_pending(outbox, "test",
+                    lambda *_: receipt, now=10), 1)
+                self.assertEqual(outbox.db.execute(
+                    "SELECT state FROM deliveries").fetchone()[0], "sent")
+            finally:
+                outbox.close()
+
+    def test_callback_requires_boolean_true_receipt(self):
+        for result in (None, {}, 1, {"ok": True}):
+            with self.subTest(result=result), tempfile.TemporaryDirectory() as directory:
+                outbox = DeliveryOutbox(Path(directory) / "queue.sqlite3")
+                try:
+                    outbox.enqueue("callback", "answerCallbackQuery",
+                                   {"callback_query_id": "x"})
+                    self.assertEqual(deliver_pending(outbox, "test",
+                        lambda *_: result, now=10), 0)
+                    self.assertEqual(outbox.db.execute(
+                        "SELECT state FROM deliveries").fetchone()[0], "uncertain")
+                finally:
+                    outbox.close()
 
     def test_long_batch_stops_after_consumer_takeover(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -56,7 +104,7 @@ class SenderRecoveryTests(unittest.TestCase):
                 def transport(token, method, payload):
                     sent.append(payload["text"])
                     new.acquire(now=16, seconds=30)
-                    return {"ok": True}
+                    return {"message_id": 100, "chat": {"id": 1}}
 
                 with self.assertRaises(ConsumerBusy):
                     deliver_pending(outbox, "test", transport, now=10,

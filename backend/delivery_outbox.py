@@ -63,14 +63,18 @@ class DeliveryOutbox:
             raise
 
     def finish(self, item, success, now=None):
+        """True=confirmed, False=retryable failure, None=uncertain/no auto-retry."""
+        if success is not None and type(success) is not bool:
+            raise ValueError("delivery result must be True, False, or None")
         now = time.time() if now is None else float(now)
         delay = min(300, 2 ** min(item["attempt"], 8))
+        state = "uncertain" if success is None else ("sent" if success else "pending")
+        due = now + delay if success is False else now
         with self.db:
             cursor = self.db.execute(
                 """UPDATE deliveries SET state=?,owner=NULL,lease_until=0,due=?
                    WHERE id=? AND owner=? AND state='leased'""",
-                ("sent" if success else "pending", now if success else now + delay,
-                 item["id"], item["owner"]),
+                (state, due, item["id"], item["owner"]),
             )
             return cursor.rowcount == 1
 
